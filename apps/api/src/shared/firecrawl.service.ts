@@ -29,7 +29,7 @@ export class FirecrawlService {
         return null;
       }
       const json = (await res.json()) as { data?: { markdown?: string } };
-      return json?.data?.markdown ?? null;
+      return json.data?.markdown ?? null;
     } catch (e) {
       this.logger.warn(`Firecrawl failed: ${String(e)}`);
       return null;

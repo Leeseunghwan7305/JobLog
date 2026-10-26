@@ -12,7 +12,7 @@ export class JwtAuthGuard implements CanActivate {
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const req = ctx.switchToHttp().getRequest();
-    const header = req.headers['authorization'] as string | undefined;
+    const header = req.headers.authorization as string | undefined;
     if (!header?.startsWith('Bearer ')) throw new UnauthorizedException();
     try {
       const payload = await this.jwt.verifyAsync(header.slice(7), {

@@ -1,14 +1,15 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+
 import { setToken } from '@/lib/auth';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const match = window.location.hash.match(/token=([^&]+)/);
+    const match = /token=([^&]+)/.exec(window.location.hash);
     if (match) {
       setToken(decodeURIComponent(match[1]));
       router.replace('/');

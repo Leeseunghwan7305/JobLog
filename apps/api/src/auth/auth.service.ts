@@ -1,5 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+
 import { PrismaService } from '../prisma/prisma.service';
 
 interface KakaoProfile {
@@ -76,7 +77,9 @@ export class AuthService {
     }
     const res = await fetch('https://kauth.kakao.com/oauth/token', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+      },
       body,
     });
     if (!res.ok) throw new UnauthorizedException('카카오 토큰 교환 실패');

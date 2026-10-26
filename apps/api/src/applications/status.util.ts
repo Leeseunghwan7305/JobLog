@@ -1,4 +1,4 @@
-import { AppStatus, StageStatus } from '@prisma/client';
+import { AppStatus, type StageStatus } from '@prisma/client';
 
 /**
  * 전체 지원 상태를 단계 상태로부터 파생 계산한다. (spec 2.3)

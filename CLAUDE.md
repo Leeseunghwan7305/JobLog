@@ -12,13 +12,13 @@
 
 ## 기술 스택
 
-| 영역 | 기술 |
-|------|------|
-| Frontend | Next.js (App Router), TypeScript, TanStack Query, shadcn/ui, Tailwind CSS |
-| Backend | NestJS, Prisma, PostgreSQL, Passport (Kakao + JWT) |
-| 외부 연동 | Firecrawl(공고 스크래핑), Claude API(파싱), 잡플래닛(기업 후기, M4) |
-| 인프라 | Vercel(web), Railway/Render(api), Neon/Supabase(DB) |
-| 패키지 매니저 | pnpm (workspace 모노레포) |
+| 영역          | 기술                                                                      |
+| ------------- | ------------------------------------------------------------------------- |
+| Frontend      | Next.js (App Router), TypeScript, TanStack Query, shadcn/ui, Tailwind CSS |
+| Backend       | NestJS, Prisma, PostgreSQL, Passport (Kakao + JWT)                        |
+| 외부 연동     | Firecrawl(공고 스크래핑), Claude API(파싱), 잡플래닛(기업 후기, M4)       |
+| 인프라        | Vercel(web), Railway/Render(api), Neon/Supabase(DB)                       |
+| 패키지 매니저 | pnpm (workspace 모노레포)                                                 |
 
 ## 저장소 구조
 
@@ -65,11 +65,13 @@ pnpm parse:eval           # 파싱 품질 eval (아래 참고)
 이 저장소는 에이전트가 스스로 수렴하도록 전용 하네스를 둔다. 작업할 때 이걸 신호로 쓴다.
 
 **검증 신호 (루프를 닫는 기준)**
+
 - `pnpm --filter @joblog/api typecheck` — `tsc --noEmit`. 결정적.
 - `pnpm --filter @joblog/api test` — `node --import tsx --test`로 순수 로직 테스트(`*.test.ts`). 네트워크 불필요.
 - `pnpm --filter @joblog/api parse:eval` — 공고 파싱 품질을 골든 대비 **필드 정확도로 채점**. API와 동일한 `LlmService`를 태운다. 자세히는 `apps/api/src/parse/eval/README.md`.
 
 **자동화 (`.claude/`)**
+
 - `settings.json` → **Stop 훅**이 `hooks/verify.sh`를 돌린다: api 소스가 바뀐 턴이면 typecheck+test가 통과해야 턴이 끝난다(실패 시 한 바퀴 더). 끄려면 해당 훅 제거.
 - `/joblog-task` 명령 — spec→task→테스트 우선 구현→검증→기록 흐름.
 - 서브에이전트 `parse-evaluator`(파싱 품질 리포트), `schema-guard`(타입↔스키마 동기화 점검).

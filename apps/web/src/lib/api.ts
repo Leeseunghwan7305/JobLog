@@ -9,13 +9,14 @@ export async function apiFetch<T>(
   init?: RequestInit,
 ): Promise<T> {
   const token = getToken();
+  const headers = new Headers(init?.headers);
+  headers.set('content-type', 'application/json');
+  if (token) {
+    headers.set('authorization', `Bearer ${token}`);
+  }
   const res = await fetch(`${BASE}${path}`, {
     ...init,
-    headers: {
-      'content-type': 'application/json',
-      ...(token ? { authorization: `Bearer ${token}` } : {}),
-      ...(init?.headers ?? {}),
-    },
+    headers,
   });
 
   if (res.status === 401) {

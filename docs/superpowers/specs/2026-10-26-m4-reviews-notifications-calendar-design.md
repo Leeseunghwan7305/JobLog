@@ -6,13 +6,13 @@ M4의 세 기능(잡플래닛 공개 평점 best-effort 스크래핑 + 캐시, D
 
 ## 확정된 결정
 
-| 항목 | 결정 |
-|------|------|
-| 알림 채널 | 이메일 (Resend) |
-| 알림 시점 | D-1 단일 (마감일/면접일 하루 전) |
+| 항목          | 결정                                                                     |
+| ------------- | ------------------------------------------------------------------------ |
+| 알림 채널     | 이메일 (Resend)                                                          |
+| 알림 시점     | D-1 단일 (마감일/면접일 하루 전)                                         |
 | 스크래핑 범위 | Firecrawl 실제 수집 + `CompanyReview` TTL 7일 캐시, 모호하면 딥링크 폴백 |
-| 작업 순서 | A(공통) → B(캘린더) → C(알림) → D(스크래핑) |
-| 알림 멱등성 | 신규 `SentNotification` 모델로 "보냈음" 영속화 |
+| 작업 순서     | A(공통) → B(캘린더) → C(알림) → D(스크래핑)                              |
+| 알림 멱등성   | 신규 `SentNotification` 모델로 "보냈음" 영속화                           |
 
 ## 설계 원칙 (spec 계승)
 
@@ -54,12 +54,12 @@ M4의 세 기능(잡플래닛 공개 평점 best-effort 스크래핑 + 캐시, D
 export type CalendarEventType = 'deadline' | 'stage';
 
 export interface CalendarEvent {
-  date: string;            // ISO date (YYYY-MM-DD 기준 그룹핑용 ISO datetime)
+  date: string; // ISO date (YYYY-MM-DD 기준 그룹핑용 ISO datetime)
   type: CalendarEventType;
   applicationId: string;
   companyName: string;
-  label: string;           // deadline: "서류 마감" / stage: 전형명(name)
-  status?: StageStatus;    // type==='stage'일 때만
+  label: string; // deadline: "서류 마감" / stage: 전형명(name)
+  status?: StageStatus; // type==='stage'일 때만
 }
 ```
 
@@ -179,13 +179,13 @@ APP_BASE_URL=http://localhost:3000   # 메일 내 링크
 
 ## 에러 처리 / 폴백 요약
 
-| 상황 | 동작 |
-|------|------|
-| Firecrawl 비활성/수집 실패 | 평점 없이 딥링크만 반환, 상세 정상 |
-| 후보 모호(0/복수) | 저장 안 함, 딥링크 반환 |
-| Resend 비활성/발송 실패 | 콘솔 로그, `SentNotification` 미기록(재시도 여지) |
-| `user.email` null | 알림 skip(로그) |
-| cron 중복 실행 | `SentNotification @@unique`로 1회만 |
+| 상황                       | 동작                                              |
+| -------------------------- | ------------------------------------------------- |
+| Firecrawl 비활성/수집 실패 | 평점 없이 딥링크만 반환, 상세 정상                |
+| 후보 모호(0/복수)          | 저장 안 함, 딥링크 반환                           |
+| Resend 비활성/발송 실패    | 콘솔 로그, `SentNotification` 미기록(재시도 여지) |
+| `user.email` null          | 알림 skip(로그)                                   |
+| cron 중복 실행             | `SentNotification @@unique`로 1회만               |
 
 ## 영향받는 파일 (요약)
 

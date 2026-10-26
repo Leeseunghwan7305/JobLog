@@ -1,7 +1,7 @@
 // web ↔ api 가 주고받는 공유 타입. (api는 생산자로서 자체 DTO도 가짐)
 
-export type StageStatus = "PENDING" | "IN_PROGRESS" | "PASSED" | "FAILED";
-export type AppStatus = "IN_PROGRESS" | "OFFER" | "REJECTED" | "CLOSED";
+export type StageStatus = 'PENDING' | 'IN_PROGRESS' | 'PASSED' | 'FAILED';
+export type AppStatus = 'IN_PROGRESS' | 'OFFER' | 'REJECTED' | 'CLOSED';
 
 export interface UserDto {
   id: string;
@@ -43,7 +43,7 @@ export interface ParsedPosting {
   employmentType?: string | null;
   deadline?: string | null; // ISO date
   stages: { name: string; order: number }[];
-  confidence: "high" | "low";
+  confidence: 'high' | 'low';
 }
 
 export interface ParseResponse {

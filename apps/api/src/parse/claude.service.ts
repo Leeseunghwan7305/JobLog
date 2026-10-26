@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+
 import { normalizeParsed, ParsedPosting } from './types';
 
 // 구조화 출력을 강제하기 위한 tool 정의 (tool_choice로 호출 강제)
@@ -29,7 +30,8 @@ const EXTRACT_TOOL = {
           properties: {
             name: {
               type: 'string',
-              description: '간결한 전형 단계명 (괄호 부연설명 제외). 예: "1차 면접"',
+              description:
+                '간결한 전형 단계명 (괄호 부연설명 제외). 예: "1차 면접"',
             },
             order: { type: 'number' },
           },
@@ -88,7 +90,7 @@ export class ClaudeService {
         const res = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
-            'x-api-key': process.env.ANTHROPIC_API_KEY as string,
+            'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
             'anthropic-version': '2023-06-01',
             'content-type': 'application/json',
           },

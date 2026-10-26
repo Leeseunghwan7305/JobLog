@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api';
 import type { ParsedPosting, ParseResponse } from '@joblog/types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
+
+import { apiFetch } from '@/lib/api';
 
 type Step = 'input' | 'manual' | 'draft';
 
@@ -55,8 +56,8 @@ export default function AddJobModal({
         }),
       }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['apps'] });
-      qc.invalidateQueries({ queryKey: ['stats'] });
+      void qc.invalidateQueries({ queryKey: ['apps'] });
+      void qc.invalidateQueries({ queryKey: ['stats'] });
       onClose();
     },
   });
@@ -71,15 +72,17 @@ export default function AddJobModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const updateDraft = (patch: Partial<ParsedPosting>) =>
-    setDraft((d) => (d ? { ...d, ...patch } : d));
+  const updateDraft = (patch: Partial<ParsedPosting>) => { setDraft((d) => (d ? { ...d, ...patch } : d)); };
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold">공고 추가</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700">
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-700"
+          >
             ✕
           </button>
         </div>
@@ -91,19 +94,19 @@ export default function AddJobModal({
             </p>
             <input
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              onChange={(e) => { setUrl(e.target.value); }}
               placeholder="https://..."
               className="rounded-lg border border-slate-300 px-3 py-2"
             />
             <button
               disabled={!url || parse.isPending}
-              onClick={() => parse.mutate({ url })}
+              onClick={() => { parse.mutate({ url }); }}
               className="rounded-lg bg-brand px-4 py-2 font-semibold text-white disabled:opacity-50"
             >
               {parse.isPending ? '분석 중…' : '분석'}
             </button>
             <button
-              onClick={() => setStep('manual')}
+              onClick={() => { setStep('manual'); }}
               className="text-sm text-slate-400 hover:text-slate-700"
             >
               직접 입력할래요
@@ -114,17 +117,19 @@ export default function AddJobModal({
         {step === 'manual' && (
           <div className="flex flex-col gap-3">
             {notice && <p className="text-sm text-amber-600">{notice}</p>}
-            <p className="text-sm text-slate-500">공고 내용을 붙여넣어 주세요.</p>
+            <p className="text-sm text-slate-500">
+              공고 내용을 붙여넣어 주세요.
+            </p>
             <textarea
               value={rawText}
-              onChange={(e) => setRawText(e.target.value)}
+              onChange={(e) => { setRawText(e.target.value); }}
               rows={8}
               placeholder="채용 공고 전문…"
               className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
             />
             <button
               disabled={!rawText || parse.isPending}
-              onClick={() => parse.mutate({ rawText })}
+              onClick={() => { parse.mutate({ rawText }); }}
               className="rounded-lg bg-brand px-4 py-2 font-semibold text-white disabled:opacity-50"
             >
               {parse.isPending ? '분석 중…' : '분석'}
@@ -138,17 +143,17 @@ export default function AddJobModal({
             <Field
               label="회사명"
               value={draft.companyName}
-              onChange={(v) => updateDraft({ companyName: v })}
+              onChange={(v) => { updateDraft({ companyName: v }); }}
             />
             <Field
               label="직무"
               value={draft.position}
-              onChange={(v) => updateDraft({ position: v })}
+              onChange={(v) => { updateDraft({ position: v }); }}
             />
             <Field
               label="마감일"
               value={draft.deadline ?? ''}
-              onChange={(v) => updateDraft({ deadline: v || null })}
+              onChange={(v) => { updateDraft({ deadline: v || null }); }}
               placeholder="YYYY-MM-DD"
             />
 
@@ -172,10 +177,9 @@ export default function AddJobModal({
                       className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
                     />
                     <button
-                      onClick={() =>
-                        updateDraft({
+                      onClick={() => { updateDraft({
                           stages: draft.stages.filter((_, j) => j !== i),
-                        })
+                        }); }
                       }
                       className="text-slate-400 hover:text-red-500"
                     >
@@ -185,13 +189,12 @@ export default function AddJobModal({
                 ))}
               </div>
               <button
-                onClick={() =>
-                  updateDraft({
+                onClick={() => { updateDraft({
                     stages: [
                       ...draft.stages,
                       { name: '', order: draft.stages.length },
                     ],
-                  })
+                  }); }
                 }
                 className="mt-2 text-sm text-brand hover:underline"
               >
@@ -201,7 +204,7 @@ export default function AddJobModal({
 
             <button
               disabled={!draft.companyName || !draft.position || save.isPending}
-              onClick={() => save.mutate(draft)}
+              onClick={() => { save.mutate(draft); }}
               className="mt-2 rounded-lg bg-brand px-4 py-2 font-semibold text-white disabled:opacity-50"
             >
               {save.isPending ? '저장 중…' : '저장'}
@@ -236,7 +239,7 @@ function Field({
       <input
         value={value}
         placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => { onChange(e.target.value); }}
         className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
       />
     </label>

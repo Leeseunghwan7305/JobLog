@@ -43,6 +43,7 @@
 `FirecrawlService`를 `ParseModule` 밖으로 빼내 잡플래닛 스크래핑에서도 쓸 수 있게 한다.
 
 **Files:**
+
 - Create: `apps/api/src/shared/firecrawl.service.ts` (이동)
 - Create: `apps/api/src/shared/shared.module.ts`
 - Delete: `apps/api/src/parse/firecrawl.service.ts`
@@ -50,6 +51,7 @@
 - Modify: `apps/api/src/parse/*` (firecrawl import 경로 — 아래 Step에서 grep로 확인)
 
 **Interfaces:**
+
 - Produces: `SharedModule` exports `FirecrawlService`. `FirecrawlService`: `get enabled(): boolean`, `scrape(url: string): Promise<string | null>`.
 
 - [ ] **Step 1: firecrawl.service.ts 이동**
@@ -121,9 +123,11 @@ git commit -m "refactor: FirecrawlService를 SharedModule로 추출"
 지원 상세의 각 전형 단계에 예정일 입력을 추가한다. 백엔드 `PATCH /applications/:id/stages/:stageId`(이미 `scheduledAt` 수신)를 재사용. 이 값이 캘린더·알림의 데이터 소스다.
 
 **Files:**
+
 - Modify: `apps/web/app/applications/[id]/page.tsx`
 
 **Interfaces:**
+
 - Consumes: `StageDto.scheduledAt: string | null` (`@joblog/types`), `PATCH /applications/:id/stages/:stageId` body `{ scheduledAt?: string | null }`.
 
 - [ ] **Step 1: scheduledAt 저장 뮤테이션 추가**
@@ -131,17 +135,23 @@ git commit -m "refactor: FirecrawlService를 SharedModule로 추출"
 `apps/web/app/applications/[id]/page.tsx` 의 `setStage` 뮤테이션 아래에 추가:
 
 ```tsx
-  const setSchedule = useMutation({
-    mutationFn: ({ stageId, scheduledAt }: { stageId: string; scheduledAt: string }) =>
-      apiFetch(`/applications/${id}/stages/${stageId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ scheduledAt: scheduledAt || null }),
-      }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['app', id] });
-      qc.invalidateQueries({ queryKey: ['calendar'] });
-    },
-  });
+const setSchedule = useMutation({
+  mutationFn: ({
+    stageId,
+    scheduledAt,
+  }: {
+    stageId: string;
+    scheduledAt: string;
+  }) =>
+    apiFetch(`/applications/${id}/stages/${stageId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ scheduledAt: scheduledAt || null }),
+    }),
+  onSuccess: () => {
+    qc.invalidateQueries({ queryKey: ['app', id] });
+    qc.invalidateQueries({ queryKey: ['calendar'] });
+  },
+});
 ```
 
 - [ ] **Step 2: 단계 행에 datetime-local 입력 추가**
@@ -149,45 +159,45 @@ git commit -m "refactor: FirecrawlService를 SharedModule로 추출"
 기존 전형 단계 `<div key={s.id} ...>` 블록 전체를 아래로 교체(세로 구조로 변경 + 예정일 입력 추가):
 
 ```tsx
-            <div
-              key={s.id}
-              className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-semibold">{s.name}</span>
-                <div className="flex gap-1.5">
-                  {STATUSES.map((st) => (
-                    <button
-                      key={st}
-                      onClick={() => setStage.mutate({ stageId: s.id, status: st })}
-                      className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
-                        s.status === st
-                          ? STAGE_STATUS_CLASS[st]
-                          : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
-                      }`}
-                    >
-                      {STAGE_STATUS_LABEL[st]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <label className="flex items-center gap-2 text-xs text-slate-500">
-                예정일
-                <input
-                  type="datetime-local"
-                  defaultValue={s.scheduledAt ? s.scheduledAt.slice(0, 16) : ''}
-                  onChange={(e) =>
-                    setSchedule.mutate({
-                      stageId: s.id,
-                      scheduledAt: e.target.value
-                        ? new Date(e.target.value).toISOString()
-                        : '',
-                    })
-                  }
-                  className="rounded-md border border-slate-200 px-2 py-1 text-slate-700"
-                />
-              </label>
-            </div>
+<div
+  key={s.id}
+  className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3"
+>
+  <div className="flex items-center justify-between">
+    <span className="font-semibold">{s.name}</span>
+    <div className="flex gap-1.5">
+      {STATUSES.map((st) => (
+        <button
+          key={st}
+          onClick={() => setStage.mutate({ stageId: s.id, status: st })}
+          className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
+            s.status === st
+              ? STAGE_STATUS_CLASS[st]
+              : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
+          }`}
+        >
+          {STAGE_STATUS_LABEL[st]}
+        </button>
+      ))}
+    </div>
+  </div>
+  <label className="flex items-center gap-2 text-xs text-slate-500">
+    예정일
+    <input
+      type="datetime-local"
+      defaultValue={s.scheduledAt ? s.scheduledAt.slice(0, 16) : ''}
+      onChange={(e) =>
+        setSchedule.mutate({
+          stageId: s.id,
+          scheduledAt: e.target.value
+            ? new Date(e.target.value).toISOString()
+            : '',
+        })
+      }
+      className="rounded-md border border-slate-200 px-2 py-1 text-slate-700"
+    />
+  </label>
+</div>
 ```
 
 - [ ] **Step 3: 빌드/타입체크**
@@ -211,9 +221,11 @@ git commit -m "feat(web): 전형 단계 예정일(scheduledAt) 입력 UI"
 ### Task 3: CalendarEvent 공유 타입
 
 **Files:**
+
 - Modify: `packages/types/src/index.ts`
 
 **Interfaces:**
+
 - Produces: `CalendarEventType`, `CalendarEvent`.
 
 - [ ] **Step 1: 타입 추가**
@@ -221,7 +233,7 @@ git commit -m "feat(web): 전형 단계 예정일(scheduledAt) 입력 UI"
 `packages/types/src/index.ts` 끝에 추가:
 
 ```ts
-export type CalendarEventType = "deadline" | "stage";
+export type CalendarEventType = 'deadline' | 'stage';
 
 export interface CalendarEvent {
   date: string; // ISO datetime
@@ -252,12 +264,14 @@ git commit -m "feat(types): CalendarEvent 공유 타입 추가"
 본인 지원의 `deadline`과 `stage.scheduledAt`을 범위로 조회해 이벤트 배열로 반환한다.
 
 **Files:**
+
 - Create: `apps/api/src/applications/calendar.util.ts`
 - Create: `apps/api/src/applications/calendar.util.test.ts`
 - Modify: `apps/api/src/applications/applications.service.ts`
 - Modify: `apps/api/src/applications/applications.controller.ts`
 
 **Interfaces:**
+
 - Consumes: `PrismaService` (주입됨).
 - Produces: `toCalendarEvents(apps): CalendarEvent[]` (순수 변환, 테스트 대상); `ApplicationsService.calendar(userId, from?, to?): Promise<CalendarEvent[]>`; route `GET /calendar?from=&to=`.
 
@@ -277,7 +291,11 @@ test('deadline과 scheduledAt을 이벤트로 투영한다', () => {
       companyName: '카카오',
       deadline: new Date('2026-11-01T00:00:00Z'),
       stages: [
-        { name: '1차 면접', status: 'IN_PROGRESS', scheduledAt: new Date('2026-11-05T05:00:00Z') },
+        {
+          name: '1차 면접',
+          status: 'IN_PROGRESS',
+          scheduledAt: new Date('2026-11-05T05:00:00Z'),
+        },
         { name: '서류', status: 'PASSED', scheduledAt: null },
       ],
     },
@@ -294,7 +312,12 @@ test('deadline과 scheduledAt을 이벤트로 투영한다', () => {
 
 test('deadline이 없고 scheduledAt도 없으면 이벤트를 만들지 않는다', () => {
   const events = toCalendarEvents([
-    { id: 'a2', companyName: '네이버', deadline: null, stages: [{ name: '서류', status: 'PENDING', scheduledAt: null }] },
+    {
+      id: 'a2',
+      companyName: '네이버',
+      deadline: null,
+      stages: [{ name: '서류', status: 'PENDING', scheduledAt: null }],
+    },
   ]);
   assert.equal(events.length, 0);
 });
@@ -305,10 +328,19 @@ test('날짜 오름차순으로 정렬한다', () => {
       id: 'a3',
       companyName: 'A',
       deadline: new Date('2026-12-10T00:00:00Z'),
-      stages: [{ name: '면접', status: 'PENDING', scheduledAt: new Date('2026-12-01T00:00:00Z') }],
+      stages: [
+        {
+          name: '면접',
+          status: 'PENDING',
+          scheduledAt: new Date('2026-12-01T00:00:00Z'),
+        },
+      ],
     },
   ]);
-  assert.deepEqual(events.map((e) => e.type), ['stage', 'deadline']);
+  assert.deepEqual(
+    events.map((e) => e.type),
+    ['stage', 'deadline'],
+  );
 });
 ```
 
@@ -452,10 +484,12 @@ git commit -m "feat(api): GET /calendar 집계 엔드포인트 + 변환 함수 �
 월간 그리드로 이벤트를 표시한다.
 
 **Files:**
+
 - Create: `apps/web/app/calendar/page.tsx`
 - Modify: `apps/web/app/page.tsx` (대시보드에 캘린더 링크)
 
 **Interfaces:**
+
 - Consumes: `CalendarEvent[]` (`@joblog/types`), `GET /calendar?from=&to=`.
 
 - [ ] **Step 1: 캘린더 페이지 작성**
@@ -558,7 +592,10 @@ export default function CalendarPage() {
 
       <div className="mt-6 grid grid-cols-7 gap-px rounded-xl border border-slate-200 bg-slate-200 text-sm">
         {['일', '월', '화', '수', '목', '금', '토'].map((w) => (
-          <div key={w} className="bg-slate-50 py-2 text-center font-semibold text-slate-500">
+          <div
+            key={w}
+            className="bg-slate-50 py-2 text-center font-semibold text-slate-500"
+          >
             {w}
           </div>
         ))}
@@ -629,11 +666,13 @@ git commit -m "feat(web): 월간 캘린더 뷰 + 대시보드 링크"
 알림 멱등성용 테이블과 스케줄/메일 라이브러리를 추가한다.
 
 **Files:**
+
 - Modify: `apps/api/prisma/schema.prisma`
 - Create: migration (자동 생성)
 - Modify: `apps/api/package.json` (deps `@nestjs/schedule`, `resend`)
 
 **Interfaces:**
+
 - Produces: Prisma `SentNotification { id, userId, kind, refId, sendDate, createdAt }` with `@@unique([userId, kind, refId, sendDate])` → client 복합키 접근자 `userId_kind_refId_sendDate`.
 
 - [ ] **Step 1: Prisma 모델 추가**
@@ -684,10 +723,12 @@ git commit -m "feat(api): SentNotification 모델 + 알림 의존성(@nestjs/sch
 ### Task 7: MailerService (Resend 래핑)
 
 **Files:**
+
 - Create: `apps/api/src/notifications/mailer.service.ts`
 - Create: `apps/api/src/notifications/mailer.service.test.ts`
 
 **Interfaces:**
+
 - Produces: `MailerService`: `get enabled(): boolean`, `send(input: { to: string; subject: string; html: string }): Promise<boolean>`.
 
 - [ ] **Step 1: 실패 테스트 작성**
@@ -709,7 +750,11 @@ test('키가 없으면 enabled=false 이고 send는 false(폴백)', async () => 
   delete process.env.RESEND_API_KEY;
   const mailer = new MailerService();
   assert.equal(mailer.enabled, false);
-  const ok = await mailer.send({ to: 'a@b.com', subject: 's', html: '<p>h</p>' });
+  const ok = await mailer.send({
+    to: 'a@b.com',
+    subject: 's',
+    html: '<p>h</p>',
+  });
   assert.equal(ok, false);
 });
 
@@ -742,9 +787,15 @@ export class MailerService {
     return !!process.env.RESEND_API_KEY;
   }
 
-  async send(input: { to: string; subject: string; html: string }): Promise<boolean> {
+  async send(input: {
+    to: string;
+    subject: string;
+    html: string;
+  }): Promise<boolean> {
     if (!this.enabled) {
-      this.logger.log(`[mail disabled] to=${input.to} subject=${input.subject}`);
+      this.logger.log(
+        `[mail disabled] to=${input.to} subject=${input.subject}`,
+      );
       return false;
     }
     try {
@@ -788,10 +839,12 @@ git commit -m "feat(api): MailerService (Resend, 키 부재 시 폴백)"
 D-1 대상 조회용으로 KST 달력 날짜의 UTC 구간을 계산하는 순수 함수. `Date.now()` 의존 없이 `now`를 인자로 받아 테스트 가능하게 한다.
 
 **Files:**
+
 - Create: `apps/api/src/notifications/kst.util.ts`
 - Create: `apps/api/src/notifications/kst.util.test.ts`
 
 **Interfaces:**
+
 - Produces: `kstDayRange(now: Date, dayOffset: number): { start: Date; end: Date; dateStr: string }` — 지정 KST 날짜(now 기준 +dayOffset일)의 `[start, end)` UTC 구간과 `YYYY-MM-DD` 문자열.
 
 - [ ] **Step 1: 실패 테스트 작성**
@@ -872,10 +925,12 @@ git commit -m "feat(api): KST 날짜 범위 유틸 (D-1 구간 계산)"
 ### Task 9: NotificationsService + cron (멱등 D-1 발송)
 
 **Files:**
+
 - Create: `apps/api/src/notifications/notifications.service.ts`
 - Create: `apps/api/src/notifications/notifications.service.test.ts`
 
 **Interfaces:**
+
 - Consumes: `PrismaService`, `MailerService` (주입), `kstDayRange` (Task 8).
 - Produces: `NotificationsService.runDaily(now: Date): Promise<{ sent: number; skipped: number }>` — cron 본체이자 테스트 진입점. `@Cron('0 9 * * *', { timeZone: 'Asia/Seoul' })` 로 호출.
 
@@ -904,7 +959,9 @@ function makePrisma(opts: {
         return existing.has(k) ? { id: 'x' } : null;
       }),
       create: mock.fn(async ({ data }: any) => {
-        existing.add(`${data.userId}|${data.kind}|${data.refId}|${data.sendDate}`);
+        existing.add(
+          `${data.userId}|${data.kind}|${data.refId}|${data.sendDate}`,
+        );
         return { id: 'new' };
       }),
     },
@@ -916,7 +973,12 @@ const NOW = new Date('2026-10-26T00:00:00Z'); // D-1 target = KST 2026-10-27
 test('마감 D-1 지원에 메일을 보내고 기록한다', async () => {
   const prisma = makePrisma({
     apps: [
-      { id: 'a1', companyName: '카카오', deadline: new Date('2026-10-27T05:00:00Z'), user: { id: 'u1', email: 'u1@x.com' } },
+      {
+        id: 'a1',
+        companyName: '카카오',
+        deadline: new Date('2026-10-27T05:00:00Z'),
+        user: { id: 'u1', email: 'u1@x.com' },
+      },
     ],
   });
   const mailer = { send: mock.fn(async () => true) } as any;
@@ -933,7 +995,12 @@ test('마감 D-1 지원에 메일을 보내고 기록한다', async () => {
 test('이미 보낸 건은 다시 보내지 않는다(멱등)', async () => {
   const prisma = makePrisma({
     apps: [
-      { id: 'a1', companyName: '카카오', deadline: new Date('2026-10-27T05:00:00Z'), user: { id: 'u1', email: 'u1@x.com' } },
+      {
+        id: 'a1',
+        companyName: '카카오',
+        deadline: new Date('2026-10-27T05:00:00Z'),
+        user: { id: 'u1', email: 'u1@x.com' },
+      },
     ],
     existingKeys: new Set(['u1|deadline|a1|2026-10-27']),
   });
@@ -949,7 +1016,12 @@ test('이미 보낸 건은 다시 보내지 않는다(멱등)', async () => {
 test('email이 없으면 스킵하고 기록하지 않는다', async () => {
   const prisma = makePrisma({
     apps: [
-      { id: 'a1', companyName: '카카오', deadline: new Date('2026-10-27T05:00:00Z'), user: { id: 'u1', email: null } },
+      {
+        id: 'a1',
+        companyName: '카카오',
+        deadline: new Date('2026-10-27T05:00:00Z'),
+        user: { id: 'u1', email: null },
+      },
     ],
   });
   const mailer = { send: mock.fn(async () => true) } as any;
@@ -964,7 +1036,16 @@ test('email이 없으면 스킵하고 기록하지 않는다', async () => {
 test('면접 D-1 메일 발송 실패 시 기록하지 않는다(다음에 재시도)', async () => {
   const prisma = makePrisma({
     stages: [
-      { id: 's1', name: '1차 면접', scheduledAt: new Date('2026-10-27T05:00:00Z'), application: { id: 'a9', companyName: '라인', user: { id: 'u1', email: 'u1@x.com' } } },
+      {
+        id: 's1',
+        name: '1차 면접',
+        scheduledAt: new Date('2026-10-27T05:00:00Z'),
+        application: {
+          id: 'a9',
+          companyName: '라인',
+          user: { id: 'u1', email: 'u1@x.com' },
+        },
+      },
     ],
   });
   const mailer = { send: mock.fn(async () => false) } as any;
@@ -1055,7 +1136,12 @@ export class NotificationsService {
         continue; // 기록하지 않아 다음 cron에서 재시도
       }
       await this.prisma.sentNotification.create({
-        data: { userId: t.userId, kind: t.kind, refId: t.refId, sendDate: dateStr },
+        data: {
+          userId: t.userId,
+          kind: t.kind,
+          refId: t.refId,
+          sendDate: dateStr,
+        },
       });
       sent++;
     }
@@ -1129,6 +1215,7 @@ git commit -m "feat(api): NotificationsService D-1 cron (멱등 발송)"
 ### Task 10: NotificationsModule 등록 + ScheduleModule + env
 
 **Files:**
+
 - Create: `apps/api/src/notifications/notifications.module.ts`
 - Modify: `apps/api/src/app.module.ts`
 - Modify: `apps/api/.env.example`
@@ -1212,6 +1299,7 @@ git commit -m "feat(api): NotificationsModule + ScheduleModule 등록, 메일 en
 `CompaniesService`를 확장한다. 정규화 키로 캐시 조회 → 7일 TTL → 만료/부재 시 Firecrawl로 검색→단일 후보일 때만 평점/요약 수집→upsert. 모호하면 딥링크만.
 
 **Files:**
+
 - Modify: `apps/api/src/companies/companies.service.ts`
 - Modify: `apps/api/src/companies/companies.module.ts`
 - Create: `apps/api/src/companies/jobplanet.util.ts`
@@ -1219,6 +1307,7 @@ git commit -m "feat(api): NotificationsModule + ScheduleModule 등록, 메일 en
 - Create: `apps/api/src/companies/companies.service.test.ts`
 
 **Interfaces:**
+
 - Consumes: `FirecrawlService` (SharedModule, Task 1), `PrismaService`, `@joblog/types` `CompanyReviewDto`.
 - Produces: `extractCandidates(markdown): { id: string; name: string; url: string }[]`, `extractRating(markdown): number | null`, `extractSummary(markdown): string | null`. `CompaniesService.getReviews(nameRaw): Promise<CompanyReviewDto>` (생성자 `(prisma, firecrawl)`).
 
@@ -1231,7 +1320,11 @@ Create `apps/api/src/companies/jobplanet.util.test.ts`:
 ```ts
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { extractCandidates, extractRating, extractSummary } from './jobplanet.util';
+import {
+  extractCandidates,
+  extractRating,
+  extractSummary,
+} from './jobplanet.util';
 
 const SEARCH_MD = `
 검색 결과
@@ -1284,7 +1377,8 @@ Expected: FAIL (모듈 없음)
 Create `apps/api/src/companies/jobplanet.util.ts`:
 
 ```ts
-const COMPANY_LINK = /\[([^\]]+)\]\((https:\/\/www\.jobplanet\.co\.kr\/companies\/(\d+)[^)]*)\)/g;
+const COMPANY_LINK =
+  /\[([^\]]+)\]\((https:\/\/www\.jobplanet\.co\.kr\/companies\/(\d+)[^)]*)\)/g;
 
 /** 검색 결과 마크다운에서 잡플래닛 회사 후보 추출(회사 id 기준 중복 제거). */
 export function extractCandidates(
@@ -1352,11 +1446,18 @@ function deps(opts: {
   return { prisma, firecrawl };
 }
 
-const SEARCH_URL = 'https://www.jobplanet.co.kr/search?query=%EC%B9%B4%EC%B9%B4%EC%98%A4';
+const SEARCH_URL =
+  'https://www.jobplanet.co.kr/search?query=%EC%B9%B4%EC%B9%B4%EC%98%A4';
 
 test('신선한 캐시는 그대로 반환하고 스크래핑하지 않는다', async () => {
   const { prisma, firecrawl } = deps({
-    cache: { companyName: '카카오', rating: 3.9, summary: '좋음', sourceUrl: 'u', fetchedAt: new Date() },
+    cache: {
+      companyName: '카카오',
+      rating: 3.9,
+      summary: '좋음',
+      sourceUrl: 'u',
+      fetchedAt: new Date(),
+    },
   });
   const svc = new CompaniesService(prisma, firecrawl);
   const r = await svc.getReviews('(주)카카오');
@@ -1375,8 +1476,10 @@ test('Firecrawl 비활성이면 딥링크만 반환', async () => {
 test('단일 후보면 평점을 수집해 upsert', async () => {
   const { prisma, firecrawl } = deps({
     scrapeMap: {
-      [SEARCH_URL]: '[카카오](https://www.jobplanet.co.kr/companies/123/info/k)',
-      'https://www.jobplanet.co.kr/companies/123/info/k': '총 평점 3.7\n한줄평: 좋아요',
+      [SEARCH_URL]:
+        '[카카오](https://www.jobplanet.co.kr/companies/123/info/k)',
+      'https://www.jobplanet.co.kr/companies/123/info/k':
+        '총 평점 3.7\n한줄평: 좋아요',
     },
   });
   const svc = new CompaniesService(prisma, firecrawl);
@@ -1415,7 +1518,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import type { CompanyReviewDto } from '@joblog/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { FirecrawlService } from '../shared/firecrawl.service';
-import { extractCandidates, extractRating, extractSummary } from './jobplanet.util';
+import {
+  extractCandidates,
+  extractRating,
+  extractSummary,
+} from './jobplanet.util';
 
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -1457,7 +1564,12 @@ export class CompaniesService {
       };
     }
 
-    const fallback: CompanyReviewDto = { companyName: name, rating: null, summary: null, sourceUrl };
+    const fallback: CompanyReviewDto = {
+      companyName: name,
+      rating: null,
+      summary: null,
+      sourceUrl,
+    };
     if (!this.firecrawl.enabled) return fallback;
 
     try {
@@ -1476,8 +1588,19 @@ export class CompaniesService {
 
       await this.prisma.companyReview.upsert({
         where: { companyName: name },
-        create: { companyName: name, rating, summary, sourceUrl: companyUrl, fetchedAt: new Date() },
-        update: { rating, summary, sourceUrl: companyUrl, fetchedAt: new Date() },
+        create: {
+          companyName: name,
+          rating,
+          summary,
+          sourceUrl: companyUrl,
+          fetchedAt: new Date(),
+        },
+        update: {
+          rating,
+          summary,
+          sourceUrl: companyUrl,
+          fetchedAt: new Date(),
+        },
       });
 
       return { companyName: name, rating, summary, sourceUrl: companyUrl };
@@ -1525,6 +1648,7 @@ git commit -m "feat(api): 잡플래닛 평점 best-effort 스크래핑 + 7일 �
 ### Task 12: 프론트 후기 위젯에 요약(summary) 표시
 
 **Files:**
+
 - Modify: `apps/web/app/applications/[id]/page.tsx`
 
 - [ ] **Step 1: 요약 렌더 추가**
@@ -1532,30 +1656,28 @@ git commit -m "feat(api): 잡플래닛 평점 best-effort 스크래핑 + 7일 �
 기존 기업 후기 `<div className="rounded-xl ...">` 블록(평점/딥링크)을 다음으로 교체:
 
 ```tsx
-        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
-          <div>
-            {reviews.data?.rating != null ? (
-              <span className="font-semibold">★ {reviews.data.rating}</span>
-            ) : (
-              <span className="text-slate-500">
-                평점 정보를 바로 가져올 수 없어요.
-              </span>
-            )}
-            {reviews.data?.sourceUrl && (
-              <a
-                href={reviews.data.sourceUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="ml-2 text-brand hover:underline"
-              >
-                잡플래닛에서 보기 ↗
-              </a>
-            )}
-          </div>
-          {reviews.data?.summary && (
-            <p className="mt-2 text-slate-600">{reviews.data.summary}</p>
-          )}
-        </div>
+<div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
+  <div>
+    {reviews.data?.rating != null ? (
+      <span className="font-semibold">★ {reviews.data.rating}</span>
+    ) : (
+      <span className="text-slate-500">평점 정보를 바로 가져올 수 없어요.</span>
+    )}
+    {reviews.data?.sourceUrl && (
+      <a
+        href={reviews.data.sourceUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="ml-2 text-brand hover:underline"
+      >
+        잡플래닛에서 보기 ↗
+      </a>
+    )}
+  </div>
+  {reviews.data?.summary && (
+    <p className="mt-2 text-slate-600">{reviews.data.summary}</p>
+  )}
+</div>
 ```
 
 - [ ] **Step 2: 빌드/타입체크**
@@ -1575,6 +1697,7 @@ git commit -m "feat(web): 기업 후기 위젯에 요약 표시"
 ### Task 13: 문서 갱신 (task.md · spec.md)
 
 **Files:**
+
 - Modify: `task.md`
 - Modify: `spec.md`
 
@@ -1608,6 +1731,7 @@ git commit -m "docs: M4 완료 반영 (캘린더·알림·스크래핑)"
 ## Self-Review
 
 **Spec coverage:**
+
 - A-1 Firecrawl 공유화 → Task 1 ✓
 - A-2 단계 일정 입력 UI → Task 2 ✓
 - B 캘린더 타입/API/뷰 → Task 3/4/5 ✓

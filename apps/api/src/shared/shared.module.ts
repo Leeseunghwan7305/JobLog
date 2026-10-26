@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+
 import { FirecrawlService } from './firecrawl.service';
 
 @Module({

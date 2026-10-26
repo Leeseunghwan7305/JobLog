@@ -25,13 +25,13 @@ Next.js (web) ──REST/JSON──> NestJS (api) ──Prisma──> PostgreSQL
 
 ### 2.1 엔티티
 
-| 엔티티 | 설명 | 관계 |
-|--------|------|------|
-| `User` | 카카오로 로그인한 사용자 | 1:N Application |
-| `Application` | 하나의 지원 = 회사 하나 | N:1 User, 1:N Stage, 1:N StatusLog |
-| `Stage` | 전형 단계(서류/코테/면접…) | N:1 Application |
-| `StatusLog` | 상태 변경 이력 | N:1 Application |
-| `CompanyReview` | 기업 후기 캐시 (M4) | 독립 |
+| 엔티티          | 설명                       | 관계                               |
+| --------------- | -------------------------- | ---------------------------------- |
+| `User`          | 카카오로 로그인한 사용자   | 1:N Application                    |
+| `Application`   | 하나의 지원 = 회사 하나    | N:1 User, 1:N Stage, 1:N StatusLog |
+| `Stage`         | 전형 단계(서류/코테/면접…) | N:1 Application                    |
+| `StatusLog`     | 상태 변경 이력             | N:1 Application                    |
+| `CompanyReview` | 기업 후기 캐시 (M4)        | 독립                               |
 
 Prisma 스키마 전문은 `docs/planning.html` 06 섹션 및 `apps/api/prisma/schema.prisma`.
 
@@ -111,16 +111,17 @@ interface ParsedPosting {
   companyName: string;
   position: string;
   location?: string;
-  employmentType?: string;      // 정규직 | 인턴 | 계약직 ...
-  deadline?: string;            // ISO date, 없으면 생략
-  stages: { name: string; order: number }[];  // 전형 단계 (추출 못하면 기본값 제공)
-  confidence: "high" | "low";   // 낮으면 프론트가 보정 유도
+  employmentType?: string; // 정규직 | 인턴 | 계약직 ...
+  deadline?: string; // ISO date, 없으면 생략
+  stages: { name: string; order: number }[]; // 전형 단계 (추출 못하면 기본값 제공)
+  confidence: 'high' | 'low'; // 낮으면 프론트가 보정 유도
 }
 ```
 
 - 전형 단계를 전혀 못 뽑으면 기본 단계(`서류 → 면접 → 최종`)를 넣고 `confidence: "low"`.
 
 **파싱 품질 규칙 (프롬프트로 강제, `claude.service.ts`):**
+
 - **전형 단계**: 전용 섹션(`채용 절차/전형 절차`)뿐 아니라 본문에 `▶·→·-`로 인라인 나열된 절차도 추출. 단계명은 간결하게(괄호 부연·조건 제외).
 - **마감일**: `2024.12.30`·`2024년 12월 30일`·`~1/30` 등을 `YYYY-MM-DD`로 정규화. `상시/수시채용`은 마감일 생략.
 - **평가 하니스**: `apps/api/src/parse/eval/`의 골든 픽스처(`<name>.input.txt` + `.expected.json`)를 `pnpm --filter api parse:eval`로 돌려 필드별 정확도 채점(전형 단계 가중 3배). 실공고 픽스처(원티드 인라인 절차·전용 섹션, 잡코리아 폴백) 포함. 키 또는 로컬 ollama 필요, provider 규칙은 `LlmService`와 동일.
@@ -131,22 +132,22 @@ interface ParsedPosting {
 
 > 모든 응답은 JSON. 에러는 `{ statusCode, message, code }` 형태.
 
-| Method | Path | 인증 | 설명 |
-|--------|------|:---:|------|
-| GET | `/auth/kakao/callback` | - | 카카오 콜백 → JWT 발급 |
-| GET | `/auth/me` | ✓ | 로그인 사용자 정보 |
-| POST | `/auth/refresh` | 쿠키 | access token 재발급 |
-| POST | `/applications/parse` | ✓ | 링크/본문 → 파싱 초안 반환 (저장 X) |
-| POST | `/applications` | ✓ | 보정된 초안으로 지원 생성 |
-| GET | `/applications` | ✓ | 내 지원 목록 (`?status=` 필터, 정렬) |
-| GET | `/applications/:id` | ✓ | 지원 상세 (stages 포함) |
-| PATCH | `/applications/:id` | ✓ | 회사·직무·메모 등 수정 |
-| DELETE | `/applications/:id` | ✓ | 지원 삭제 |
-| PATCH | `/applications/:id/stages/:stageId` | ✓ | 단계 상태·일정 갱신 → 전체 상태 재계산 |
-| POST | `/applications/:id/stages` | ✓ | 단계 추가 |
-| DELETE | `/applications/:id/stages/:stageId` | ✓ | 단계 삭제 |
-| GET | `/companies/reviews?name=` | ✓ | 기업 후기 평점·요약 (M4, best-effort) |
-| GET | `/dashboard/stats` | ✓ | 지원 수·진행중·합격·탈락 통계 |
+| Method | Path                                | 인증 | 설명                                   |
+| ------ | ----------------------------------- | :--: | -------------------------------------- |
+| GET    | `/auth/kakao/callback`              |  -   | 카카오 콜백 → JWT 발급                 |
+| GET    | `/auth/me`                          |  ✓   | 로그인 사용자 정보                     |
+| POST   | `/auth/refresh`                     | 쿠키 | access token 재발급                    |
+| POST   | `/applications/parse`               |  ✓   | 링크/본문 → 파싱 초안 반환 (저장 X)    |
+| POST   | `/applications`                     |  ✓   | 보정된 초안으로 지원 생성              |
+| GET    | `/applications`                     |  ✓   | 내 지원 목록 (`?status=` 필터, 정렬)   |
+| GET    | `/applications/:id`                 |  ✓   | 지원 상세 (stages 포함)                |
+| PATCH  | `/applications/:id`                 |  ✓   | 회사·직무·메모 등 수정                 |
+| DELETE | `/applications/:id`                 |  ✓   | 지원 삭제                              |
+| PATCH  | `/applications/:id/stages/:stageId` |  ✓   | 단계 상태·일정 갱신 → 전체 상태 재계산 |
+| POST   | `/applications/:id/stages`          |  ✓   | 단계 추가                              |
+| DELETE | `/applications/:id/stages/:stageId` |  ✓   | 단계 삭제                              |
+| GET    | `/companies/reviews?name=`          |  ✓   | 기업 후기 평점·요약 (M4, best-effort)  |
+| GET    | `/dashboard/stats`                  |  ✓   | 지원 수·진행중·합격·탈락 통계          |
 
 ### 5.1 주요 DTO (요약)
 
@@ -167,8 +168,8 @@ interface CreateApplicationDto {
 
 // PATCH /applications/:id/stages/:stageId
 interface UpdateStageDto {
-  status?: "PENDING" | "IN_PROGRESS" | "PASSED" | "FAILED";
-  scheduledAt?: string;   // 면접·발표 예정일
+  status?: 'PENDING' | 'IN_PROGRESS' | 'PASSED' | 'FAILED';
+  scheduledAt?: string; // 면접·발표 예정일
   completedAt?: string;
 }
 ```
@@ -199,13 +200,13 @@ interface UpdateStageDto {
 
 ## 7. 에러 처리 / 폴백
 
-| 상황 | 동작 |
-|------|------|
-| Firecrawl 수집 실패 | `needsManualInput: true` → 본문 붙여넣기 폴백 |
+| 상황                           | 동작                                                              |
+| ------------------------------ | ----------------------------------------------------------------- |
+| Firecrawl 수집 실패            | `needsManualInput: true` → 본문 붙여넣기 폴백                     |
 | Claude 파싱 실패/스키마 불일치 | 재시도 1회 → 실패 시 빈 초안 + `confidence: low`로 수동 입력 유도 |
-| 잡플래닛 조회 실패 | 위젯 숨기거나 딥링크만 표시 (지원 상세는 정상) |
-| 소유권 불일치 | 404 |
-| 토큰 만료 | 401 → 프론트가 refresh 시도 |
+| 잡플래닛 조회 실패             | 위젯 숨기거나 딥링크만 표시 (지원 상세는 정상)                    |
+| 소유권 불일치                  | 404                                                               |
+| 토큰 만료                      | 401 → 프론트가 refresh 시도                                       |
 
 ---
 
@@ -246,11 +247,11 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
 
 분석 1건 = Firecrawl 스크래핑 1회 + LLM 파싱 1회.
 
-| 항목 | 비고 |
-|------|------|
-| LLM 파싱 (Haiku/로컬 Ollama) | 건당 ~1원 이하. 로컬(`018c062` 라우팅)은 토큰 비용 0 |
-| LLM 파싱 (Opus) | 건당 수십~수백 원 — 품질용, 상시 사용은 과함 |
-| Firecrawl 스크래핑 | 플랜에 따라 **LLM보다 비쌀 수 있음** → 실질 원가의 주 변수 |
+| 항목                         | 비고                                                       |
+| ---------------------------- | ---------------------------------------------------------- |
+| LLM 파싱 (Haiku/로컬 Ollama) | 건당 ~1원 이하. 로컬(`018c062` 라우팅)은 토큰 비용 0       |
+| LLM 파싱 (Opus)              | 건당 수십~수백 원 — 품질용, 상시 사용은 과함               |
+| Firecrawl 스크래핑           | 플랜에 따라 **LLM보다 비쌀 수 있음** → 실질 원가의 주 변수 |
 
 → 파싱 LLM은 Haiku/로컬로 라우팅하면 LLM 원가는 거의 무시 가능. 원가 통제의 핵심은 오히려 **스크래핑 횟수**와 **상한 설정**이다.
 

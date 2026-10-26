@@ -11,7 +11,7 @@ export interface CompanyReviewDto {
 export class CompaniesService {
   /** 회사명 정규화: 법인 접미사·여분 공백 제거 (spec 6.1) */
   normalize(name: string): string {
-    return (name ?? '')
+    return name
       .replace(/\(주\)|\(유\)|주식회사|유한회사|㈜|㈜/g, '')
       .replace(/\s+/g, ' ')
       .trim();

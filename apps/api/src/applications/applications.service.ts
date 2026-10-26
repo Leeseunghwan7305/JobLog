@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AppStatus, StageStatus } from '@prisma/client';
+
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateApplicationDto,
@@ -89,9 +90,7 @@ export class ApplicationsService {
     const app = await this.findOne(userId, id);
     const order =
       dto.order ??
-      (app.stages.length
-        ? Math.max(...app.stages.map((s) => s.order)) + 1
-        : 0);
+      (app.stages.length ? Math.max(...app.stages.map((s) => s.order)) + 1 : 0);
     await this.prisma.stage.create({
       data: { applicationId: id, name: dto.name, order },
     });

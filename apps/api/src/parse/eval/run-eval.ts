@@ -1,11 +1,11 @@
-import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { existsSync,readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { ClaudeService } from '../claude.service';
-import { OllamaService } from '../ollama.service';
 import { LlmService } from '../llm.service';
-import { ParsedPosting } from '../types';
-import { scoreParsed, aggregate, FixtureScore } from './score';
+import { OllamaService } from '../ollama.service';
+import { type ParsedPosting } from '../types';
+import { aggregate, type FixtureScore,scoreParsed } from './score';
 
 /**
  * 파싱 eval 러너 — 루프 엔지니어링의 심장.
@@ -39,7 +39,9 @@ function loadFixtures(): Fixture[] {
       if (!existsSync(expectedPath)) {
         throw new Error(`정답 파일 없음: ${name}.expected.json`);
       }
-      const expected = JSON.parse(readFileSync(expectedPath, 'utf8')) as ParsedPosting;
+      const expected = JSON.parse(
+        readFileSync(expectedPath, 'utf8'),
+      ) as ParsedPosting;
       return { name, input, expected };
     });
 }
@@ -51,19 +53,29 @@ function pct(n: number): string {
 async function main(): Promise<void> {
   const llm = new LlmService(new ClaudeService(), new OllamaService());
 
-  console.log(`\n■ JobLog 파싱 eval  (provider=${llm.provider}, threshold=${pct(THRESHOLD)})\n`);
+  console.log(
+    `\n■ JobLog 파싱 eval  (provider=${llm.provider}, threshold=${pct(THRESHOLD)})\n`,
+  );
 
   if (!llm.enabled) {
     console.log('ⓘ LLM 프로바이더가 꺼져 있어(none) 실제 채점을 건너뜁니다.');
-    console.log('  ANTHROPIC_API_KEY를 설정하거나 LLM_PROVIDER=ollama + 로컬 ollama로 돌리세요.');
-    console.log('  (채점 로직 자체는 `pnpm --filter @joblog/api test`로 검증됩니다.)\n');
+    console.log(
+      '  ANTHROPIC_API_KEY를 설정하거나 LLM_PROVIDER=ollama + 로컬 ollama로 돌리세요.',
+    );
+    console.log(
+      '  (채점 로직 자체는 `pnpm --filter @joblog/api test`로 검증됩니다.)\n',
+    );
     return;
   }
 
   const fixtures = loadFixtures();
   if (fixtures.length === 0) {
-    console.log('ⓘ fixtures/ 가 비어 있습니다. <name>.input.txt + <name>.expected.json 을 추가하세요.');
-    console.log('  실패했던 실제 공고를 계속 쌓는 게 이 하네스의 사용법입니다.\n');
+    console.log(
+      'ⓘ fixtures/ 가 비어 있습니다. <name>.input.txt + <name>.expected.json 을 추가하세요.',
+    );
+    console.log(
+      '  실패했던 실제 공고를 계속 쌓는 게 이 하네스의 사용법입니다.\n',
+    );
     return;
   }
 
@@ -74,13 +86,17 @@ async function main(): Promise<void> {
     const actual = await llm.parse(fx.input);
     if (!actual) {
       parseFailures.push(fx.name);
-      console.log(`  ✗ ${fx.name.padEnd(24)} 파싱 실패(null) — 수집/프로바이더 확인`);
+      console.log(
+        `  ✗ ${fx.name.padEnd(24)} 파싱 실패(null) — 수집/프로바이더 확인`,
+      );
       continue;
     }
     const s = scoreParsed(fx.expected, actual);
     scores.push(s);
     const mark = s.overall >= THRESHOLD ? '✓' : '△';
-    const failed = s.failedFields.length ? `  틀림: ${s.failedFields.join(', ')}` : '';
+    const failed = s.failedFields.length
+      ? `  틀림: ${s.failedFields.join(', ')}`
+      : '';
     console.log(`  ${mark} ${fx.name.padEnd(24)} ${pct(s.overall)}${failed}`);
   }
 
@@ -92,21 +108,25 @@ async function main(): Promise<void> {
 
   const { meanOverall, fieldMeans } = aggregate(scores);
   console.log('\n  ── 필드별 평균 ───────────────────');
-  for (const [k, v] of Object.entries(fieldMeans)) {
-    console.log(`     ${k.padEnd(18)} ${pct(v)}`);
+  for (const k of Object.keys(fieldMeans) as (keyof typeof fieldMeans)[]) {
+    console.log(`     ${k.padEnd(18)} ${pct(fieldMeans[k])}`);
   }
   console.log('  ─────────────────────────────────');
-  console.log(`\n  전체 평균: ${pct(meanOverall)}  (${scores.length}건 채점, 파싱 실패 ${parseFailures.length}건)\n`);
+  console.log(
+    `\n  전체 평균: ${pct(meanOverall)}  (${scores.length}건 채점, 파싱 실패 ${parseFailures.length}건)\n`,
+  );
 
   if (meanOverall < THRESHOLD) {
-    console.log(`✗ 기준(${pct(THRESHOLD)}) 미달 — 프롬프트/스키마를 조정하고 다시 돌리세요.\n`);
+    console.log(
+      `✗ 기준(${pct(THRESHOLD)}) 미달 — 프롬프트/스키마를 조정하고 다시 돌리세요.\n`,
+    );
     process.exitCode = 1;
   } else {
     console.log('✓ 기준 통과.\n');
   }
 }
 
-main().catch((e) => {
+main().catch((e: unknown) => {
   console.error('eval 실행 오류:', e);
   process.exitCode = 1;
 });

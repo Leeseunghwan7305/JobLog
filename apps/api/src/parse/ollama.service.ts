@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+
 import { normalizeParsed, ParsedPosting } from './types';
 
 // Ollama의 format 필드에 넣어 구조화 출력을 강제하는 JSON 스키마
@@ -71,7 +72,7 @@ export class OllamaService {
         return null;
       }
       const json = (await res.json()) as { message?: { content?: string } };
-      const content = json?.message?.content;
+      const content = json.message?.content;
       if (!content) return null;
       return normalizeParsed(JSON.parse(content) as Record<string, unknown>);
     } catch (e) {

@@ -1,4 +1,4 @@
-import { ParsedPosting } from '../types';
+import { type ParsedPosting } from '../types';
 
 /**
  * 파싱 결과 채점기 (순수 함수, 외부 의존 없음).
@@ -39,20 +39,22 @@ const WEIGHTS: Record<keyof FieldScores, number> = {
 
 /** 문자열 정규화: 전각/반각 통일, 공백 정리, 대소문자 무시. */
 function norm(s: string | null | undefined): string {
-  return (s ?? '')
-    .normalize('NFKC')
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, ' ');
+  return (s ?? '').normalize('NFKC').trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
 /** 널 허용 문자열 비교: 둘 다 비어있어도 일치로 본다. */
-function nullableEq(a: string | null, b: string | null): number {
+function nullableEq(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): number {
   return norm(a) === norm(b) ? 1 : 0;
 }
 
 /** 전형 단계 이름 집합의 Jaccard 유사도 (순서 무시). */
-function stageSetScore(expected: ParsedPosting['stages'], actual: ParsedPosting['stages']): number {
+function stageSetScore(
+  expected: ParsedPosting['stages'],
+  actual: ParsedPosting['stages'],
+): number {
   const e = new Set(expected.map((s) => norm(s.name)));
   const a = new Set(actual.map((s) => norm(s.name)));
   if (e.size === 0 && a.size === 0) return 1;
@@ -63,16 +65,26 @@ function stageSetScore(expected: ParsedPosting['stages'], actual: ParsedPosting[
 }
 
 /** 단계 이름을 order 순으로 늘어놓은 시퀀스가 완전히 같은가. */
-function stageOrderScore(expected: ParsedPosting['stages'], actual: ParsedPosting['stages']): number {
+function stageOrderScore(
+  expected: ParsedPosting['stages'],
+  actual: ParsedPosting['stages'],
+): number {
   const seq = (st: ParsedPosting['stages']) =>
-    [...st].sort((x, y) => x.order - y.order).map((s) => norm(s.name)).join(' > ');
+    [...st]
+      .sort((x, y) => x.order - y.order)
+      .map((s) => norm(s.name))
+      .join(' > ');
   return seq(expected) === seq(actual) ? 1 : 0;
 }
 
 /** 한 건의 expected/actual을 필드별로 채점하고 가중 평균을 낸다. */
-export function scoreParsed(expected: ParsedPosting, actual: ParsedPosting): FixtureScore {
+export function scoreParsed(
+  expected: ParsedPosting,
+  actual: ParsedPosting,
+): FixtureScore {
   const fields: FieldScores = {
-    companyName: norm(expected.companyName) === norm(actual.companyName) ? 1 : 0,
+    companyName:
+      norm(expected.companyName) === norm(actual.companyName) ? 1 : 0,
     position: norm(expected.position) === norm(actual.position) ? 1 : 0,
     location: nullableEq(expected.location, actual.location),
     employmentType: nullableEq(expected.employmentType, actual.employmentType),
@@ -102,8 +114,14 @@ export function aggregate(scores: FixtureScore[]): {
   fieldMeans: FieldScores;
 } {
   const empty: FieldScores = {
-    companyName: 0, position: 0, location: 0, employmentType: 0,
-    deadline: 0, stages: 0, stageOrderExact: 0, confidence: 0,
+    companyName: 0,
+    position: 0,
+    location: 0,
+    employmentType: 0,
+    deadline: 0,
+    stages: 0,
+    stageOrderExact: 0,
+    confidence: 0,
   };
   if (scores.length === 0) return { meanOverall: 0, fieldMeans: empty };
 

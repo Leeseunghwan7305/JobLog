@@ -1,7 +1,8 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { scoreParsed, aggregate } from './score';
-import { ParsedPosting } from '../types';
+import { test } from 'node:test';
+
+import { type ParsedPosting } from '../types';
+import { aggregate,scoreParsed } from './score';
 
 const base: ParsedPosting = {
   companyName: '네이버',

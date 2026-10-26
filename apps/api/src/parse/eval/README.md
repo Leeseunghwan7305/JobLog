@@ -16,12 +16,12 @@ pnpm --filter @joblog/api parse:eval
 
 `parse:eval`은 API와 **똑같은** `LlmService`를 태운다. 프로바이더 선택도 동일한 env 규칙:
 
-| env | 동작 |
-|-----|------|
-| `ANTHROPIC_API_KEY` 설정 | anthropic(claude)로 파싱 |
+| env                                 | 동작                                     |
+| ----------------------------------- | ---------------------------------------- |
+| `ANTHROPIC_API_KEY` 설정            | anthropic(claude)로 파싱                 |
 | `LLM_PROVIDER=ollama` + 로컬 ollama | 로컬 모델로 파싱 (무료, 네트워크 불필요) |
-| 둘 다 없음 | provider=none → 채점 건너뜀(우아한 실패) |
-| `PARSE_EVAL_THRESHOLD=0.8` | 통과 기준 변경 (기본 0.7) |
+| 둘 다 없음                          | provider=none → 채점 건너뜀(우아한 실패) |
+| `PARSE_EVAL_THRESHOLD=0.8`          | 통과 기준 변경 (기본 0.7)                |
 
 평균 점수가 기준 미만이면 종료코드 1 → CI·자동 루프의 실패 신호로 쓸 수 있다.
 
@@ -45,7 +45,7 @@ fixtures/
   "employmentType": "고용형태 | null",
   "deadline": "YYYY-MM-DD | null",
   "stages": [{ "name": "서류", "order": 0 }],
-  "confidence": "high | low"
+  "confidence": "high | low",
 }
 ```
 

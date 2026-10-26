@@ -1,21 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import type { ApplicationDto, DashboardStats, UserDto } from '@joblog/types';
 import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+
+import AddJobModal from '@/components/AddJobModal';
+import LoginModal from '@/components/LoginModal';
 import { apiFetch } from '@/lib/api';
 import {
-  getToken,
+  clearPendingUrl,
   clearToken,
   getPendingUrl,
-  clearPendingUrl,
+  getToken,
   setPendingUrl,
 } from '@/lib/auth';
 import { currentStageLabel } from '@/lib/stage';
-import type { ApplicationDto, DashboardStats, UserDto } from '@joblog/types';
-import AddJobModal from '@/components/AddJobModal';
-import LoginModal from '@/components/LoginModal';
 
 export default function Home() {
   const [hasToken, setHasToken] = useState<boolean | null>(null);
@@ -57,8 +58,14 @@ function Landing() {
         <div className="flex gap-2">
           <input
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && start()}
+            onChange={(e) => {
+              setUrl(e.target.value);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                start();
+              }
+            }}
             placeholder="채용 공고 링크를 붙여넣으세요"
             className="flex-1 rounded-lg border border-slate-300 px-4 py-3"
           />
@@ -72,7 +79,7 @@ function Landing() {
         <p className="mt-3 text-xs text-slate-400">
           이미 계정이 있으신가요?{' '}
           <button
-            onClick={() => setShowLogin(true)}
+            onClick={() => { setShowLogin(true); }}
             className="text-brand hover:underline"
           >
             로그인
@@ -80,7 +87,7 @@ function Landing() {
         </p>
       </div>
 
-      {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
+      {showLogin && <LoginModal onClose={() => { setShowLogin(false); }} />}
     </main>
   );
 }

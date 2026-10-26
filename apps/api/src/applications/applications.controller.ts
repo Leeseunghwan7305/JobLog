@@ -9,8 +9,9 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt.guard';
+
 import { CurrentUser } from '../auth/current-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt.guard';
 import { ApplicationsService } from './applications.service';
 import {
   CreateApplicationDto,

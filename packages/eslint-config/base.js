@@ -59,5 +59,13 @@ export default tseslint.config(
     files: ['**/*.{js,cjs,mjs}'],
     ...tseslint.configs.disableTypeChecked,
   },
+  // 테스트 파일: node:test의 test()는 반환 Promise를 러너가 관리한다
+  {
+    files: ['**/*.test.ts', '**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'off',
+      '@typescript-eslint/require-await': 'off',
+    },
+  },
   eslintConfigPrettier,
 );

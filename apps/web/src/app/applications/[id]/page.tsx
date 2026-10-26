@@ -1,17 +1,18 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api';
-import { getToken } from '@/lib/auth';
-import { STAGE_STATUS_CLASS, STAGE_STATUS_LABEL } from '@/lib/stage';
 import type {
   ApplicationDto,
   CompanyReviewDto,
   StageStatus,
 } from '@joblog/types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { use, useEffect, useState } from 'react';
+
+import { apiFetch } from '@/lib/api';
+import { getToken } from '@/lib/auth';
+import { STAGE_STATUS_CLASS, STAGE_STATUS_LABEL } from '@/lib/stage';
 
 const STATUSES: StageStatus[] = ['PENDING', 'IN_PROGRESS', 'PASSED', 'FAILED'];
 
@@ -40,29 +41,53 @@ export default function ApplicationDetail({
     queryKey: ['reviews', app.data?.companyName],
     queryFn: () =>
       apiFetch<CompanyReviewDto>(
-        `/companies/reviews?name=${encodeURIComponent(app.data!.companyName)}`,
+        `/companies/reviews?name=${encodeURIComponent(app.data?.companyName ?? '')}`,
       ),
     enabled: !!app.data?.companyName,
   });
 
   const setStage = useMutation({
-    mutationFn: ({ stageId, status }: { stageId: string; status: StageStatus }) =>
+    mutationFn: ({
+      stageId,
+      status,
+    }: {
+      stageId: string;
+      status: StageStatus;
+    }) =>
       apiFetch(`/applications/${id}/stages/${stageId}`, {
         method: 'PATCH',
         body: JSON.stringify({ status }),
       }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['app', id] });
-      qc.invalidateQueries({ queryKey: ['apps'] });
-      qc.invalidateQueries({ queryKey: ['stats'] });
+      void qc.invalidateQueries({ queryKey: ['app', id] });
+      void qc.invalidateQueries({ queryKey: ['apps'] });
+      void qc.invalidateQueries({ queryKey: ['stats'] });
+    },
+  });
+
+  const setSchedule = useMutation({
+    mutationFn: ({
+      stageId,
+      scheduledAt,
+    }: {
+      stageId: string;
+      scheduledAt: string;
+    }) =>
+      apiFetch(`/applications/${id}/stages/${stageId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ scheduledAt: scheduledAt || null }),
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['app', id] });
+      void qc.invalidateQueries({ queryKey: ['calendar'] });
     },
   });
 
   const remove = useMutation({
     mutationFn: () => apiFetch(`/applications/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['apps'] });
-      qc.invalidateQueries({ queryKey: ['stats'] });
+      void qc.invalidateQueries({ queryKey: ['apps'] });
+      void qc.invalidateQueries({ queryKey: ['stats'] });
       router.replace('/');
     },
   });
@@ -117,24 +142,42 @@ export default function ApplicationDetail({
           {a.stages.map((s) => (
             <div
               key={s.id}
-              className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3"
+              className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3"
             >
-              <span className="font-semibold">{s.name}</span>
-              <div className="flex gap-1.5">
-                {STATUSES.map((st) => (
-                  <button
-                    key={st}
-                    onClick={() => setStage.mutate({ stageId: s.id, status: st })}
-                    className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
-                      s.status === st
-                        ? STAGE_STATUS_CLASS[st]
-                        : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
-                    }`}
-                  >
-                    {STAGE_STATUS_LABEL[st]}
-                  </button>
-                ))}
+              <div className="flex items-center justify-between">
+                <span className="font-semibold">{s.name}</span>
+                <div className="flex gap-1.5">
+                  {STATUSES.map((st) => (
+                    <button
+                      key={st}
+                      onClick={() => { setStage.mutate({ stageId: s.id, status: st }); }
+                      }
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
+                        s.status === st
+                          ? STAGE_STATUS_CLASS[st]
+                          : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
+                      }`}
+                    >
+                      {STAGE_STATUS_LABEL[st]}
+                    </button>
+                  ))}
+                </div>
               </div>
+              <label className="flex items-center gap-2 text-xs text-slate-500">
+                예정일
+                <input
+                  type="datetime-local"
+                  defaultValue={s.scheduledAt ? s.scheduledAt.slice(0, 16) : ''}
+                  onChange={(e) => { setSchedule.mutate({
+                      stageId: s.id,
+                      scheduledAt: e.target.value
+                        ? new Date(e.target.value).toISOString()
+                        : '',
+                    }); }
+                  }
+                  className="rounded-md border border-slate-200 px-2 py-1 text-slate-700"
+                />
+              </label>
             </div>
           ))}
         </div>
