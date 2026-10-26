@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { IsOptional, IsString } from 'class-validator';
 import { FirecrawlService } from './firecrawl.service';
-import { ClaudeService } from './claude.service';
+import { LlmService } from './llm.service';
 import { DEFAULT_STAGES, ParsedPosting, ParseResponse } from './types';
 
 export class ParseDto {
@@ -13,7 +13,7 @@ export class ParseDto {
 export class ParseService {
   constructor(
     private firecrawl: FirecrawlService,
-    private claude: ClaudeService,
+    private llm: LlmService,
   ) {}
 
   async parse(dto: ParseDto): Promise<ParseResponse> {
@@ -44,15 +44,15 @@ export class ParseService {
       };
     }
 
-    // 2. 본문 → Claude 파싱
-    const parsed = await this.claude.parse(text);
+    // 2. 본문 → LLM 파싱 (로컬 ollama / 클라우드 anthropic, env로 라우팅)
+    const parsed = this.llm.enabled ? await this.llm.parse(text) : null;
     if (!parsed) {
       return {
         draft: this.emptyDraft(dto.url),
         needsManualInput: false,
-        notice: this.claude.enabled
+        notice: this.llm.enabled
           ? '자동 분석에 실패했어요. 내용을 직접 확인하고 채워 주세요.'
-          : 'AI 분석이 설정되지 않아 기본 양식을 제공해요. 직접 채워 주세요.',
+          : 'AI 분석이 꺼져 있어 기본 양식을 제공해요. 직접 채워 주세요.',
       };
     }
 

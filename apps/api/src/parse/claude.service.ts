@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { DEFAULT_STAGES, ParsedPosting } from './types';
+import { normalizeParsed, ParsedPosting } from './types';
 
 // 구조화 출력을 강제하기 위한 tool 정의 (tool_choice로 호출 강제)
 const EXTRACT_TOOL = {
@@ -89,32 +89,10 @@ export class ClaudeService {
       if (json.stop_reason === 'refusal') return null;
       const block = (json.content ?? []).find((b) => b.type === 'tool_use');
       if (!block?.input) return null;
-      return this.normalize(block.input as Record<string, unknown>);
+      return normalizeParsed(block.input as Record<string, unknown>);
     } catch (e) {
       this.logger.warn(`Claude parse failed: ${String(e)}`);
       return null;
     }
-  }
-
-  private normalize(input: Record<string, unknown>): ParsedPosting {
-    const rawStages = Array.isArray(input.stages) ? input.stages : [];
-    const stages =
-      rawStages.length > 0
-        ? rawStages.map((s: any, i: number) => ({
-            name: String(s?.name ?? `단계 ${i + 1}`),
-            order: Number.isFinite(s?.order) ? Number(s.order) : i,
-          }))
-        : DEFAULT_STAGES;
-    return {
-      companyName: String(input.companyName ?? ''),
-      position: String(input.position ?? ''),
-      location: input.location ? String(input.location) : null,
-      employmentType: input.employmentType
-        ? String(input.employmentType)
-        : null,
-      deadline: input.deadline ? String(input.deadline) : null,
-      stages,
-      confidence: input.confidence === 'high' ? 'high' : 'low',
-    };
   }
 }
