@@ -11,7 +11,8 @@ import {
 const DAY = 86_400_000;
 
 test('후보 추출: 회사 링크 없으면 0개', () => {
-  const md = '검색 결과가 없습니다. [채용공고](https://www.jobplanet.co.kr/job/1)';
+  const md =
+    '검색 결과가 없습니다. [채용공고](https://www.jobplanet.co.kr/job/1)';
   assert.equal(extractCompanyCandidates(md).length, 0);
 });
 
@@ -67,5 +68,9 @@ test('캐시 신선도: TTL 이내 true, 경계/초과 false', () => {
 });
 
 test('검색 딥링크: 쿼리 인코딩', () => {
-  assert.ok(searchUrl('카카오 뱅크').includes('query=%EC%B9%B4%EC%B9%B4%EC%98%A4%20%EB%B1%85%ED%81%AC'));
+  assert.ok(
+    searchUrl('카카오 뱅크').includes(
+      'query=%EC%B9%B4%EC%B9%B4%EC%98%A4%20%EB%B1%85%ED%81%AC',
+    ),
+  );
 });

@@ -20,15 +20,27 @@ test('deadline: 상시/수시채용 같은 비(非)날짜 표현도 null', () =>
 });
 
 test('deadline: 다양한 날짜 표기를 YYYY-MM-DD로 정규화', () => {
-  assert.equal(normalizeParsed({ deadline: '2024-12-30' }).deadline, '2024-12-30');
-  assert.equal(normalizeParsed({ deadline: '2024.12.30' }).deadline, '2024-12-30');
-  assert.equal(normalizeParsed({ deadline: '2024/12/30' }).deadline, '2024-12-30');
+  assert.equal(
+    normalizeParsed({ deadline: '2024-12-30' }).deadline,
+    '2024-12-30',
+  );
+  assert.equal(
+    normalizeParsed({ deadline: '2024.12.30' }).deadline,
+    '2024-12-30',
+  );
+  assert.equal(
+    normalizeParsed({ deadline: '2024/12/30' }).deadline,
+    '2024-12-30',
+  );
   assert.equal(
     normalizeParsed({ deadline: '2024년 12월 30일' }).deadline,
     '2024-12-30',
   );
   // 한 자리 월/일도 0 패딩
-  assert.equal(normalizeParsed({ deadline: '2024.1.5' }).deadline, '2024-01-05');
+  assert.equal(
+    normalizeParsed({ deadline: '2024.1.5' }).deadline,
+    '2024-01-05',
+  );
 });
 
 test('deadline: null/빈 문자열은 null 유지', () => {

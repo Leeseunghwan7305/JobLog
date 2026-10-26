@@ -1,5 +1,6 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { test } from 'node:test';
+
 import { toCalendarEvents } from './calendar.util';
 
 test('deadline과 scheduledAt을 이벤트로 투영한다', () => {
@@ -19,11 +20,13 @@ test('deadline과 scheduledAt을 이벤트로 투영한다', () => {
     },
   ]);
   assert.equal(events.length, 2);
-  const deadline = events.find((e) => e.type === 'deadline')!;
+  const deadline = events.find((e) => e.type === 'deadline');
+  assert.ok(deadline);
   assert.equal(deadline.applicationId, 'a1');
   assert.equal(deadline.label, '서류 마감');
   assert.equal(deadline.status, null);
-  const stage = events.find((e) => e.type === 'stage')!;
+  const stage = events.find((e) => e.type === 'stage');
+  assert.ok(stage);
   assert.equal(stage.label, '1차 면접');
   assert.equal(stage.status, 'IN_PROGRESS');
 });

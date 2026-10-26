@@ -142,7 +142,9 @@ function Deadline({ iso }: { iso: string | null }) {
   const info = deadlineInfo(iso);
   if (!info) return null;
   return (
-    <div className={`mt-2 text-xs font-medium ${DEADLINE_TONE_CLASS[info.tone]}`}>
+    <div
+      className={`mt-2 text-xs font-medium ${DEADLINE_TONE_CLASS[info.tone]}`}
+    >
       {info.text}
     </div>
   );

@@ -34,7 +34,7 @@ const pad2 = (n: number): string => String(n).padStart(2, '0');
 function normalizeDeadline(v: unknown): string | null {
   const s = asString(v).trim();
   if (!s) return null;
-  const m = s.match(/(\d{4})\s*[.\-/년]\s*(\d{1,2})\s*[.\-/월]\s*(\d{1,2})/);
+  const m = /(\d{4})\s*[.\-/년]\s*(\d{1,2})\s*[.\-/월]\s*(\d{1,2})/.exec(s);
   if (!m) return null;
   const year = Number(m[1]);
   const month = Number(m[2]);

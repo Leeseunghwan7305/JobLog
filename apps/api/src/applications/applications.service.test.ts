@@ -1,8 +1,8 @@
-import { test, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { mock, test } from 'node:test';
 
-import { ApplicationsService } from './applications.service';
 import type { PrismaService } from '../prisma/prisma.service';
+import { ApplicationsService } from './applications.service';
 
 function createPrismaMock(stage: {
   id: string;

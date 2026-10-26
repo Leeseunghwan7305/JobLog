@@ -1,9 +1,9 @@
+import type { CalendarEvent } from '@joblog/types';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AppStatus, StageStatus } from '@prisma/client';
 
-import type { CalendarEvent } from '@joblog/types';
-
 import { PrismaService } from '../prisma/prisma.service';
+import { toCalendarEvents } from './calendar.util';
 import {
   CreateApplicationDto,
   CreateStageDto,
@@ -11,7 +11,6 @@ import {
   UpdateStageDto,
 } from './dto';
 import { deriveStatus } from './status.util';
-import { toCalendarEvents } from './calendar.util';
 
 const withStages = { stages: { orderBy: { order: 'asc' as const } } };
 
@@ -205,7 +204,11 @@ export class ApplicationsService {
       deadline: inRange(a.deadline) ? a.deadline : null,
       stages: a.stages
         .filter((s) => inRange(s.scheduledAt))
-        .map((s) => ({ name: s.name, status: s.status, scheduledAt: s.scheduledAt })),
+        .map((s) => ({
+          name: s.name,
+          status: s.status,
+          scheduledAt: s.scheduledAt,
+        })),
     }));
     return toCalendarEvents(filtered);
   }

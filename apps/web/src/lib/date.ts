@@ -6,7 +6,9 @@ export interface DeadlineInfo {
 }
 
 /** 마감일 ISO → "마감 D-7 (11/30)" 형태 라벨 + 임박/초과 톤. 없거나 파싱 실패 시 null. */
-export function deadlineInfo(iso: string | null | undefined): DeadlineInfo | null {
+export function deadlineInfo(
+  iso: string | null | undefined,
+): DeadlineInfo | null {
   if (!iso) return null;
   const due = new Date(iso);
   if (Number.isNaN(due.getTime())) return null;
@@ -21,7 +23,10 @@ export function deadlineInfo(iso: string | null | undefined): DeadlineInfo | nul
 
   if (diff < 0) return { text: `마감 지남 · ${md}`, tone: 'over' };
   if (diff === 0) return { text: `오늘 마감 · ${md}`, tone: 'soon' };
-  return { text: `마감 D-${diff} · ${md}`, tone: diff <= 3 ? 'soon' : 'normal' };
+  return {
+    text: `마감 D-${diff} · ${md}`,
+    tone: diff <= 3 ? 'soon' : 'normal',
+  };
 }
 
 export const DEADLINE_TONE_CLASS: Record<DeadlineTone, string> = {

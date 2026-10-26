@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
 import type { CompanyReviewDto } from '@joblog/types';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { FirecrawlService } from '../shared/firecrawl.service';
@@ -37,7 +37,12 @@ export class CompaniesService {
     const name = this.normalize(nameRaw);
     const deepLink = searchUrl(name);
     if (!name) {
-      return { companyName: name, rating: null, summary: null, sourceUrl: deepLink };
+      return {
+        companyName: name,
+        rating: null,
+        summary: null,
+        sourceUrl: deepLink,
+      };
     }
 
     // 1) 캐시 (정규화 키 기준)
@@ -55,7 +60,12 @@ export class CompaniesService {
 
     // 2) 수집 비활성이면 딥링크만
     if (!this.firecrawl.enabled) {
-      return { companyName: name, rating: null, summary: null, sourceUrl: deepLink };
+      return {
+        companyName: name,
+        rating: null,
+        summary: null,
+        sourceUrl: deepLink,
+      };
     }
 
     // 3) best-effort 수집
@@ -64,7 +74,12 @@ export class CompaniesService {
       const candidates = searchMd ? extractCompanyCandidates(searchMd) : [];
       // 모호하면(0개/복수) 자신 있게 틀린 정보 대신 딥링크
       if (candidates.length !== 1) {
-        return { companyName: name, rating: null, summary: null, sourceUrl: deepLink };
+        return {
+          companyName: name,
+          rating: null,
+          summary: null,
+          sourceUrl: deepLink,
+        };
       }
 
       const companyUrl = candidates[0].url;
@@ -75,7 +90,12 @@ export class CompaniesService {
 
       const saved = await this.prisma.companyReview.upsert({
         where: { companyName: name },
-        update: { rating, summary, sourceUrl: companyUrl, fetchedAt: new Date() },
+        update: {
+          rating,
+          summary,
+          sourceUrl: companyUrl,
+          fetchedAt: new Date(),
+        },
         create: { companyName: name, rating, summary, sourceUrl: companyUrl },
       });
       return {
@@ -86,7 +106,12 @@ export class CompaniesService {
       };
     } catch (e) {
       this.logger.warn(`jobplanet 수집 실패 (${name}): ${String(e)}`);
-      return { companyName: name, rating: null, summary: null, sourceUrl: deepLink };
+      return {
+        companyName: name,
+        rating: null,
+        summary: null,
+        sourceUrl: deepLink,
+      };
     }
   }
 }

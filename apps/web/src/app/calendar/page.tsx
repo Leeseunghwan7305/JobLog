@@ -116,7 +116,11 @@ export default function CalendarPage() {
           <div
             key={w}
             className={`bg-slate-50 py-2 text-center text-xs font-semibold ${
-              i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-500' : 'text-slate-500'
+              i === 0
+                ? 'text-red-500'
+                : i === 6
+                  ? 'text-blue-500'
+                  : 'text-slate-500'
             }`}
           >
             {w}
