@@ -124,7 +124,7 @@ git commit -m "refactor: FirecrawlService를 SharedModule로 추출"
 
 **Files:**
 
-- Modify: `apps/web/app/applications/[id]/page.tsx`
+- Modify: `apps/web/src/app/applications/[id]/page.tsx`
 
 **Interfaces:**
 
@@ -132,7 +132,7 @@ git commit -m "refactor: FirecrawlService를 SharedModule로 추출"
 
 - [ ] **Step 1: scheduledAt 저장 뮤테이션 추가**
 
-`apps/web/app/applications/[id]/page.tsx` 의 `setStage` 뮤테이션 아래에 추가:
+`apps/web/src/app/applications/[id]/page.tsx` 의 `setStage` 뮤테이션 아래에 추가:
 
 ```tsx
 const setSchedule = useMutation({
@@ -212,7 +212,7 @@ api·web dev 서버를 띄우고(`pnpm --filter @joblog/api dev`, `pnpm --filter
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add "apps/web/app/applications/[id]/page.tsx"
+git add "apps/web/src/app/applications/[id]/page.tsx"
 git commit -m "feat(web): 전형 단계 예정일(scheduledAt) 입력 UI"
 ```
 
@@ -485,8 +485,8 @@ git commit -m "feat(api): GET /calendar 집계 엔드포인트 + 변환 함수 �
 
 **Files:**
 
-- Create: `apps/web/app/calendar/page.tsx`
-- Modify: `apps/web/app/page.tsx` (대시보드에 캘린더 링크)
+- Create: `apps/web/src/app/calendar/page.tsx`
+- Modify: `apps/web/src/app/page.tsx` (대시보드에 캘린더 링크)
 
 **Interfaces:**
 
@@ -494,7 +494,7 @@ git commit -m "feat(api): GET /calendar 집계 엔드포인트 + 변환 함수 �
 
 - [ ] **Step 1: 캘린더 페이지 작성**
 
-Create `apps/web/app/calendar/page.tsx`:
+Create `apps/web/src/app/calendar/page.tsx`:
 
 ```tsx
 'use client';
@@ -632,7 +632,7 @@ export default function CalendarPage() {
 
 - [ ] **Step 2: 대시보드에 캘린더 링크 추가**
 
-먼저 헤더 구조 확인: `grep -n "Link\|href\|<h1\|대시보드" apps/web/app/page.tsx | head -30`
+먼저 헤더 구조 확인: `grep -n "Link\|href\|<h1\|대시보드" apps/web/src/app/page.tsx | head -30`
 적절한 헤더/네비 영역에 삽입:
 
 ```tsx
@@ -655,7 +655,7 @@ dev 서버에서 한 지원에 마감일과 단계 예정일을 넣고 `/calenda
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add apps/web/app/calendar/page.tsx apps/web/app/page.tsx
+git add apps/web/src/app/calendar/page.tsx apps/web/src/app/page.tsx
 git commit -m "feat(web): 월간 캘린더 뷰 + 대시보드 링크"
 ```
 
@@ -1649,7 +1649,7 @@ git commit -m "feat(api): 잡플래닛 평점 best-effort 스크래핑 + 7일 �
 
 **Files:**
 
-- Modify: `apps/web/app/applications/[id]/page.tsx`
+- Modify: `apps/web/src/app/applications/[id]/page.tsx`
 
 - [ ] **Step 1: 요약 렌더 추가**
 
@@ -1688,7 +1688,7 @@ Expected: 성공
 - [ ] **Step 3: 커밋**
 
 ```bash
-git add "apps/web/app/applications/[id]/page.tsx"
+git add "apps/web/src/app/applications/[id]/page.tsx"
 git commit -m "feat(web): 기업 후기 위젯에 요약 표시"
 ```
 
