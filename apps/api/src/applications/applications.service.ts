@@ -20,6 +20,8 @@ export class ApplicationsService {
   constructor(private prisma: PrismaService) {}
 
   create(userId: string, dto: CreateApplicationDto) {
+    const orders = dto.stages.map((s, i) => s.order ?? i);
+    const minOrder = orders.length ? Math.min(...orders) : 0;
     return this.prisma.application.create({
       data: {
         userId,
@@ -33,10 +35,18 @@ export class ApplicationsService {
         appliedAt: dto.appliedAt ? new Date(dto.appliedAt) : null,
         memo: dto.memo,
         stages: {
-          create: dto.stages.map((s, i) => ({
-            name: s.name,
-            order: s.order ?? i,
-          })),
+          create: dto.stages.map((s, i) => {
+            const order = s.order ?? i;
+            return {
+              name: s.name,
+              order,
+              // 첫 단계는 진행중으로 시작(지원 완료 = 첫 전형 진행중), 이후 단계는 대기
+              status:
+                order === minOrder
+                  ? StageStatus.IN_PROGRESS
+                  : StageStatus.PENDING,
+            };
+          }),
         },
       },
       include: withStages,
