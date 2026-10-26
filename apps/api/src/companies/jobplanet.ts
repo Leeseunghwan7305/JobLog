@@ -25,12 +25,11 @@ export function extractCompanyCandidates(markdown: string): CompanyCandidate[] {
   const re = /\[([^\]]+)\]\(([^)]*\/companies\/(\d+)[^)]*)\)/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(markdown)) !== null) {
-    const [, rawName, rawUrl, id] = m;
+    const [, rawName, , id] = m;
     const name = rawName.trim();
     if (byId.has(id)) continue;
-    const url = rawUrl.startsWith('http')
-      ? `${JOBPLANET_BASE}/companies/${id}`
-      : `${JOBPLANET_BASE}/companies/${id}`;
+    // 검색 결과 링크 형태와 무관하게 회사 id로 정규 URL을 구성한다.
+    const url = `${JOBPLANET_BASE}/companies/${id}`;
     byId.set(id, { id, name, url });
   }
   return [...byId.values()];

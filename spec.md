@@ -32,6 +32,7 @@ Next.js (web) ──REST/JSON──> NestJS (api) ──Prisma──> PostgreSQL
 | `Stage`         | 전형 단계(서류/코테/면접…) | N:1 Application                    |
 | `StatusLog`     | 상태 변경 이력             | N:1 Application                    |
 | `CompanyReview` | 기업 후기 캐시 (M4)        | 독립                               |
+| `SentNotification` | 발송한 알림 기록 — D-N 중복/재실행 멱등성 (M4) | 독립 (`@@unique([userId,kind,refId,sendDate])`) |
 
 Prisma 스키마 전문은 `docs/planning.html` 06 섹션 및 `apps/api/prisma/schema.prisma`.
 
@@ -147,6 +148,8 @@ interface ParsedPosting {
 | POST   | `/applications/:id/stages`          |  ✓   | 단계 추가                              |
 | DELETE | `/applications/:id/stages/:stageId` |  ✓   | 단계 삭제                              |
 | GET    | `/companies/reviews?name=`          |  ✓   | 기업 후기 평점·요약 (M4, best-effort)  |
+| GET    | `/calendar?from=&to=`               |  ✓   | 마감·단계 예정일을 이벤트로 집계 (M4)  |
+| POST   | `/notifications/run`                |  ✓   | 알림 수동 트리거 (dev 전용, 운영 404)  |
 | GET    | `/dashboard/stats`                  |  ✓   | 지원 수·진행중·합격·탈락 통계          |
 
 ### 5.1 주요 DTO (요약)
@@ -223,6 +226,11 @@ KAKAO_REDIRECT_URI=...
 ANTHROPIC_API_KEY=...        # Claude API
 FIRECRAWL_API_KEY=...
 WEB_ORIGIN=http://localhost:3000   # CORS
+# M4 알림 (없으면 메일 비활성 — 콘솔 로그 폴백)
+RESEND_API_KEY=...
+MAIL_FROM=JobLog <onboarding@resend.dev>
+APP_BASE_URL=http://localhost:3000   # 메일 내 지원 상세 링크
+NOTIFY_DAYS_AHEAD=3                   # D-N 알림 (기본 3일 전)
 
 # apps/web/.env.local
 NEXT_PUBLIC_API_BASE_URL=http://localhost:4000

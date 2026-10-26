@@ -1,15 +1,15 @@
 # M4 설계 — 잡플래닛 평점 스크래핑 · 마감 알림 · 캘린더
 
-> 2026-10-26 · 기준 문서: `spec.md`, `task.md` · 상태: 설계(구현 전)
+> 2026-10-26 · 기준 문서: `spec.md`, `task.md` · 상태: 구현 완료
 
-M4의 세 기능(잡플래닛 공개 평점 best-effort 스크래핑 + 캐시, D-1 이메일 알림, 캘린더 뷰)의 구현 설계. `spec.md` 6절(기업 후기)·2.3절(상태 파생)·7절(폴백)을 따른다.
+M4의 세 기능(잡플래닛 공개 평점 best-effort 스크래핑 + 캐시, D-3 이메일 알림, 캘린더 뷰)의 구현 설계. `spec.md` 6절(기업 후기)·2.3절(상태 파생)·7절(폴백)을 따른다.
 
 ## 확정된 결정
 
 | 항목          | 결정                                                                     |
 | ------------- | ------------------------------------------------------------------------ |
 | 알림 채널     | 이메일 (Resend)                                                          |
-| 알림 시점     | D-1 단일 (마감일/면접일 하루 전)                                         |
+| 알림 시점     | D-3 (마감일/면접일 3일 전, `NOTIFY_DAYS_AHEAD`로 조정)                   |
 | 스크래핑 범위 | Firecrawl 실제 수집 + `CompanyReview` TTL 7일 캐시, 모호하면 딥링크 폴백 |
 | 작업 순서     | A(공통) → B(캘린더) → C(알림) → D(스크래핑)                              |
 | 알림 멱등성   | 신규 `SentNotification` 모델로 "보냈음" 영속화                           |
@@ -85,7 +85,7 @@ export interface CalendarEvent {
 
 ---
 
-## C. 알림 (D-1 이메일, Resend)
+## C. 알림 (D-3 이메일, Resend)
 
 ### C-1. 의존성 / 등록
 
@@ -103,7 +103,7 @@ export interface CalendarEvent {
 
 - `@Cron`으로 매일 1회 실행. 표현식은 서버 TZ 가정 하에 09:00 KST에 맞춘다(`ScheduleModule`의 `timeZone: 'Asia/Seoul'` 옵션 사용).
 - 로직(멱등):
-  1. "내일"(D-1) 날짜 구간 계산(KST 자정~자정).
+  1. D-N(기본 D-3, `NOTIFY_DAYS_AHEAD`) 날짜 구간 계산(KST 자정~자정).
   2. 해당 구간에 `deadline`이 있는 본인 지원 + `scheduledAt`이 있는 stage 조회(모든 유저 대상, `include: user`).
   3. 각 대상에 대해 `SentNotification`에 (userId, kind, refId, sendDate) 존재 확인 → 이미 있으면 skip.
   4. `user.email`이 null이면 skip(로그).
