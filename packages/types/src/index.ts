@@ -61,6 +61,32 @@ export interface CompanyReviewDto {
   sourceUrl: string; // 잡플래닛 딥링크 (항상 존재)
 }
 
+export interface NpsMetrics {
+  memberCount: number;
+  estimatedAnnualSalaryManwon: number | null;
+  newThisMonth: number | null;
+  lostThisMonth: number | null;
+  industry: string | null;
+  region: string | null;
+  dataYm: string | null; // 자료생성연월 (YYYYMM)
+}
+
+export interface CompanyProfileLink {
+  label: string;
+  url: string;
+}
+
+export interface CompanyProfileDto {
+  companyName: string; // 정규화된 표시명
+  nps: NpsMetrics | null; // 매칭 모호/키없음/실패 시 null
+  review: {
+    rating: number | null;
+    summary: string | null;
+    sourceUrl: string;
+  } | null;
+  links: CompanyProfileLink[];
+}
+
 export interface DashboardStats {
   total: number;
   inProgress: number;
