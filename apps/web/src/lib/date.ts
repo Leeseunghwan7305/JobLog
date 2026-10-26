@@ -30,7 +30,7 @@ export function deadlineInfo(
 }
 
 export const DEADLINE_TONE_CLASS: Record<DeadlineTone, string> = {
-  over: 'text-red-600',
-  soon: 'text-amber-600',
-  normal: 'text-slate-400',
+  over: 'text-red-600 dark:text-red-400',
+  soon: 'text-amber-600 dark:text-amber-400',
+  normal: 'text-muted-foreground',
 };

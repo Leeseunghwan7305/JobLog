@@ -1,9 +1,4 @@
-import {
-  Controller,
-  NotFoundException,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, NotFoundException, Post, UseGuards } from '@nestjs/common';
 
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { NotificationsService } from './notifications.service';

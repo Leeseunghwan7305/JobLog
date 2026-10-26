@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
+import ThemeToggle from '@/components/ThemeToggle';
 import { apiFetch } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { STAGE_STATUS_CLASS } from '@/lib/stage';
@@ -19,9 +20,10 @@ function ymd(d: Date): string {
 }
 
 function badgeClass(e: CalendarEvent): string {
-  if (e.type === 'deadline') return 'bg-red-100 text-red-700';
+  if (e.type === 'deadline')
+    return 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300';
   if (e.status) return STAGE_STATUS_CLASS[e.status];
-  return 'bg-brand/10 text-brand';
+  return 'bg-primary/10 text-primary';
 }
 
 export default function CalendarPage() {
@@ -83,15 +85,21 @@ export default function CalendarPage() {
   return (
     <main className="mx-auto max-w-4xl px-6 py-8">
       <div className="mb-6 flex items-center justify-between">
-        <Link href="/" className="text-sm text-slate-400 hover:text-slate-700">
-          ← 대시보드
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            ← 대시보드
+          </Link>
+          <ThemeToggle />
+        </div>
         <div className="flex items-center gap-4">
           <button
             onClick={() => {
               move(-1);
             }}
-            className="rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100"
+            className="rounded-md px-2 py-1 text-muted-foreground hover:bg-muted"
             aria-label="이전 달"
           >
             ‹
@@ -103,7 +111,7 @@ export default function CalendarPage() {
             onClick={() => {
               move(1);
             }}
-            className="rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100"
+            className="rounded-md px-2 py-1 text-muted-foreground hover:bg-muted"
             aria-label="다음 달"
           >
             ›
@@ -111,16 +119,16 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200 text-sm">
+      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border border-border bg-border text-sm">
         {WEEKDAYS.map((w, i) => (
           <div
             key={w}
-            className={`bg-slate-50 py-2 text-center text-xs font-semibold ${
+            className={`bg-muted py-2 text-center text-xs font-semibold ${
               i === 0
-                ? 'text-red-500'
+                ? 'text-red-500 dark:text-red-400'
                 : i === 6
-                  ? 'text-blue-500'
-                  : 'text-slate-500'
+                  ? 'text-blue-500 dark:text-blue-400'
+                  : 'text-muted-foreground'
             }`}
           >
             {w}
@@ -129,17 +137,17 @@ export default function CalendarPage() {
 
         {cells.map((day, i) => {
           if (day === null)
-            return <div key={`b${i}`} className="min-h-24 bg-slate-50/50" />;
+            return <div key={`b${i}`} className="min-h-24 bg-muted/50" />;
           const key = ymd(new Date(cursor.y, cursor.m, day));
           const dayEvents = byDay.get(key) ?? [];
           const isToday = key === todayKey;
           return (
-            <div key={key} className="min-h-24 bg-white p-1.5">
+            <div key={key} className="min-h-24 bg-card p-1.5">
               <div
                 className={`mb-1 text-xs font-medium ${
                   isToday
-                    ? 'inline-grid h-5 w-5 place-items-center rounded-full bg-brand text-white'
-                    : 'text-slate-500'
+                    ? 'inline-grid h-5 w-5 place-items-center rounded-full bg-primary text-primary-foreground'
+                    : 'text-muted-foreground'
                 }`}
               >
                 {day}
@@ -162,9 +170,9 @@ export default function CalendarPage() {
       </div>
 
       {events.isLoading && (
-        <p className="mt-4 text-sm text-slate-400">불러오는 중…</p>
+        <p className="mt-4 text-sm text-muted-foreground">불러오는 중…</p>
       )}
-      <p className="mt-4 text-xs text-slate-400">
+      <p className="mt-4 text-xs text-muted-foreground">
         <span className="mr-3">
           <span className="mr-1 inline-block h-2 w-2 rounded-full bg-red-400" />
           마감

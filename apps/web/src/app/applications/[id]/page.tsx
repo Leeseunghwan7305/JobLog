@@ -10,6 +10,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
 
+import ThemeToggle from '@/components/ThemeToggle';
+import { Skeleton } from '@/components/ui/skeleton';
 import { apiFetch } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { DEADLINE_TONE_CLASS, deadlineInfo } from '@/lib/date';
@@ -95,24 +97,41 @@ export default function ApplicationDetail({
 
   if (!ready) return null;
   if (app.isLoading)
-    return <main className="p-8 text-slate-400">불러오는 중…</main>;
+    return (
+      <main className="mx-auto max-w-3xl px-6 py-8">
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="mt-6 h-8 w-48" />
+        <Skeleton className="mt-2 h-4 w-32" />
+        <div className="mt-8 flex flex-col gap-2">
+          {[0, 1, 2].map((n) => (
+            <Skeleton key={n} className="h-20 w-full rounded-xl" />
+          ))}
+        </div>
+      </main>
+    );
   if (!app.data)
-    return <main className="p-8 text-slate-400">찾을 수 없어요.</main>;
+    return <main className="p-8 text-muted-foreground">찾을 수 없어요.</main>;
 
   const a = app.data;
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-8">
-      <Link href="/" className="text-sm text-slate-400 hover:text-slate-700">
-        ← 대시보드
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link
+          href="/"
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          ← 대시보드
+        </Link>
+        <ThemeToggle />
+      </div>
 
       <div className="mt-4 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">
             {a.companyName}
           </h1>
-          <p className="text-slate-500">{a.position}</p>
+          <p className="text-muted-foreground">{a.position}</p>
           {(() => {
             const info = deadlineInfo(a.deadline);
             return info ? (
@@ -128,7 +147,7 @@ export default function ApplicationDetail({
           onClick={() => {
             if (confirm('이 지원을 삭제할까요?')) remove.mutate();
           }}
-          className="text-sm text-slate-400 hover:text-red-500"
+          className="text-sm text-muted-foreground hover:text-red-500 dark:hover:text-red-400"
         >
           삭제
         </button>
@@ -139,21 +158,21 @@ export default function ApplicationDetail({
           href={a.jobUrl}
           target="_blank"
           rel="noreferrer"
-          className="mt-2 inline-block text-sm text-brand hover:underline"
+          className="mt-2 inline-block text-sm text-primary hover:underline"
         >
           공고 링크 열기 ↗
         </a>
       )}
 
       <section className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           전형 단계
         </h2>
         <div className="flex flex-col gap-2">
           {a.stages.map((s) => (
             <div
               key={s.id}
-              className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3"
+              className="flex flex-col gap-2 rounded-xl border border-border bg-card px-4 py-3"
             >
               <div className="flex items-center justify-between">
                 <span className="font-semibold">{s.name}</span>
@@ -167,7 +186,7 @@ export default function ApplicationDetail({
                       className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
                         s.status === st
                           ? STAGE_STATUS_CLASS[st]
-                          : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
+                          : 'bg-muted/50 text-muted-foreground hover:bg-muted'
                       }`}
                     >
                       {STAGE_STATUS_LABEL[st]}
@@ -175,7 +194,7 @@ export default function ApplicationDetail({
                   ))}
                 </div>
               </div>
-              <label className="flex items-center gap-2 text-xs text-slate-500">
+              <label className="flex items-center gap-2 text-xs text-muted-foreground">
                 예정일
                 <input
                   type="datetime-local"
@@ -188,7 +207,7 @@ export default function ApplicationDetail({
                         : '',
                     });
                   }}
-                  className="rounded-md border border-slate-200 px-2 py-1 text-slate-700"
+                  className="rounded-md border border-border px-2 py-1 text-foreground"
                 />
               </label>
             </div>
@@ -197,17 +216,17 @@ export default function ApplicationDetail({
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           기업 후기
         </h2>
-        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
+        <div className="rounded-xl border border-border bg-card px-4 py-3 text-sm">
           <div className="flex items-center gap-2">
             {reviews.data?.rating != null ? (
-              <span className="font-semibold text-amber-600">
+              <span className="font-semibold text-amber-600 dark:text-amber-400">
                 ★ {reviews.data.rating.toFixed(1)}
               </span>
             ) : (
-              <span className="text-slate-500">
+              <span className="text-muted-foreground">
                 평점 정보를 바로 가져올 수 없어요.
               </span>
             )}
@@ -216,14 +235,16 @@ export default function ApplicationDetail({
                 href={reviews.data.sourceUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-brand hover:underline"
+                className="text-primary hover:underline"
               >
                 잡플래닛에서 보기 ↗
               </a>
             )}
           </div>
           {reviews.data?.summary && (
-            <p className="mt-2 text-slate-600">“{reviews.data.summary}”</p>
+            <p className="mt-2 text-muted-foreground">
+              “{reviews.data.summary}”
+            </p>
           )}
         </div>
       </section>

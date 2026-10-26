@@ -80,7 +80,12 @@ export class CompaniesService {
 
       const saved = await this.prisma.companyReview.upsert({
         where: { companyName: name },
-        update: { rating, summary, sourceUrl: match.url, fetchedAt: new Date() },
+        update: {
+          rating,
+          summary,
+          sourceUrl: match.url,
+          fetchedAt: new Date(),
+        },
         create: { companyName: name, rating, summary, sourceUrl: match.url },
       });
       return {

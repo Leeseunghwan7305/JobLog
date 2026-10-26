@@ -25,13 +25,13 @@ Next.js (web) ──REST/JSON──> NestJS (api) ──Prisma──> PostgreSQL
 
 ### 2.1 엔티티
 
-| 엔티티          | 설명                       | 관계                               |
-| --------------- | -------------------------- | ---------------------------------- |
-| `User`          | 카카오로 로그인한 사용자   | 1:N Application                    |
-| `Application`   | 하나의 지원 = 회사 하나    | N:1 User, 1:N Stage, 1:N StatusLog |
-| `Stage`         | 전형 단계(서류/코테/면접…) | N:1 Application                    |
-| `StatusLog`     | 상태 변경 이력             | N:1 Application                    |
-| `CompanyReview` | 기업 후기 캐시 (M4)        | 독립                               |
+| 엔티티             | 설명                                           | 관계                                            |
+| ------------------ | ---------------------------------------------- | ----------------------------------------------- |
+| `User`             | 카카오로 로그인한 사용자                       | 1:N Application                                 |
+| `Application`      | 하나의 지원 = 회사 하나                        | N:1 User, 1:N Stage, 1:N StatusLog              |
+| `Stage`            | 전형 단계(서류/코테/면접…)                     | N:1 Application                                 |
+| `StatusLog`        | 상태 변경 이력                                 | N:1 Application                                 |
+| `CompanyReview`    | 기업 후기 캐시 (M4)                            | 독립                                            |
 | `SentNotification` | 발송한 알림 기록 — D-N 중복/재실행 멱등성 (M4) | 독립 (`@@unique([userId,kind,refId,sendDate])`) |
 
 Prisma 스키마 전문은 `docs/planning.html` 06 섹션 및 `apps/api/prisma/schema.prisma`.

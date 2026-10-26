@@ -4,6 +4,7 @@ import { AppStatus, StageStatus } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { toCalendarEvents } from './calendar.util';
+import { parseDateStrict } from './date.util';
 import {
   CreateApplicationDto,
   CreateStageDto,
@@ -30,8 +31,10 @@ export class ApplicationsService {
         rawPosting: dto.rawPosting,
         location: dto.location,
         employmentType: dto.employmentType,
-        deadline: dto.deadline ? new Date(dto.deadline) : null,
-        appliedAt: dto.appliedAt ? new Date(dto.appliedAt) : null,
+        deadline: dto.deadline ? parseDateStrict(dto.deadline, '마감일') : null,
+        appliedAt: dto.appliedAt
+          ? parseDateStrict(dto.appliedAt, '지원일')
+          : null,
         memo: dto.memo,
         stages: {
           create: dto.stages.map((s, i) => {
@@ -83,8 +86,12 @@ export class ApplicationsService {
         jobUrl: dto.jobUrl,
         location: dto.location,
         employmentType: dto.employmentType,
-        deadline: dto.deadline ? new Date(dto.deadline) : undefined,
-        appliedAt: dto.appliedAt ? new Date(dto.appliedAt) : undefined,
+        deadline: dto.deadline
+          ? parseDateStrict(dto.deadline, '마감일')
+          : undefined,
+        appliedAt: dto.appliedAt
+          ? parseDateStrict(dto.appliedAt, '지원일')
+          : undefined,
         memo: dto.memo,
         status: dto.status ? (dto.status as AppStatus) : undefined,
       },
@@ -138,13 +145,13 @@ export class ApplicationsService {
           dto.scheduledAt === undefined
             ? undefined
             : dto.scheduledAt
-              ? new Date(dto.scheduledAt)
+              ? parseDateStrict(dto.scheduledAt, '예정일')
               : null,
         completedAt:
           dto.completedAt === undefined
             ? undefined
             : dto.completedAt
-              ? new Date(dto.completedAt)
+              ? parseDateStrict(dto.completedAt, '완료일')
               : null,
       },
     });

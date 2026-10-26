@@ -13,6 +13,8 @@ import { useEffect, useState } from 'react';
 
 import AddJobModal from '@/components/AddJobModal';
 import LoginModal from '@/components/LoginModal';
+import ThemeToggle from '@/components/ThemeToggle';
+import { Skeleton } from '@/components/ui/skeleton';
 import { apiFetch } from '@/lib/api';
 import {
   clearPendingUrl,
@@ -54,14 +56,14 @@ function Landing() {
   return (
     <main className="mx-auto grid min-h-screen max-w-2xl place-items-center px-6">
       <div className="w-full text-center">
-        <div className="mx-auto mb-6 grid h-12 w-12 place-items-center rounded-2xl bg-brand text-xl font-bold text-white">
+        <div className="mx-auto mb-6 grid h-12 w-12 place-items-center rounded-2xl bg-primary text-xl font-bold text-primary-foreground">
           J
         </div>
         <h1 className="mb-3 text-3xl font-extrabold tracking-tight">
-          지원한 공고, <span className="text-brand">어디까지 왔는지</span>
+          지원한 공고, <span className="text-primary">어디까지 왔는지</span>
           <br />한 곳에서 추적하세요
         </h1>
-        <p className="mb-8 text-slate-500">
+        <p className="mb-8 text-muted-foreground">
           공고 링크만 붙여넣으면 회사·직무·전형을 자동으로 정리해 드려요.
         </p>
 
@@ -77,22 +79,22 @@ function Landing() {
               }
             }}
             placeholder="채용 공고 링크를 붙여넣으세요"
-            className="flex-1 rounded-lg border border-slate-300 px-4 py-3"
+            className="flex-1 rounded-lg border border-input px-4 py-3"
           />
           <button
             onClick={start}
-            className="rounded-lg bg-brand px-6 py-3 font-semibold text-white transition hover:bg-brand-ink"
+            className="rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:bg-primary/90"
           >
             분석
           </button>
         </div>
-        <p className="mt-3 text-xs text-slate-400">
+        <p className="mt-3 text-xs text-muted-foreground">
           이미 계정이 있으신가요?{' '}
           <button
             onClick={() => {
               setShowLogin(true);
             }}
-            className="text-brand hover:underline"
+            className="text-primary hover:underline"
           >
             로그인
           </button>
@@ -153,13 +155,13 @@ function Deadline({ iso }: { iso: string | null }) {
 function pillClass(status: ApplicationDto['status']): string {
   switch (status) {
     case 'OFFER':
-      return 'bg-emerald-100 text-emerald-700';
+      return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300';
     case 'REJECTED':
-      return 'bg-red-100 text-red-700';
+      return 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300';
     case 'CLOSED':
-      return 'bg-slate-100 text-slate-500';
+      return 'bg-muted text-muted-foreground';
     default:
-      return 'bg-amber-100 text-amber-700';
+      return 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300';
   }
 }
 
@@ -203,17 +205,21 @@ function Dashboard() {
     <main className="mx-auto max-w-6xl px-6 py-8">
       <header className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand font-bold text-white">
+          <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary font-bold text-primary-foreground">
             J
           </span>
           <span className="text-lg font-bold tracking-tight">JobLog</span>
         </div>
         <div className="flex items-center gap-4 text-sm">
-          <Link href="/calendar" className="text-slate-500 hover:text-brand">
+          <ThemeToggle />
+          <Link
+            href="/calendar"
+            className="text-muted-foreground hover:text-primary"
+          >
             캘린더
           </Link>
           {me.data && (
-            <span className="text-slate-500">{me.data.nickname}님</span>
+            <span className="text-muted-foreground">{me.data.nickname}님</span>
           )}
           <button
             onClick={() => {
@@ -221,7 +227,7 @@ function Dashboard() {
               router.refresh();
               window.location.href = '/';
             }}
-            className="text-slate-400 hover:text-slate-700"
+            className="text-muted-foreground hover:text-foreground"
           >
             로그아웃
           </button>
@@ -237,26 +243,44 @@ function Dashboard() {
         </div>
         <button
           onClick={openAdd}
-          className="rounded-lg bg-brand px-4 py-2 font-semibold text-white transition hover:bg-brand-ink"
+          className="rounded-lg bg-primary px-4 py-2 font-semibold text-primary-foreground transition hover:bg-primary/90"
         >
           + 공고 추가
         </button>
       </div>
 
       {apps.isLoading ? (
-        <p className="text-slate-400">불러오는 중…</p>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {COLUMNS.map((col) => (
+            <div key={col.key}>
+              <Skeleton className="mb-3 h-4 w-14" />
+              <div className="flex flex-col gap-3">
+                {[0, 1].map((n) => (
+                  <div
+                    key={n}
+                    className="rounded-xl border border-border bg-card p-3"
+                  >
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="mt-2 h-3 w-32" />
+                    <Skeleton className="mt-3 h-5 w-20 rounded-full" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (apps.data?.length ?? 0) === 0 ? (
         <div className="mt-16 flex flex-col items-center gap-4 text-center">
           <div className="text-5xl">📋</div>
           <div>
             <p className="text-lg font-bold">아직 등록한 공고가 없어요</p>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               채용 공고 링크를 붙여넣으면 전형까지 자동으로 정리해 드려요.
             </p>
           </div>
           <button
             onClick={openAdd}
-            className="rounded-lg bg-brand px-5 py-2.5 font-semibold text-white transition hover:bg-brand-ink"
+            className="rounded-lg bg-primary px-5 py-2.5 font-semibold text-primary-foreground transition hover:bg-primary/90"
           >
             + 첫 공고 추가하기
           </button>
@@ -267,19 +291,19 @@ function Dashboard() {
             const items = grouped(col.key);
             return (
               <div key={col.key}>
-                <div className="mb-3 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <div className="mb-3 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   <span>{col.label}</span>
-                  <span className="text-slate-400">{items.length}</span>
+                  <span className="text-muted-foreground">{items.length}</span>
                 </div>
                 <div className="flex flex-col gap-3">
                   {items.map((app) => (
                     <Link
                       key={app.id}
                       href={`/applications/${app.id}`}
-                      className="block rounded-xl border border-slate-200 bg-white p-3 transition hover:border-brand"
+                      className="block rounded-xl border border-border bg-card p-3 transition hover:border-ring"
                     >
                       <div className="font-bold">{app.companyName}</div>
-                      <div className="text-sm text-slate-500">
+                      <div className="text-sm text-muted-foreground">
                         {app.position}
                       </div>
                       <span
@@ -292,7 +316,7 @@ function Dashboard() {
                     </Link>
                   ))}
                   {items.length === 0 && (
-                    <div className="rounded-xl border border-dashed border-slate-200 p-4 text-center text-xs text-slate-400">
+                    <div className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
                       비어 있음
                     </div>
                   )}
@@ -327,13 +351,13 @@ function Stat({
 }) {
   const color =
     tone === 'emerald'
-      ? 'text-emerald-600'
+      ? 'text-emerald-600 dark:text-emerald-400'
       : tone === 'red'
-        ? 'text-red-600'
-        : 'text-slate-900';
+        ? 'text-red-600 dark:text-red-400'
+        : 'text-foreground';
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-4 py-2">
-      <div className="text-xs text-slate-500">{label}</div>
+    <div className="rounded-xl border border-border bg-card px-4 py-2">
+      <div className="text-xs text-muted-foreground">{label}</div>
       <div className={`text-xl font-bold tabular-nums ${color}`}>{value}</div>
     </div>
   );
