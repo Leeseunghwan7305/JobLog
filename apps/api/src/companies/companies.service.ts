@@ -7,6 +7,8 @@ import {
   extractCompanyCandidates,
   isCacheFresh,
   parseRatingSummary,
+  pickCandidate,
+  SCRAPE_WAIT_MS,
   searchUrl,
 } from './jobplanet';
 
@@ -29,21 +31,19 @@ export class CompaniesService {
 
   /**
    * 기업 후기 조회 (M4, best-effort).
-   * 정규화 → 캐시(7일) → Firecrawl 검색·회사 페이지 수집 → 평점/요약 파싱.
-   * 후보가 모호(0/복수)하거나 수집 실패면 저장하지 않고 검색 딥링크만 반환한다 (spec 6.1).
-   * 전체 후기 본문은 수집·저장하지 않는다.
+   * 정규화 → 캐시(7일) → 잡플래닛 검색(waitFor) → 이름 일치 후보 선택 → 회사 페이지 평점 파싱.
+   * 이름 일치 후보가 없거나 수집/파싱 실패면 저장하지 않고 검색 딥링크만 반환 (spec 6.1).
    */
   async getReviews(nameRaw: string): Promise<CompanyReviewDto> {
     const name = this.normalize(nameRaw);
     const deepLink = searchUrl(name);
-    if (!name) {
-      return {
-        companyName: name,
-        rating: null,
-        summary: null,
-        sourceUrl: deepLink,
-      };
-    }
+    const fallback: CompanyReviewDto = {
+      companyName: name,
+      rating: null,
+      summary: null,
+      sourceUrl: deepLink,
+    };
+    if (!name) return fallback;
 
     // 1) 캐시 (정규화 키 기준)
     const cached = await this.prisma.companyReview.findUnique({
@@ -59,44 +59,29 @@ export class CompaniesService {
     }
 
     // 2) 수집 비활성이면 딥링크만
-    if (!this.firecrawl.enabled) {
-      return {
-        companyName: name,
-        rating: null,
-        summary: null,
-        sourceUrl: deepLink,
-      };
-    }
+    if (!this.firecrawl.enabled) return fallback;
 
     // 3) best-effort 수집
     try {
-      const searchMd = await this.firecrawl.scrape(deepLink);
+      const searchMd = await this.firecrawl.scrape(deepLink, {
+        waitFor: SCRAPE_WAIT_MS,
+      });
       const candidates = searchMd ? extractCompanyCandidates(searchMd) : [];
-      // 모호하면(0개/복수) 자신 있게 틀린 정보 대신 딥링크
-      if (candidates.length !== 1) {
-        return {
-          companyName: name,
-          rating: null,
-          summary: null,
-          sourceUrl: deepLink,
-        };
-      }
+      const match = pickCandidate(candidates, name, (s) => this.normalize(s));
+      // 이름 일치 후보 없음 → 자신 있게 틀린 정보 대신 딥링크
+      if (!match) return fallback;
 
-      const companyUrl = candidates[0].url;
-      const pageMd = await this.firecrawl.scrape(companyUrl);
+      const pageMd = await this.firecrawl.scrape(match.url, {
+        waitFor: SCRAPE_WAIT_MS,
+      });
       const { rating, summary } = pageMd
         ? parseRatingSummary(pageMd)
         : { rating: null, summary: null };
 
       const saved = await this.prisma.companyReview.upsert({
         where: { companyName: name },
-        update: {
-          rating,
-          summary,
-          sourceUrl: companyUrl,
-          fetchedAt: new Date(),
-        },
-        create: { companyName: name, rating, summary, sourceUrl: companyUrl },
+        update: { rating, summary, sourceUrl: match.url, fetchedAt: new Date() },
+        create: { companyName: name, rating, summary, sourceUrl: match.url },
       });
       return {
         companyName: name,
@@ -106,12 +91,7 @@ export class CompaniesService {
       };
     } catch (e) {
       this.logger.warn(`jobplanet 수집 실패 (${name}): ${String(e)}`);
-      return {
-        companyName: name,
-        rating: null,
-        summary: null,
-        sourceUrl: deepLink,
-      };
+      return fallback;
     }
   }
 }

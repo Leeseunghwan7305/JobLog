@@ -26,3 +26,6 @@ coverage/
 
 # TS incremental build cache
 *.tsbuildinfo
+
+# playwright MCP 스냅샷
+.playwright-mcp/

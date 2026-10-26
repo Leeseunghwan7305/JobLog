@@ -9,7 +9,10 @@ export class FirecrawlService {
     return !!process.env.FIRECRAWL_API_KEY;
   }
 
-  async scrape(url: string): Promise<string | null> {
+  async scrape(
+    url: string,
+    opts?: { waitFor?: number },
+  ): Promise<string | null> {
     if (!this.enabled) return null;
     try {
       const res = await fetch('https://api.firecrawl.dev/v1/scrape', {
@@ -22,6 +25,8 @@ export class FirecrawlService {
           url,
           formats: ['markdown'],
           onlyMainContent: true,
+          // JS 렌더가 필요한 페이지(잡플래닛 검색 결과 등)는 waitFor로 대기
+          ...(opts?.waitFor ? { waitFor: opts.waitFor } : {}),
         }),
       });
       if (!res.ok) {

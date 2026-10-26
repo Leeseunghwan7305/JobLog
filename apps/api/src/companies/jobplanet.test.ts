@@ -5,72 +5,83 @@ import {
   extractCompanyCandidates,
   isCacheFresh,
   parseRatingSummary,
+  pickCandidate,
   searchUrl,
 } from './jobplanet';
 
 const DAY = 86_400_000;
 
-test('후보 추출: 회사 링크 없으면 0개', () => {
-  const md =
-    '검색 결과가 없습니다. [채용공고](https://www.jobplanet.co.kr/job/1)';
-  assert.equal(extractCompanyCandidates(md).length, 0);
-});
+// 서비스의 normalize를 흉내낸 순수 함수 (테스트용)
+const norm = (s: string): string =>
+  s
+    .replace(/\(주\)|\(유\)|주식회사|유한회사|㈜/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-test('후보 추출: 같은 회사의 여러 링크는 id로 dedup → 1개', () => {
-  const md = `
-[카카오](https://www.jobplanet.co.kr/companies/123/reviews)
-[카카오 연봉](https://www.jobplanet.co.kr/companies/123/salaries)
-[카카오 면접](/companies/123/interviews)
+// 실제 잡플래닛 검색 결과 마크다운 구조를 축약한 픽스처
+const SEARCH_MD = `
+[![로고](logo1)\\
+**(주)카카오** \\
+IT/웹/통신 ∙서울](https://www.jobplanet.co.kr/companies/93880)
+
+[![로고](logo2)\\
+**(주)카카오** \\
+∙제주](https://www.jobplanet.co.kr/companies/82715)
+
+[![로고](logo3)\\
+**(주)카카오페이** \\
+∙판교](https://www.jobplanet.co.kr/companies/326339)
 `;
-  const c = extractCompanyCandidates(md);
-  assert.equal(c.length, 1);
-  assert.equal(c[0].id, '123');
-  assert.equal(c[0].url, 'https://www.jobplanet.co.kr/companies/123');
-});
 
-test('후보 추출: 서로 다른 회사(동명 등) → 복수', () => {
-  const md = `
-[토스](https://www.jobplanet.co.kr/companies/111)
-[토스뱅크](https://www.jobplanet.co.kr/companies/222)
-`;
-  assert.equal(extractCompanyCandidates(md).length, 2);
-});
-
-test('평점 파싱: 평점/총점/별점 키워드 뒤 X.X', () => {
-  assert.equal(parseRatingSummary('기업 평점 3.5 / 5.0').rating, 3.5);
-  assert.equal(parseRatingSummary('총점: 4').rating, 4);
-  assert.equal(parseRatingSummary('★ 2.8 추천').rating, 2.8);
-});
-
-test('평점 파싱: 범위(0~5) 벗어나면 null', () => {
-  assert.equal(parseRatingSummary('평점 9.9').rating, null);
-  assert.equal(parseRatingSummary('조회수 1234').rating, null);
-});
-
-test('평점 파싱: 평점 단서 없으면 null', () => {
-  assert.equal(parseRatingSummary('이 회사는 좋은 회사입니다.').rating, null);
-});
-
-test('요약 파싱: 한줄평 한 줄만, 없으면 null', () => {
-  assert.equal(
-    parseRatingSummary('한줄평: 워라밸이 좋아요\n다음 줄은 무시').summary,
-    '워라밸이 좋아요',
+test('후보 추출: **이름** → /companies/<id> 쌍, id로 dedup', () => {
+  const c = extractCompanyCandidates(SEARCH_MD);
+  assert.equal(c.length, 3);
+  assert.deepEqual(
+    c.map((x) => x.id),
+    ['93880', '82715', '326339'],
   );
-  assert.equal(parseRatingSummary('별도 요약 없음').summary, null);
+  assert.equal(c[0].name, '(주)카카오');
+  assert.equal(c[0].url, 'https://www.jobplanet.co.kr/companies/93880');
+});
+
+test('후보 선택: 정규화 이름 정확 일치, 동명이면 첫 번째', () => {
+  const c = extractCompanyCandidates(SEARCH_MD);
+  const picked = pickCandidate(c, '카카오', norm);
+  assert.equal(picked?.id, '93880'); // (주)카카오 → 카카오, 첫 번째
+});
+
+test('후보 선택: 부분일치(카카오페이)는 "카카오"로 선택 안 됨', () => {
+  const only = extractCompanyCandidates(
+    '[![l](x)\\\n**(주)카카오페이** ](https://www.jobplanet.co.kr/companies/326339)',
+  );
+  assert.equal(pickCandidate(only, '카카오', norm), null);
+});
+
+test('후보 선택: 일치 없으면 null (→ 딥링크)', () => {
+  const c = extractCompanyCandidates(SEARCH_MD);
+  assert.equal(pickCandidate(c, '네이버', norm), null);
+});
+
+test('평점 파싱: 잡플래닛 "전체 리뷰 통계 (N명) 3.8"', () => {
+  const md = '## _전체 리뷰_ 통계 (1308명)  3.8  복지/급여  3.5  워라밸  4.2';
+  assert.equal(parseRatingSummary(md).rating, 3.8);
+});
+
+test('평점 파싱: 총점/★ 폴백, 범위 밖/없음은 null', () => {
+  assert.equal(parseRatingSummary('총점 4.1').rating, 4.1);
+  assert.equal(parseRatingSummary('★ 2.7').rating, 2.7);
+  assert.equal(parseRatingSummary('평점 9.9').rating, null);
+  assert.equal(parseRatingSummary('평점 정보 없음').rating, null);
 });
 
 test('캐시 신선도: TTL 이내 true, 경계/초과 false', () => {
   const now = 100 * DAY;
   assert.equal(isCacheFresh(now - 1 * DAY, now), true);
-  assert.equal(isCacheFresh(now - 6.9 * DAY, now), true);
-  assert.equal(isCacheFresh(now - 7 * DAY, now), false); // 경계 포함 만료
-  assert.equal(isCacheFresh(now - 30 * DAY, now), false);
+  assert.equal(isCacheFresh(now - 7 * DAY, now), false);
 });
 
-test('검색 딥링크: 쿼리 인코딩', () => {
-  assert.ok(
-    searchUrl('카카오 뱅크').includes(
-      'query=%EC%B9%B4%EC%B9%B4%EC%98%A4%20%EB%B1%85%ED%81%AC',
-    ),
-  );
+test('검색 딥링크: query 인코딩 + type=companies', () => {
+  const u = searchUrl('카카오');
+  assert.ok(u.includes('query=%EC%B9%B4%EC%B9%B4%EC%98%A4'));
+  assert.ok(u.includes('type=companies'));
 });

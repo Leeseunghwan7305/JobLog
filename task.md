@@ -57,7 +57,7 @@
 - [x] `CompanyReview` 캐시 모델 migrate (스키마)
 - [x] 회사명 정규화 + 잡플래닛 딥링크 (`GET /companies/reviews`) — 검증 완료
 - [x] 지원 상세 후기 위젯 (없으면 딥링크)
-- [x] 잡플래닛 공개 평점·요약 best-effort 스크래핑 + 캐시 TTL(7일) — 정규화→후보해소(0/1/복수)→평점·요약 파싱, 모호/실패 시 딥링크 폴백. 파싱 로직 단위테스트 완료 (`jobplanet.test.ts`). 실공고 HTML 파싱 품질 튜닝은 FIRECRAWL_API_KEY 연결 후
+- [x] 잡플래닛 공개 평점·요약 best-effort 스크래핑 + 캐시 TTL(7일) — 정규화→후보해소(0/1/복수)→평점·요약 파싱, 모호/실패 시 딥링크 폴백. 파싱 로직 단위테스트 완료 (`jobplanet.test.ts`). 실키 연결·튜닝 완료 — 카카오 평점 3.8 수집 검증(waitFor로 JS렌더, 이름 매칭, "전체 리뷰 통계" 파싱)
 - [x] 마감·면접 임박 D-3 이메일 알림 (Resend) — @Cron 매일 09:00 KST, `SentNotification` 멱등(중복 발송 차단), 키 없으면 콘솔 로그 폴백. `NOTIFY_DAYS_AHEAD`로 D-N 조정. 수동 트리거 `POST /notifications/run`. 날짜 유틸 단위테스트(`notifications.util.test.ts`). 실발송은 RESEND_API_KEY 연결 후
 - [x] 캘린더 뷰 — 백엔드(`GET /calendar`, `toCalendarEvents`, 소유권 필터) + 프론트 월간 그리드(`/calendar`, 이전/다음 달, 마감/전형 이벤트 뱃지→상세 딥링크). 대시보드에 캘린더 링크
 - [ ] 합격률·전형별 통계 인사이트
