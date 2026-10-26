@@ -1,6 +1,11 @@
 'use client';
 
-import type { ApplicationDto, DashboardStats, UserDto } from '@joblog/types';
+import type {
+  ApplicationDto,
+  DashboardStats,
+  StageDto,
+  UserDto,
+} from '@joblog/types';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -16,7 +21,11 @@ import {
   getToken,
   setPendingUrl,
 } from '@/lib/auth';
-import { currentStageLabel } from '@/lib/stage';
+import {
+  currentStageLabel,
+  STAGE_STATUS_CLASS,
+  STAGE_STATUS_LABEL,
+} from '@/lib/stage';
 
 export default function Home() {
   const [hasToken, setHasToken] = useState<boolean | null>(null);
@@ -108,6 +117,24 @@ const COLUMNS = [
   { key: 'REJECTED', label: '불합격' },
   { key: 'CLOSED', label: '철회' },
 ] as const;
+
+/** 지원의 전체 전형 단계를 이름+상태색 칩으로 나열 (1차/2차/인적성 등이 그대로 보임) */
+function StageTrack({ stages }: { stages: StageDto[] }) {
+  if (stages.length === 0) return null;
+  return (
+    <div className="mt-2 flex flex-wrap gap-1">
+      {stages.map((s) => (
+        <span
+          key={s.id}
+          title={`${s.name} · ${STAGE_STATUS_LABEL[s.status]}`}
+          className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${STAGE_STATUS_CLASS[s.status]}`}
+        >
+          {s.name}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 function pillClass(status: ApplicationDto['status']): string {
   switch (status) {
@@ -219,14 +246,15 @@ function Dashboard() {
                       className="block rounded-xl border border-slate-200 bg-white p-3 transition hover:border-brand"
                     >
                       <div className="font-bold">{app.companyName}</div>
-                      <div className="mb-2 text-sm text-slate-500">
+                      <div className="text-sm text-slate-500">
                         {app.position}
                       </div>
                       <span
-                        className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${pillClass(app.status)}`}
+                        className={`mt-2 inline-block rounded-full px-2.5 py-1 text-[13px] font-semibold ${pillClass(app.status)}`}
                       >
                         {currentStageLabel(app)}
                       </span>
+                      <StageTrack stages={app.stages} />
                     </Link>
                   ))}
                   {items.length === 0 && (

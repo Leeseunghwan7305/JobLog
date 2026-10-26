@@ -33,18 +33,23 @@ export function normalizeParsed(input: Record<string, unknown>): ParsedPosting {
   const rawStages: unknown[] = Array.isArray(input.stages) ? input.stages : [];
   const stages =
     rawStages.length > 0
-      ? rawStages.map((s, i) => {
-          const stage = (
-            typeof s === 'object' && s !== null ? s : {}
-          ) as RawStage;
-          return {
-            name: asString(stage.name) || `단계 ${i + 1}`,
-            order:
-              typeof stage.order === 'number' && Number.isFinite(stage.order)
-                ? stage.order
-                : i,
-          };
-        })
+      ? rawStages
+          .map((s, i) => {
+            const stage = (
+              typeof s === 'object' && s !== null ? s : {}
+            ) as RawStage;
+            return {
+              name: asString(stage.name) || `단계 ${i + 1}`,
+              // 모델이 준 order는 정렬 기준으로만 쓰고(1-based·비연속 가능),
+              // 실제 order는 아래서 0-based 연속으로 재매김한다.
+              sortKey:
+                typeof stage.order === 'number' && Number.isFinite(stage.order)
+                  ? stage.order
+                  : i,
+            };
+          })
+          .sort((a, b) => a.sortKey - b.sortKey)
+          .map((s, i) => ({ name: s.name, order: i }))
       : DEFAULT_STAGES;
   return {
     companyName: asString(input.companyName),

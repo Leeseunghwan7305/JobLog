@@ -44,13 +44,8 @@ export default tseslint.config(
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
-      // 외부 경계(LLM JSON·Express req·DB row 등)에서 과하게 울리는 규칙은
-      // 차단하지 않고 경고로 — 보이되 루프를 막지 않는다. (핵심 correctness 규칙은 error 유지)
-      '@typescript-eslint/no-unsafe-assignment': 'warn',
-      '@typescript-eslint/no-unsafe-member-access': 'warn',
-      '@typescript-eslint/no-unsafe-call': 'warn',
-      '@typescript-eslint/no-unsafe-return': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn',
+      // no-unsafe-* 는 error — 외부 경계(Express req 등)는 타입으로 좁혀서 통과시킨다.
+      // no-unnecessary-condition 만 warn 유지(외부/DB 데이터 방어 코드가 흔해서).
       '@typescript-eslint/no-unnecessary-condition': 'warn',
       '@typescript-eslint/restrict-template-expressions': [
         'error',

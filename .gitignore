@@ -23,3 +23,6 @@ apps/api/prisma/*.db
 coverage/
 .DS_Store
 .turbo/
+
+# TS incremental build cache
+*.tsbuildinfo

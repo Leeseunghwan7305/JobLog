@@ -22,6 +22,12 @@ export default function AddJobModal({
   const [notice, setNotice] = useState<string | undefined>();
   const [draft, setDraft] = useState<ParsedPosting | null>(null);
   const [jobUrl, setJobUrl] = useState('');
+  const urlInputRef = useRef<HTMLInputElement>(null);
+
+  // 모달이 입력 단계일 때 URL 입력창에 자동 포커스 (바로 붙여넣기 가능하게)
+  useEffect(() => {
+    if (step === 'input') urlInputRef.current?.focus();
+  }, [step]);
 
   const parse = useMutation({
     mutationFn: (body: { url?: string; rawText?: string }) =>
@@ -95,6 +101,7 @@ export default function AddJobModal({
               채용 공고 링크를 붙여넣으면 회사·직무·전형을 자동으로 분석해요.
             </p>
             <input
+              ref={urlInputRef}
               value={url}
               onChange={(e) => {
                 setUrl(e.target.value);
