@@ -150,8 +150,9 @@ export default function ApplicationDetail({
                   {STATUSES.map((st) => (
                     <button
                       key={st}
-                      onClick={() => { setStage.mutate({ stageId: s.id, status: st }); }
-                      }
+                      onClick={() => {
+                        setStage.mutate({ stageId: s.id, status: st });
+                      }}
                       className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
                         s.status === st
                           ? STAGE_STATUS_CLASS[st]
@@ -168,13 +169,14 @@ export default function ApplicationDetail({
                 <input
                   type="datetime-local"
                   defaultValue={s.scheduledAt ? s.scheduledAt.slice(0, 16) : ''}
-                  onChange={(e) => { setSchedule.mutate({
+                  onChange={(e) => {
+                    setSchedule.mutate({
                       stageId: s.id,
                       scheduledAt: e.target.value
                         ? new Date(e.target.value).toISOString()
                         : '',
-                    }); }
-                  }
+                    });
+                  }}
                   className="rounded-md border border-slate-200 px-2 py-1 text-slate-700"
                 />
               </label>

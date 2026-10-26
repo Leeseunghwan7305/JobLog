@@ -44,10 +44,14 @@ export default tseslint.config(
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
-      // 외부 JSON(LLM 응답 등)을 다루는 코드가 많아 완전 차단 대신 경고로
+      // 외부 경계(LLM JSON·Express req·DB row 등)에서 과하게 울리는 규칙은
+      // 차단하지 않고 경고로 — 보이되 루프를 막지 않는다. (핵심 correctness 규칙은 error 유지)
       '@typescript-eslint/no-unsafe-assignment': 'warn',
       '@typescript-eslint/no-unsafe-member-access': 'warn',
       '@typescript-eslint/no-unsafe-call': 'warn',
+      '@typescript-eslint/no-unsafe-return': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-unnecessary-condition': 'warn',
       '@typescript-eslint/restrict-template-expressions': [
         'error',
         { allowNumber: true, allowBoolean: true },

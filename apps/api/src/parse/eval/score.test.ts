@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { type ParsedPosting } from '../types';
-import { aggregate,scoreParsed } from './score';
+import { aggregate, scoreParsed } from './score';
 
 const base: ParsedPosting = {
   companyName: '네이버',

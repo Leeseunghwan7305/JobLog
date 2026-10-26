@@ -12,7 +12,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   const port = Number(process.env.PORT ?? 4000);
   await app.listen(port);
-   
+
   console.log(`JobLog API → http://localhost:${port}`);
 }
 void bootstrap();

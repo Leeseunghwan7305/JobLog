@@ -11,9 +11,7 @@ export function deriveStatus(
   stages: { order: number; status: StageStatus }[],
 ): AppStatus {
   if (stages.some((s) => s.status === 'FAILED')) return AppStatus.REJECTED;
-  if (stages.length > 0) {
-    const last = [...stages].sort((a, b) => a.order - b.order).at(-1)!;
-    if (last.status === 'PASSED') return AppStatus.OFFER;
-  }
+  const last = [...stages].sort((a, b) => a.order - b.order).at(-1);
+  if (last?.status === 'PASSED') return AppStatus.OFFER;
   return AppStatus.IN_PROGRESS;
 }

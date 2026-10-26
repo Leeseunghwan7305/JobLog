@@ -25,17 +25,23 @@
 ```
 JobLog/
 ├── apps/
-│   ├── web/          # Next.js 프론트엔드
-│   └── api/          # NestJS 백엔드
-│       └── prisma/   # schema.prisma, migrations
-├── packages/
-│   └── types/        # web·api 공유 타입 (DTO, 파싱 결과 스키마)
+│   ├── web/                # Next.js 프론트엔드
+│   │   └── src/            # app/ · components/(+ui/) · lib/
+│   └── api/                # NestJS 백엔드
+│       ├── src/            # auth · parse · applications · companies · shared · prisma
+│       └── prisma/         # schema.prisma, migrations
+├── packages/               # 최대한 공통으로 묶는다
+│   ├── types/              # web·api 공유 타입 (source of truth)
+│   ├── tsconfig/           # 공유 tsconfig (base/nextjs/nestjs)
+│   ├── eslint-config/      # 공유 ESLint (base/next/nest, 빡세게)
+│   └── prettier-config/    # 공유 Prettier
+├── .claude/                # 하네스 (settings·hooks·commands·agents)
 ├── docs/
-│   └── planning.html # 서비스 기획서
-├── spec.md
-├── task.md
-└── CLAUDE.md
+├── spec.md · task.md · CLAUDE.md
 ```
+
+- **web**: 소스는 `src/` 아래. 경로 alias `@/*` → `./src/*`. 공용 UI는 `src/components/ui/`.
+- **공유 설정**: 각 앱은 `@joblog/{tsconfig,eslint-config,prettier-config}`를 extends만 한다. 중복 두지 않는다.
 
 ## 핵심 설계 원칙
 
@@ -56,9 +62,17 @@ pnpm --filter api dev     # 백엔드 개발 서버
 pnpm --filter api prisma migrate dev   # DB 마이그레이션
 pnpm --filter api prisma studio        # DB GUI
 pnpm test                 # 전체 테스트 (-r --if-present)
-pnpm typecheck            # 전체 타입체크
+pnpm typecheck            # 전체 타입체크 (web + api)
+pnpm lint                 # 전체 린트 (ESLint, 타입 인지·빡세게)
+pnpm lint:fix             # 린트 자동수정
+pnpm format               # Prettier 포맷 적용 (전체)
+pnpm format:check         # 포맷 검사 (CI용)
 pnpm parse:eval           # 파싱 품질 eval (아래 참고)
 ```
+
+> **빡센 lint/prettier**: 규칙은 `packages/eslint-config`·`packages/prettier-config`에 공통으로 둔다.
+> 핵심 correctness 규칙(floating-promise·non-null·explicit-any·import 정렬 등)은 **error**,
+> 외부 경계(LLM JSON·Express req·DB row)에서 과하게 울리는 `no-unsafe-*`·`no-unnecessary-condition`은 **warn**.
 
 ## 하네스 / 검증 루프
 
@@ -66,13 +80,14 @@ pnpm parse:eval           # 파싱 품질 eval (아래 참고)
 
 **검증 신호 (루프를 닫는 기준)**
 
-- `pnpm --filter @joblog/api typecheck` — `tsc --noEmit`. 결정적.
+- `pnpm typecheck` — web + api `tsc --noEmit`. 결정적.
+- `pnpm lint` — web + api ESLint(타입 인지·빡세게). error 0이어야 통과.
 - `pnpm --filter @joblog/api test` — `node --import tsx --test`로 순수 로직 테스트(`*.test.ts`). 네트워크 불필요.
-- `pnpm --filter @joblog/api parse:eval` — 공고 파싱 품질을 골든 대비 **필드 정확도로 채점**. API와 동일한 `LlmService`를 태운다. 자세히는 `apps/api/src/parse/eval/README.md`.
+- `pnpm parse:eval` — 공고 파싱 품질을 골든 대비 **필드 정확도로 채점**. API와 동일한 `LlmService`를 태운다. 자세히는 `apps/api/src/parse/eval/README.md`.
 
 **자동화 (`.claude/`)**
 
-- `settings.json` → **Stop 훅**이 `hooks/verify.sh`를 돌린다: api 소스가 바뀐 턴이면 typecheck+test가 통과해야 턴이 끝난다(실패 시 한 바퀴 더). 끄려면 해당 훅 제거.
+- `settings.json` → **Stop 훅**이 `hooks/verify.sh`를 돌린다: `apps/`·`packages/`가 바뀐 턴이면 typecheck + lint + test가 통과해야 턴이 끝난다(실패 시 한 바퀴 더). 끄려면 해당 훅 제거.
 - `/joblog-task` 명령 — spec→task→테스트 우선 구현→검증→기록 흐름.
 - 서브에이전트 `parse-evaluator`(파싱 품질 리포트), `schema-guard`(타입↔스키마 동기화 점검).
 

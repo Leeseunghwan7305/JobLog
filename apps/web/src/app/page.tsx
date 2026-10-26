@@ -79,7 +79,9 @@ function Landing() {
         <p className="mt-3 text-xs text-slate-400">
           이미 계정이 있으신가요?{' '}
           <button
-            onClick={() => { setShowLogin(true); }}
+            onClick={() => {
+              setShowLogin(true);
+            }}
             className="text-brand hover:underline"
           >
             로그인
@@ -87,7 +89,13 @@ function Landing() {
         </p>
       </div>
 
-      {showLogin && <LoginModal onClose={() => { setShowLogin(false); }} />}
+      {showLogin && (
+        <LoginModal
+          onClose={() => {
+            setShowLogin(false);
+          }}
+        />
+      )}
     </main>
   );
 }

@@ -57,7 +57,7 @@ export class ApplicationsService {
       include: withStages,
     });
     // 소유권 불일치는 존재를 숨기기 위해 404
-    if (!app || app.userId !== userId) throw new NotFoundException();
+    if (app?.userId !== userId) throw new NotFoundException();
     return app;
   }
 

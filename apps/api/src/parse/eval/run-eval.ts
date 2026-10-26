@@ -1,11 +1,11 @@
-import { existsSync,readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { ClaudeService } from '../claude.service';
 import { LlmService } from '../llm.service';
 import { OllamaService } from '../ollama.service';
 import { type ParsedPosting } from '../types';
-import { aggregate, type FixtureScore,scoreParsed } from './score';
+import { aggregate, type FixtureScore, scoreParsed } from './score';
 
 /**
  * 파싱 eval 러너 — 루프 엔지니어링의 심장.

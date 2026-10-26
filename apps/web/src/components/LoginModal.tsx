@@ -10,7 +10,9 @@ export default function LoginModal({ onClose }: { onClose: () => void }) {
     >
       <div
         className="w-full max-w-sm rounded-2xl bg-white p-8 text-center shadow-xl"
-        onClick={(e) => { e.stopPropagation(); }}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
       >
         <div className="mx-auto mb-5 grid h-12 w-12 place-items-center rounded-2xl bg-brand text-xl font-bold text-white">
           J
