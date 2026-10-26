@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IsOptional, IsString } from 'class-validator';
-import { FirecrawlService } from './firecrawl.service';
+import { FirecrawlService } from '../shared/firecrawl.service';
 import { LlmService } from './llm.service';
 import { DEFAULT_STAGES, ParsedPosting, ParseResponse } from './types';
 
