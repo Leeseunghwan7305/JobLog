@@ -30,6 +30,15 @@ export class ApplicationsController {
     return this.svc.stats(userId);
   }
 
+  @Get('calendar')
+  calendar(
+    @CurrentUser() userId: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.svc.calendar(userId, from, to);
+  }
+
   @Post('applications')
   create(@CurrentUser() userId: string, @Body() dto: CreateApplicationDto) {
     return this.svc.create(userId, dto);

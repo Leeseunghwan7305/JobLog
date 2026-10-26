@@ -53,6 +53,6 @@ export class UpdateStageDto {
   @IsOptional()
   @IsIn(['PENDING', 'IN_PROGRESS', 'PASSED', 'FAILED'])
   status?: string;
-  @IsOptional() @IsString() scheduledAt?: string;
-  @IsOptional() @IsString() completedAt?: string;
+  @IsOptional() @IsString() scheduledAt?: string | null;
+  @IsOptional() @IsString() completedAt?: string | null;
 }

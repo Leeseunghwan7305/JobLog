@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AppStatus, StageStatus } from '@prisma/client';
 
+import type { CalendarEvent } from '@joblog/types';
+
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateApplicationDto,
@@ -9,6 +11,7 @@ import {
   UpdateStageDto,
 } from './dto';
 import { deriveStatus } from './status.util';
+import { toCalendarEvents } from './calendar.util';
 
 const withStages = { stages: { orderBy: { order: 'asc' as const } } };
 
@@ -122,8 +125,18 @@ export class ApplicationsService {
       where: { id: stageId },
       data: {
         status: dto.status ? (dto.status as StageStatus) : undefined,
-        scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
-        completedAt: dto.completedAt ? new Date(dto.completedAt) : undefined,
+        scheduledAt:
+          dto.scheduledAt === undefined
+            ? undefined
+            : dto.scheduledAt
+              ? new Date(dto.scheduledAt)
+              : null,
+        completedAt:
+          dto.completedAt === undefined
+            ? undefined
+            : dto.completedAt
+              ? new Date(dto.completedAt)
+              : null,
       },
     });
     return this.recompute(id);
@@ -149,6 +162,42 @@ export class ApplicationsService {
       offer: apps.filter((a) => a.status === 'OFFER').length,
       rejected: apps.filter((a) => a.status === 'REJECTED').length,
     };
+  }
+
+  async calendar(
+    userId: string,
+    from?: string,
+    to?: string,
+  ): Promise<CalendarEvent[]> {
+    const now = new Date();
+    const start = from
+      ? new Date(from)
+      : new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const end = to
+      ? new Date(to)
+      : new Date(now.getFullYear(), now.getMonth() + 2, 0);
+
+    const apps = await this.prisma.application.findMany({
+      where: {
+        userId,
+        OR: [
+          { deadline: { gte: start, lte: end } },
+          { stages: { some: { scheduledAt: { gte: start, lte: end } } } },
+        ],
+      },
+      include: { stages: true },
+    });
+
+    const inRange = (d: Date | null) => !!d && d >= start && d <= end;
+    const filtered = apps.map((a) => ({
+      id: a.id,
+      companyName: a.companyName,
+      deadline: inRange(a.deadline) ? a.deadline : null,
+      stages: a.stages
+        .filter((s) => inRange(s.scheduledAt))
+        .map((s) => ({ name: s.name, status: s.status, scheduledAt: s.scheduledAt })),
+    }));
+    return toCalendarEvents(filtered);
   }
 
   /** 단계 변경 후 전체 상태 재계산 (CLOSED는 유지) */
