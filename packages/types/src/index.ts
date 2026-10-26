@@ -67,3 +67,14 @@ export interface DashboardStats {
   offer: number;
   rejected: number;
 }
+
+export type CalendarEventType = 'deadline' | 'stage';
+
+export interface CalendarEvent {
+  date: string; // ISO datetime
+  type: CalendarEventType;
+  applicationId: string;
+  companyName: string;
+  label: string; // deadline: "서류 마감" / stage: 전형명
+  status: StageStatus | null; // type === "stage" 일 때만 값
+}
