@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  kakaoId      String        @unique
+  email        String?
+  nickname     String
+  profileImage String?
+  applications Application[]
+  createdAt    DateTime      @default(now())
+}
+
+model Application {
+  id             String      @id @default(cuid())
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  companyName    String
+  position       String
+  jobUrl         String?
+  rawPosting     String?     @db.Text
+  location       String?
+  employmentType String?
+  deadline       DateTime?
+  status         AppStatus   @default(IN_PROGRESS)
+  memo           String?     @db.Text
+  stages         Stage[]
+  logs           StatusLog[]
+  appliedAt      DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([userId, status])
+}
+
+model Stage {
+  id            String      @id @default(cuid())
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String
+  name          String
+  order         Int
+  status        StageStatus @default(PENDING)
+  scheduledAt   DateTime?
+  completedAt   DateTime?
+
+  @@index([applicationId, order])
+}
+
+model StatusLog {
+  id            String      @id @default(cuid())
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId String
+  stageName     String
+  fromStatus    String?
+  toStatus      String
+  createdAt     DateTime    @default(now())
+}
+
+// M4 — 기업 후기 캐시 (정규화된 회사명 기준)
+model CompanyReview {
+  id          String   @id @default(cuid())
+  companyName String   @unique // 정규화 키
+  rating      Float?
+  summary     String?  @db.Text
+  sourceUrl   String?
+  fetchedAt   DateTime @default(now())
+}
+
+enum AppStatus {
+  IN_PROGRESS
+  OFFER
+  REJECTED
+  CLOSED
+}
+
+enum StageStatus {
+  PENDING
+  IN_PROGRESS
+  PASSED
+  FAILED
+}

@@ -1,0 +1,69 @@
+// web ↔ api 가 주고받는 공유 타입. (api는 생산자로서 자체 DTO도 가짐)
+
+export type StageStatus = "PENDING" | "IN_PROGRESS" | "PASSED" | "FAILED";
+export type AppStatus = "IN_PROGRESS" | "OFFER" | "REJECTED" | "CLOSED";
+
+export interface UserDto {
+  id: string;
+  nickname: string;
+  email: string | null;
+  profileImage: string | null;
+}
+
+export interface StageDto {
+  id: string;
+  name: string;
+  order: number;
+  status: StageStatus;
+  scheduledAt: string | null;
+  completedAt: string | null;
+}
+
+export interface ApplicationDto {
+  id: string;
+  companyName: string;
+  position: string;
+  jobUrl: string | null;
+  location: string | null;
+  employmentType: string | null;
+  deadline: string | null;
+  appliedAt: string | null;
+  memo: string | null;
+  status: AppStatus;
+  stages: StageDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** 공고 파싱 결과(초안). Claude가 이 스키마로만 출력하도록 강제. */
+export interface ParsedPosting {
+  companyName: string;
+  position: string;
+  location?: string | null;
+  employmentType?: string | null;
+  deadline?: string | null; // ISO date
+  stages: { name: string; order: number }[];
+  confidence: "high" | "low";
+}
+
+export interface ParseResponse {
+  draft: ParsedPosting;
+  /** 링크 수집 실패 등으로 본문 붙여넣기가 필요한 경우 true */
+  needsManualInput: boolean;
+  /** 사용자에게 보여줄 안내 메시지 (폴백/저신뢰 상황) */
+  notice?: string;
+}
+
+export interface CompanyReviewDto {
+  companyName: string; // 정규화된 키
+  rating: number | null;
+  summary: string | null;
+  sourceUrl: string; // 잡플래닛 딥링크 (항상 존재)
+}
+
+export interface DashboardStats {
+  total: number;
+  inProgress: number;
+  offer: number;
+  rejected: number;
+}

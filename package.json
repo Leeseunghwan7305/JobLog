@@ -1,0 +1,16 @@
+{
+  "name": "joblog",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./apps/*\" run dev",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "api": "pnpm --filter @joblog/api",
+    "web": "pnpm --filter @joblog/web"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

@@ -1,0 +1,25 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# builds
+dist/
+.next/
+out/
+build/
+
+# env (NEVER commit real keys)
+.env
+.env.local
+.env.*.local
+apps/api/.env
+apps/web/.env.local
+
+# prisma
+apps/api/prisma/*.db
+
+# misc
+*.log
+coverage/
+.DS_Store
+.turbo/

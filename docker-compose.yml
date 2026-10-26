@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:16
+    container_name: joblog-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: joblog
+      POSTGRES_PASSWORD: joblog
+      POSTGRES_DB: joblog
+    # 로컬 psql(5432)과 충돌 방지를 위해 호스트 포트는 5433
+    ports:
+      - "5433:5432"
+    volumes:
+      - joblog_pg:/var/lib/postgresql/data
+
+volumes:
+  joblog_pg:
