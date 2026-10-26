@@ -72,6 +72,18 @@ model CompanyReview {
   fetchedAt   DateTime @default(now())
 }
 
+// M4 — 발송한 알림 기록 (cron 중복/재실행 멱등성)
+model SentNotification {
+  id        String   @id @default(cuid())
+  userId    String
+  kind      String // "deadline" | "stage"
+  refId     String // applicationId(deadline) 또는 stageId(stage)
+  sendDate  String // 알림 대상일 'YYYY-MM-DD' (KST)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, kind, refId, sendDate])
+}
+
 enum AppStatus {
   IN_PROGRESS
   OFFER
