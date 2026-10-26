@@ -1,0 +1,40 @@
+# Render 블루프린트 — JobLog API (NestJS)
+# 무료 티어: 유휴 시 절전(요청 시 콜드스타트). 알림 cron은 무료 티어에선 동작 안 함(알림 미사용 전제).
+services:
+  - type: web
+    name: joblog-api
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @joblog/api exec prisma generate && pnpm --filter @joblog/api build
+    startCommand: pnpm --filter @joblog/api exec prisma migrate deploy && node apps/api/dist/main.js
+    envVars:
+      - key: LLM_PROVIDER
+        value: anthropic
+      - key: ANTHROPIC_MODEL
+        value: claude-haiku-4-5 # 비용 최소화 (opus 대비 1/5~1/25)
+      - key: NOTIFY_DAYS_AHEAD
+        value: "3"
+      - key: MAIL_FROM
+        value: JobLog <onboarding@resend.dev>
+      # 아래는 비밀/도메인 값 → Render 대시보드에서 입력 (sync:false = blueprint에 저장 안 함)
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: KAKAO_REST_API_KEY
+        sync: false
+      - key: KAKAO_CLIENT_SECRET
+        sync: false
+      - key: KAKAO_REDIRECT_URI
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: FIRECRAWL_API_KEY
+        sync: false
+      - key: WEB_ORIGIN
+        sync: false
+      - key: APP_BASE_URL
+        sync: false
