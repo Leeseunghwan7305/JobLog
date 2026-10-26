@@ -9,7 +9,11 @@ const EXTRACT_TOOL = {
   input_schema: {
     type: 'object',
     properties: {
-      companyName: { type: 'string', description: '회사명' },
+      companyName: {
+        type: 'string',
+        description:
+          '실제 채용하는 회사(고용주)명. 공고를 게시한 채용 플랫폼/잡보드(원티드·잡코리아·사람인·인크루트·링크드인·리멤버 등) 이름이 아니다.',
+      },
       position: { type: 'string', description: '직무/포지션' },
       location: { type: 'string', description: '근무지' },
       employmentType: {
@@ -70,6 +74,9 @@ export class ClaudeService {
           role: 'user',
           content:
             '다음 채용 공고 본문에서 정보를 추출해 save_job_posting 도구로 저장해줘.\n\n' +
+            '[회사명]\n' +
+            '- companyName은 실제로 채용하는 회사(고용주)다. 공고가 게시된 채용 플랫폼/잡보드(원티드/wanted, 잡코리아, 사람인, 인크루트, 링크드인, 리멤버 등) 이름이나 사이트 UI 문구를 회사명으로 쓰지 마라.\n' +
+            '- "회사명:" 같은 라벨이 없으면 회사를 소개하는 문맥(예: "○○는 …를 운영하는 회사입니다", "○○에서 …를 채용합니다")에서 고용주명을 찾는다.\n\n' +
             '[전형 단계]\n' +
             '- "채용 절차/전형 절차/채용 프로세스" 전용 섹션이 있으면 그 단계를 순서대로 담는다.\n' +
             '- 전용 섹션이 없어도 본문에 "서류 ▶ 코테 ▶ 면접"처럼 ▶·→·- 로 나열된 절차가 있으면 그것을 단계로 쓴다.\n' +

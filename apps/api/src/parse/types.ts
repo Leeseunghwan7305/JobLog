@@ -60,6 +60,36 @@ function cleanStageName(name: string): string {
     .trim();
 }
 
+// 채용 플랫폼/잡보드 이름. 공고를 "게시한" 곳일 뿐 "채용하는 회사"가 아니므로
+// 모델이 이걸 companyName으로 돌려주면 비우고 사용자 보정을 유도한다(spec: AI는 초안).
+// 정확 일치(공백·대소문자 무시)만 막는다 — "원티드랩"처럼 플랫폼명을 포함한 실제 회사는 보존.
+const JOB_PLATFORMS = new Set([
+  '원티드',
+  'wanted',
+  '잡코리아',
+  'jobkorea',
+  '사람인',
+  'saramin',
+  '인크루트',
+  'incruit',
+  '링크드인',
+  'linkedin',
+  '리멤버',
+  'remember',
+  '로켓펀치',
+  'rocketpunch',
+  '점핏',
+  'jumpit',
+  '프로그래머스',
+  'programmers',
+]);
+
+/** companyName이 채용 플랫폼 이름이면 빈 문자열로(그 외엔 그대로). */
+function stripPlatformName(name: string): string {
+  const key = name.trim().toLowerCase().replace(/\s+/g, '');
+  return JOB_PLATFORMS.has(key) ? '' : name;
+}
+
 interface RawStage {
   name?: unknown;
   order?: unknown;
@@ -88,13 +118,18 @@ export function normalizeParsed(input: Record<string, unknown>): ParsedPosting {
           .sort((a, b) => a.sortKey - b.sortKey)
           .map((s, i) => ({ name: s.name, order: i }))
       : DEFAULT_STAGES;
+  const rawCompany = asString(input.companyName);
+  const companyName = stripPlatformName(rawCompany);
+  // 플랫폼명을 걷어냈다면(= 모델이 고용주를 못 집음) 사용자 보정을 유도한다.
+  const droppedPlatform = rawCompany !== '' && companyName === '';
   return {
-    companyName: asString(input.companyName),
+    companyName,
     position: asString(input.position),
     location: asStringOrNull(input.location),
     employmentType: asStringOrNull(input.employmentType),
     deadline: normalizeDeadline(input.deadline),
     stages,
-    confidence: input.confidence === 'high' ? 'high' : 'low',
+    confidence:
+      !droppedPlatform && input.confidence === 'high' ? 'high' : 'low',
   };
 }

@@ -75,3 +75,32 @@ test('stages: 기존 동작 유지 — order로 정렬 후 0-based 재매김', (
     { name: '최종', order: 1 },
   ]);
 });
+
+test('companyName: 채용 플랫폼 이름(원티드)은 회사명으로 쓰지 않고 비운다 + confidence low', () => {
+  const r = normalizeParsed({
+    companyName: '원티드',
+    position: '백엔드 개발자',
+    stages: [{ name: '서류', order: 0 }],
+    confidence: 'high',
+  });
+  assert.equal(r.companyName, ''); // 플랫폼명 → 비움(사용자 보정 유도)
+  assert.equal(r.confidence, 'low');
+});
+
+test('companyName: wanted/잡코리아/사람인 등도 플랫폼으로 간주(대소문자·공백 무시)', () => {
+  assert.equal(normalizeParsed({ companyName: 'Wanted' }).companyName, '');
+  assert.equal(normalizeParsed({ companyName: '잡코리아' }).companyName, '');
+  assert.equal(normalizeParsed({ companyName: ' 사람인 ' }).companyName, '');
+  assert.equal(normalizeParsed({ companyName: '사람 인' }).companyName, '');
+});
+
+test('companyName: 플랫폼명을 포함하는 실제 회사(원티드랩)는 보존한다', () => {
+  const r = normalizeParsed({
+    companyName: '원티드랩',
+    position: 'x',
+    stages: [{ name: '서류', order: 0 }],
+    confidence: 'high',
+  });
+  assert.equal(r.companyName, '원티드랩');
+  assert.equal(r.confidence, 'high');
+});
