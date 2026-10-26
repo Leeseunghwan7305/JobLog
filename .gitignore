@@ -29,3 +29,6 @@ coverage/
 
 # playwright MCP 스냅샷
 .playwright-mcp/
+
+# Claude 워크트리/런타임 아티팩트
+.claude/worktrees/
