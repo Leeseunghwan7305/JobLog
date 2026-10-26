@@ -1,0 +1,6 @@
+{
+  "//": "lint·typecheck용 — 테스트 파일까지 포함한다. (nest build는 tsconfig.json을 써서 테스트를 dist에서 제외)",
+  "extends": "./tsconfig.json",
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

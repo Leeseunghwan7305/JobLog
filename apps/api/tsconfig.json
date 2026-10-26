@@ -3,7 +3,10 @@
   "compilerOptions": {
     "baseUrl": "./",
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    // incremental 비활성: 공유 base가 켜두지만, nest build(deleteOutDir)가
+    // dist 밖 tsbuildinfo를 못 지워 emit을 건너뛰는 문제를 막는다(항상 산출물 생성).
+    "incremental": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]
