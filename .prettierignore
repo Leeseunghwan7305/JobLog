@@ -1,0 +1,17 @@
+# 빌드 산출물·생성물
+**/dist/**
+**/.next/**
+**/node_modules/**
+**/coverage/**
+pnpm-lock.yaml
+
+# Prisma 마이그레이션 SQL
+apps/api/prisma/migrations/**
+
+# 아이콘·바이너리
+**/*.png
+**/*.svg
+**/*.ico
+
+# eval 픽스처(원문 그대로 보존)
+apps/api/src/parse/eval/fixtures/*.input.txt

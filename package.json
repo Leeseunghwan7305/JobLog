@@ -7,10 +7,20 @@
     "dev": "pnpm --parallel --filter \"./apps/*\" run dev",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "pnpm -r --if-present lint",
+    "lint:fix": "pnpm -r --if-present lint:fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "parse:eval": "pnpm --filter @joblog/api parse:eval",
     "api": "pnpm --filter @joblog/api",
     "web": "pnpm --filter @joblog/web"
   },
   "devDependencies": {
+    "@joblog/prettier-config": "workspace:*",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.9",
     "typescript": "^5.6.3"
   }
 }

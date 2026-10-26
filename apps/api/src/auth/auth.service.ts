@@ -70,6 +70,10 @@ export class AuthService {
       redirect_uri: process.env.KAKAO_REDIRECT_URI ?? '',
       code,
     });
+    // 카카오 앱에서 Client Secret을 활성화한 경우 필수
+    if (process.env.KAKAO_CLIENT_SECRET) {
+      body.set('client_secret', process.env.KAKAO_CLIENT_SECRET);
+    }
     const res = await fetch('https://kauth.kakao.com/oauth/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },

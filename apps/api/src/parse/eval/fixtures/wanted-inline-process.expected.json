@@ -1,0 +1,16 @@
+{
+  "companyName": "원티드랩",
+  "position": "프론트엔드 개발자",
+  "location": "서울 송파구 올림픽로 300, 35층",
+  "employmentType": null,
+  "deadline": null,
+  "stages": [
+    { "name": "서류 전형", "order": 0 },
+    { "name": "사전 테스트", "order": 1 },
+    { "name": "1차 면접", "order": 2 },
+    { "name": "2차 면접", "order": 3 },
+    { "name": "레퍼런스 체크", "order": 4 },
+    { "name": "처우 협의", "order": 5 }
+  ],
+  "confidence": "high"
+}

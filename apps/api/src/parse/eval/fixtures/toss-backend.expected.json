@@ -1,0 +1,15 @@
+{
+  "companyName": "토스",
+  "position": "백엔드 엔지니어",
+  "location": "서울 강남구 테헤란로",
+  "employmentType": "정규직",
+  "deadline": null,
+  "stages": [
+    { "name": "서류", "order": 0 },
+    { "name": "사전 과제", "order": 1 },
+    { "name": "1차 실무 인터뷰", "order": 2 },
+    { "name": "2차 임원 인터뷰", "order": 3 },
+    { "name": "최종", "order": 4 }
+  ],
+  "confidence": "high"
+}

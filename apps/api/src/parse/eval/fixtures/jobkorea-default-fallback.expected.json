@@ -1,0 +1,13 @@
+{
+  "companyName": "딜리트",
+  "position": "백엔드 개발자",
+  "location": "경기 용인시 기흥구 공세로 150-20",
+  "employmentType": "정규직",
+  "deadline": "2026-01-30",
+  "stages": [
+    { "name": "서류", "order": 0 },
+    { "name": "면접", "order": 1 },
+    { "name": "최종", "order": 2 }
+  ],
+  "confidence": "low"
+}

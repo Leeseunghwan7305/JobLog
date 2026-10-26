@@ -55,9 +55,26 @@ pnpm --filter web dev     # 프론트 개발 서버
 pnpm --filter api dev     # 백엔드 개발 서버
 pnpm --filter api prisma migrate dev   # DB 마이그레이션
 pnpm --filter api prisma studio        # DB GUI
-pnpm lint                 # 린트
-pnpm test                 # 테스트
+pnpm test                 # 전체 테스트 (-r --if-present)
+pnpm typecheck            # 전체 타입체크
+pnpm parse:eval           # 파싱 품질 eval (아래 참고)
 ```
+
+## 하네스 / 검증 루프
+
+이 저장소는 에이전트가 스스로 수렴하도록 전용 하네스를 둔다. 작업할 때 이걸 신호로 쓴다.
+
+**검증 신호 (루프를 닫는 기준)**
+- `pnpm --filter @joblog/api typecheck` — `tsc --noEmit`. 결정적.
+- `pnpm --filter @joblog/api test` — `node --import tsx --test`로 순수 로직 테스트(`*.test.ts`). 네트워크 불필요.
+- `pnpm --filter @joblog/api parse:eval` — 공고 파싱 품질을 골든 대비 **필드 정확도로 채점**. API와 동일한 `LlmService`를 태운다. 자세히는 `apps/api/src/parse/eval/README.md`.
+
+**자동화 (`.claude/`)**
+- `settings.json` → **Stop 훅**이 `hooks/verify.sh`를 돌린다: api 소스가 바뀐 턴이면 typecheck+test가 통과해야 턴이 끝난다(실패 시 한 바퀴 더). 끄려면 해당 훅 제거.
+- `/joblog-task` 명령 — spec→task→테스트 우선 구현→검증→기록 흐름.
+- 서브에이전트 `parse-evaluator`(파싱 품질 리포트), `schema-guard`(타입↔스키마 동기화 점검).
+
+**원칙**: 파싱처럼 비결정적인 부분은 "정답 신호(eval)"로, 일반 코드는 typecheck+test로 루프를 닫는다. 파싱 프롬프트/스키마를 바꾸면 `fixtures/`에 실패 케이스를 추가해 회귀를 막는다.
 
 ## 컨벤션
 
