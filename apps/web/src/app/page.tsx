@@ -207,6 +207,9 @@ function Dashboard() {
           <span className="text-lg font-bold tracking-tight">JobLog</span>
         </div>
         <div className="flex items-center gap-4 text-sm">
+          <Link href="/calendar" className="text-slate-500 hover:text-brand">
+            캘린더
+          </Link>
           {me.data && (
             <span className="text-slate-500">{me.data.nickname}님</span>
           )}
