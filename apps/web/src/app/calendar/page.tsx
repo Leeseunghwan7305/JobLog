@@ -88,7 +88,9 @@ export default function CalendarPage() {
         </Link>
         <div className="flex items-center gap-4">
           <button
-            onClick={() => move(-1)}
+            onClick={() => {
+              move(-1);
+            }}
             className="rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100"
             aria-label="이전 달"
           >
@@ -98,7 +100,9 @@ export default function CalendarPage() {
             {cursor.y}년 {cursor.m + 1}월
           </h1>
           <button
-            onClick={() => move(1)}
+            onClick={() => {
+              move(1);
+            }}
             className="rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100"
             aria-label="다음 달"
           >
