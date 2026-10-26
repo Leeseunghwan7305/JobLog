@@ -5,10 +5,87 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import { getToken, clearToken } from '@/lib/auth';
+import {
+  getToken,
+  clearToken,
+  getPendingUrl,
+  clearPendingUrl,
+  setPendingUrl,
+} from '@/lib/auth';
 import { currentStageLabel } from '@/lib/stage';
 import type { ApplicationDto, DashboardStats, UserDto } from '@joblog/types';
 import AddJobModal from '@/components/AddJobModal';
+import LoginModal from '@/components/LoginModal';
+
+export default function Home() {
+  const [hasToken, setHasToken] = useState<boolean | null>(null);
+  useEffect(() => {
+    setHasToken(!!getToken());
+  }, []);
+
+  if (hasToken === null) return null; // SSR/하이드레이션 전
+  return hasToken ? <Dashboard /> : <Landing />;
+}
+
+/* ───────────────── 로그아웃 랜딩: URL 입력 → 로그인 유도 ───────────────── */
+
+function Landing() {
+  const [url, setUrl] = useState('');
+  const [showLogin, setShowLogin] = useState(false);
+
+  const start = () => {
+    const v = url.trim();
+    if (!v) return;
+    setPendingUrl(v); // 로그인 리다이렉트 너머로 URL 보존
+    setShowLogin(true);
+  };
+
+  return (
+    <main className="mx-auto grid min-h-screen max-w-2xl place-items-center px-6">
+      <div className="w-full text-center">
+        <div className="mx-auto mb-6 grid h-12 w-12 place-items-center rounded-2xl bg-brand text-xl font-bold text-white">
+          J
+        </div>
+        <h1 className="mb-3 text-3xl font-extrabold tracking-tight">
+          지원한 공고, <span className="text-brand">어디까지 왔는지</span>
+          <br />한 곳에서 추적하세요
+        </h1>
+        <p className="mb-8 text-slate-500">
+          공고 링크만 붙여넣으면 회사·직무·전형을 자동으로 정리해 드려요.
+        </p>
+
+        <div className="flex gap-2">
+          <input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && start()}
+            placeholder="채용 공고 링크를 붙여넣으세요"
+            className="flex-1 rounded-lg border border-slate-300 px-4 py-3"
+          />
+          <button
+            onClick={start}
+            className="rounded-lg bg-brand px-6 py-3 font-semibold text-white transition hover:bg-brand-ink"
+          >
+            분석
+          </button>
+        </div>
+        <p className="mt-3 text-xs text-slate-400">
+          이미 계정이 있으신가요?{' '}
+          <button
+            onClick={() => setShowLogin(true)}
+            className="text-brand hover:underline"
+          >
+            로그인
+          </button>
+        </p>
+      </div>
+
+      {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
+    </main>
+  );
+}
+
+/* ───────────────── 로그인 후 대시보드 ───────────────── */
 
 const COLUMNS = [
   { key: 'IN_PROGRESS', label: '진행중' },
@@ -30,36 +107,41 @@ function pillClass(status: ApplicationDto['status']): string {
   }
 }
 
-export default function Dashboard() {
+function Dashboard() {
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [addUrl, setAddUrl] = useState<string | undefined>(undefined);
 
+  // 로그인 유도 흐름에서 넘어온 URL이 있으면 분석 모달 자동 오픈
   useEffect(() => {
-    if (!getToken()) router.replace('/login');
-    else setReady(true);
-  }, [router]);
+    const pending = getPendingUrl();
+    if (pending) {
+      clearPendingUrl();
+      setAddUrl(pending);
+      setShowAdd(true);
+    }
+  }, []);
 
   const me = useQuery({
     queryKey: ['me'],
     queryFn: () => apiFetch<UserDto>('/auth/me'),
-    enabled: ready,
   });
   const apps = useQuery({
     queryKey: ['apps'],
     queryFn: () => apiFetch<ApplicationDto[]>('/applications'),
-    enabled: ready,
   });
   const stats = useQuery({
     queryKey: ['stats'],
     queryFn: () => apiFetch<DashboardStats>('/dashboard/stats'),
-    enabled: ready,
   });
-
-  if (!ready) return null;
 
   const grouped = (status: string) =>
     (apps.data ?? []).filter((a) => a.status === status);
+
+  const openAdd = () => {
+    setAddUrl(undefined);
+    setShowAdd(true);
+  };
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-8">
@@ -77,7 +159,8 @@ export default function Dashboard() {
           <button
             onClick={() => {
               clearToken();
-              router.replace('/login');
+              router.refresh();
+              window.location.href = '/';
             }}
             className="text-slate-400 hover:text-slate-700"
           >
@@ -94,7 +177,7 @@ export default function Dashboard() {
           <Stat label="불합격" value={stats.data?.rejected ?? 0} tone="red" />
         </div>
         <button
-          onClick={() => setShowAdd(true)}
+          onClick={openAdd}
           className="rounded-lg bg-brand px-4 py-2 font-semibold text-white transition hover:bg-brand-ink"
         >
           + 공고 추가
@@ -143,7 +226,15 @@ export default function Dashboard() {
         </div>
       )}
 
-      {showAdd && <AddJobModal onClose={() => setShowAdd(false)} />}
+      {showAdd && (
+        <AddJobModal
+          initialUrl={addUrl}
+          onClose={() => {
+            setShowAdd(false);
+            setAddUrl(undefined);
+          }}
+        />
+      )}
     </main>
   );
 }

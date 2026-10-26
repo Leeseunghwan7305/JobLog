@@ -17,7 +17,8 @@ const EXTRACT_TOOL = {
       },
       deadline: {
         type: 'string',
-        description: '지원 마감일 (YYYY-MM-DD). 없으면 생략',
+        description:
+          '지원 마감일. 반드시 YYYY-MM-DD로 정규화. 상시·수시채용 등 특정 마감일이 없으면 이 필드를 생략',
       },
       stages: {
         type: 'array',
@@ -26,7 +27,10 @@ const EXTRACT_TOOL = {
         items: {
           type: 'object',
           properties: {
-            name: { type: 'string' },
+            name: {
+              type: 'string',
+              description: '간결한 전형 단계명 (괄호 부연설명 제외). 예: "1차 면접"',
+            },
             order: { type: 'number' },
           },
           required: ['name', 'order'],
@@ -71,8 +75,16 @@ export class ClaudeService {
             {
               role: 'user',
               content:
-                '다음 채용 공고에서 회사명·직무·전형 단계·마감일을 추출해 save_job_posting 도구로 저장해줘. ' +
-                '전형 단계는 공고에 적힌 실제 명칭을 순서대로 담고, 명확히 찾지 못하면 기본값(서류 → 면접 → 최종)을 넣고 confidence를 "low"로 설정해.\n\n---\n' +
+                '다음 채용 공고 본문에서 정보를 추출해 save_job_posting 도구로 저장해줘.\n\n' +
+                '[전형 단계]\n' +
+                '- "채용 절차/전형 절차/채용 프로세스" 전용 섹션이 있으면 그 단계를 순서대로 담는다.\n' +
+                '- 전용 섹션이 없어도 본문에 "서류 ▶ 코테 ▶ 면접"처럼 ▶·→·- 로 나열된 절차가 있으면 그것을 단계로 쓴다.\n' +
+                '- 단계명은 간결하게: 괄호 부연("1차 면접(직무 적합성)"→"1차 면접")과 "(생략 가능)" 류 조건은 이름에서 뺀다.\n' +
+                '- 어디에서도 전형 절차를 못 찾으면 기본값(서류 → 면접 → 최종)을 넣고 confidence를 "low"로, 명확히 찾았으면 "high"로 설정한다.\n\n' +
+                '[마감일]\n' +
+                '- "2024.12.30", "2024년 12월 30일", "~ 1/30(금)" 등은 모두 YYYY-MM-DD로 변환한다(연도 미표기 시 올해 기준).\n' +
+                '- "상시채용/수시채용/채용시 마감"처럼 마감일이 특정되지 않으면 deadline을 생략한다.\n\n' +
+                '공고 본문:\n---\n' +
                 text.slice(0, 20000),
             },
           ],

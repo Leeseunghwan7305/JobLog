@@ -1,16 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import type { ParsedPosting, ParseResponse } from '@joblog/types';
 
 type Step = 'input' | 'manual' | 'draft';
 
-export default function AddJobModal({ onClose }: { onClose: () => void }) {
+export default function AddJobModal({
+  onClose,
+  initialUrl,
+}: {
+  onClose: () => void;
+  initialUrl?: string;
+}) {
   const qc = useQueryClient();
   const [step, setStep] = useState<Step>('input');
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState(initialUrl ?? '');
   const [rawText, setRawText] = useState('');
   const [notice, setNotice] = useState<string | undefined>();
   const [draft, setDraft] = useState<ParsedPosting | null>(null);
@@ -54,6 +60,16 @@ export default function AddJobModal({ onClose }: { onClose: () => void }) {
       onClose();
     },
   });
+
+  // 로그인 후 이어진 흐름: 저장해둔 URL로 분석 자동 시작 (1회만)
+  const autoRan = useRef(false);
+  useEffect(() => {
+    if (initialUrl && !autoRan.current) {
+      autoRan.current = true;
+      parse.mutate({ url: initialUrl });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const updateDraft = (patch: Partial<ParsedPosting>) =>
     setDraft((d) => (d ? { ...d, ...patch } : d));
