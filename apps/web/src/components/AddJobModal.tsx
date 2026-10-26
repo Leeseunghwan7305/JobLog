@@ -48,19 +48,25 @@ export default function AddJobModal({
   });
 
   const save = useMutation({
-    mutationFn: (d: ParsedPosting) =>
-      apiFetch('/applications', {
+    mutationFn: (d: ParsedPosting) => {
+      // 빈 전형명은 제외하고 순서 재부여 (빈 칩 생성 방지)
+      const stages = d.stages
+        .map((s) => s.name.trim())
+        .filter((name) => name.length > 0)
+        .map((name, i) => ({ name, order: i }));
+      return apiFetch('/applications', {
         method: 'POST',
         body: JSON.stringify({
-          companyName: d.companyName,
-          position: d.position,
+          companyName: d.companyName.trim(),
+          position: d.position.trim(),
           jobUrl: jobUrl || undefined,
           location: d.location ?? undefined,
           employmentType: d.employmentType ?? undefined,
           deadline: d.deadline ?? undefined,
-          stages: d.stages.map((s, i) => ({ name: s.name, order: i })),
+          stages,
         }),
-      }),
+      });
+    },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['apps'] });
       void qc.invalidateQueries({ queryKey: ['stats'] });

@@ -21,6 +21,7 @@ import {
   getToken,
   setPendingUrl,
 } from '@/lib/auth';
+import { DEADLINE_TONE_CLASS, deadlineInfo } from '@/lib/date';
 import {
   currentStageLabel,
   STAGE_STATUS_CLASS,
@@ -136,6 +137,17 @@ function StageTrack({ stages }: { stages: StageDto[] }) {
   );
 }
 
+/** 마감일 D-day 라벨 (없으면 렌더 안 함) */
+function Deadline({ iso }: { iso: string | null }) {
+  const info = deadlineInfo(iso);
+  if (!info) return null;
+  return (
+    <div className={`mt-2 text-xs font-medium ${DEADLINE_TONE_CLASS[info.tone]}`}>
+      {info.text}
+    </div>
+  );
+}
+
 function pillClass(status: ApplicationDto['status']): string {
   switch (status) {
     case 'OFFER':
@@ -228,6 +240,22 @@ function Dashboard() {
 
       {apps.isLoading ? (
         <p className="text-slate-400">불러오는 중…</p>
+      ) : (apps.data?.length ?? 0) === 0 ? (
+        <div className="mt-16 flex flex-col items-center gap-4 text-center">
+          <div className="text-5xl">📋</div>
+          <div>
+            <p className="text-lg font-bold">아직 등록한 공고가 없어요</p>
+            <p className="mt-1 text-sm text-slate-500">
+              채용 공고 링크를 붙여넣으면 전형까지 자동으로 정리해 드려요.
+            </p>
+          </div>
+          <button
+            onClick={openAdd}
+            className="rounded-lg bg-brand px-5 py-2.5 font-semibold text-white transition hover:bg-brand-ink"
+          >
+            + 첫 공고 추가하기
+          </button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           {COLUMNS.map((col) => {
@@ -255,6 +283,7 @@ function Dashboard() {
                         {currentStageLabel(app)}
                       </span>
                       <StageTrack stages={app.stages} />
+                      <Deadline iso={app.deadline} />
                     </Link>
                   ))}
                   {items.length === 0 && (

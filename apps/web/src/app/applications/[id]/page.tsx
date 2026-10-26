@@ -12,6 +12,7 @@ import { use, useEffect, useState } from 'react';
 
 import { apiFetch } from '@/lib/api';
 import { getToken } from '@/lib/auth';
+import { DEADLINE_TONE_CLASS, deadlineInfo } from '@/lib/date';
 import { STAGE_STATUS_CLASS, STAGE_STATUS_LABEL } from '@/lib/stage';
 
 const STATUSES: StageStatus[] = ['PENDING', 'IN_PROGRESS', 'PASSED', 'FAILED'];
@@ -112,6 +113,16 @@ export default function ApplicationDetail({
             {a.companyName}
           </h1>
           <p className="text-slate-500">{a.position}</p>
+          {(() => {
+            const info = deadlineInfo(a.deadline);
+            return info ? (
+              <p
+                className={`mt-1 text-sm font-medium ${DEADLINE_TONE_CLASS[info.tone]}`}
+              >
+                {info.text}
+              </p>
+            ) : null;
+          })()}
         </div>
         <button
           onClick={() => {
