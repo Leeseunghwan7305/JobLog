@@ -201,22 +201,29 @@ export default function ApplicationDetail({
           기업 후기
         </h2>
         <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
-          {reviews.data?.rating != null ? (
-            <span className="font-semibold">★ {reviews.data.rating}</span>
-          ) : (
-            <span className="text-slate-500">
-              평점 정보를 바로 가져올 수 없어요.
-            </span>
-          )}
-          {reviews.data?.sourceUrl && (
-            <a
-              href={reviews.data.sourceUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="ml-2 text-brand hover:underline"
-            >
-              잡플래닛에서 보기 ↗
-            </a>
+          <div className="flex items-center gap-2">
+            {reviews.data?.rating != null ? (
+              <span className="font-semibold text-amber-600">
+                ★ {reviews.data.rating.toFixed(1)}
+              </span>
+            ) : (
+              <span className="text-slate-500">
+                평점 정보를 바로 가져올 수 없어요.
+              </span>
+            )}
+            {reviews.data?.sourceUrl && (
+              <a
+                href={reviews.data.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-brand hover:underline"
+              >
+                잡플래닛에서 보기 ↗
+              </a>
+            )}
+          </div>
+          {reviews.data?.summary && (
+            <p className="mt-2 text-slate-600">“{reviews.data.summary}”</p>
           )}
         </div>
       </section>
