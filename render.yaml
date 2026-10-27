@@ -14,12 +14,14 @@ services:
       - key: ANTHROPIC_MODEL
         value: claude-haiku-4-5 # 비용 최소화 (opus 대비 1/5~1/25)
       - key: NOTIFY_DAYS_AHEAD
-        value: "3"
+        value: '3'
       - key: MAIL_FROM
         value: JobLog <onboarding@resend.dev>
       # 아래는 비밀/도메인 값 → Render 대시보드에서 입력 (sync:false = blueprint에 저장 안 함)
       - key: DATABASE_URL
-        sync: false
+        sync: false # Neon pooled (-pooler) — 런타임
+      - key: DATABASE_URL_UNPOOLED
+        sync: false # Neon direct — prisma migrate deploy용
       - key: JWT_ACCESS_SECRET
         sync: false
       - key: JWT_REFRESH_SECRET
