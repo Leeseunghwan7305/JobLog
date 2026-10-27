@@ -147,7 +147,8 @@ interface ParsedPosting {
 | PATCH  | `/applications/:id/stages/:stageId` |  ✓   | 단계 상태·일정 갱신 → 전체 상태 재계산 |
 | POST   | `/applications/:id/stages`          |  ✓   | 단계 추가                              |
 | DELETE | `/applications/:id/stages/:stageId` |  ✓   | 단계 삭제                              |
-| GET    | `/companies/reviews?name=`          |  ✓   | 기업 후기 평점·요약 (M4, best-effort)  |
+| GET    | `/companies/reviews?name=`          |  -   | 기업 후기 평점·요약 (M4, best-effort)  |
+| GET    | `/companies/profile?name=`          |  ✓   | 회사 통합 프로필: 국민연금 지표+후기+바로가기 (M4) |
 | GET    | `/calendar?from=&to=`               |  ✓   | 마감·단계 예정일을 이벤트로 집계 (M4)  |
 | POST   | `/notifications/run`                |  ✓   | 알림 수동 트리거 (dev 전용, 운영 404)  |
 | GET    | `/dashboard/stats`                  |  ✓   | 지원 수·진행중·합격·탈락 통계          |
