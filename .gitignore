@@ -32,3 +32,8 @@ coverage/
 
 # Claude 워크트리/런타임 아티팩트
 .claude/worktrees/
+.mcp.json
+.neon
+
+# Neon 스킬 문서(재생성 가능: neon skills)
+.claude/skills/
