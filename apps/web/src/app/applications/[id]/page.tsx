@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { apiFetch } from '@/lib/api';
 import { getToken } from '@/lib/auth';
+import { rememberCompanySize } from '@/lib/company-size';
 import { DEADLINE_TONE_CLASS, deadlineInfo } from '@/lib/date';
 import { STAGE_STATUS_CLASS, STAGE_STATUS_LABEL } from '@/lib/stage';
 import { externalHref } from '@/lib/url';
@@ -115,6 +116,13 @@ export default function ApplicationDetail({
       router.replace('/');
     },
   });
+
+  // 조회된 회사규모(NPS 가입자수)를 로컬에 기억 → 대시보드 목록 카드 뱃지에 사용.
+  useEffect(() => {
+    const name = app.data?.companyName;
+    const size = profile.data?.nps?.memberCount;
+    if (name && size) rememberCompanySize(name, size);
+  }, [app.data?.companyName, profile.data?.nps?.memberCount]);
 
   if (!ready) return null;
   if (app.isLoading)

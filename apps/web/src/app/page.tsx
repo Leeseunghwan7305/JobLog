@@ -23,6 +23,7 @@ import {
   getToken,
   setPendingUrl,
 } from '@/lib/auth';
+import { getCompanySize } from '@/lib/company-size';
 import { DEADLINE_TONE_CLASS, deadlineInfo } from '@/lib/date';
 import {
   currentStageLabel,
@@ -188,6 +189,17 @@ function Dashboard() {
     queryKey: ['apps'],
     queryFn: () => apiFetch<ApplicationDto[]>('/applications'),
   });
+  // 상세에서 조회해 캐시해둔 회사규모를 목록 카드 뱃지로 표시(브라우저 로컬, 점진적).
+  const [sizes, setSizes] = useState<Record<string, number>>({});
+  useEffect(() => {
+    const map: Record<string, number> = {};
+    for (const a of apps.data ?? []) {
+      const s = getCompanySize(a.companyName);
+      if (s) map[a.companyName] = s;
+    }
+    setSizes(map);
+  }, [apps.data]);
+
   const stats = useQuery({
     queryKey: ['stats'],
     queryFn: () => apiFetch<DashboardStats>('/dashboard/stats'),
@@ -304,7 +316,14 @@ function Dashboard() {
                       href={`/applications/${app.id}`}
                       className="block rounded-xl border border-border bg-card p-3 transition duration-300 animate-in fade-in slide-in-from-bottom-1 hover:border-ring hover:shadow-sm"
                     >
-                      <div className="font-bold">{app.companyName}</div>
+                      <div className="flex items-center gap-1.5 font-bold">
+                        <span>{app.companyName}</span>
+                        {sizes[app.companyName] ? (
+                          <span className="rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                            {sizes[app.companyName].toLocaleString()}명
+                          </span>
+                        ) : null}
+                      </div>
                       <div className="text-sm text-muted-foreground">
                         {app.position}
                       </div>
