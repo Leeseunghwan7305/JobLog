@@ -253,6 +253,12 @@ function Dashboard() {
             {showArchived ? '← 대시보드' : '보관함'}
           </button>
           <Link
+            href="/profile"
+            className="text-muted-foreground hover:text-primary"
+          >
+            이력서
+          </Link>
+          <Link
             href="/calendar"
             className="text-muted-foreground hover:text-primary"
           >

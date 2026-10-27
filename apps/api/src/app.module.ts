@@ -8,6 +8,7 @@ import { CompaniesModule } from './companies/companies.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ParseModule } from './parse/parse.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { ProfileModule } from './profile/profile.module';
 import { SupportModule } from './support/support.module';
 
 @Module({
@@ -21,6 +22,7 @@ import { SupportModule } from './support/support.module';
     CompaniesModule,
     NotificationsModule,
     SupportModule,
+    ProfileModule,
   ],
 })
 export class AppModule {}

@@ -50,8 +50,16 @@ export interface ParsedPosting {
   confidence: 'high' | 'low';
 }
 
+export interface ResumeStatus {
+  hasResume: boolean;
+  resumeFilename: string | null;
+  resumeUpdatedAt: string | null; // ISO
+}
+
 export interface ParseResponse {
   draft: ParsedPosting;
+  /** 공고 원문 텍스트(핏 분석 입력용). 수집/붙여넣기 본문. */
+  rawText?: string;
   /** 링크 수집 실패 등으로 본문 붙여넣기가 필요한 경우 true */
   needsManualInput: boolean;
   /** 사용자에게 보여줄 안내 메시지 (폴백/저신뢰 상황) */

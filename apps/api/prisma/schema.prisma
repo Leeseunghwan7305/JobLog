@@ -15,6 +15,10 @@ model User {
   email        String?
   nickname     String
   profileImage String?
+  // 이력서(핏 분석 입력). PDF 업로드 시 텍스트만 추출해 저장.
+  resumeText      String?   @db.Text
+  resumeFilename  String?
+  resumeUpdatedAt DateTime?
   applications Application[]
   createdAt    DateTime      @default(now())
 }

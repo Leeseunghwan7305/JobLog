@@ -57,6 +57,7 @@ export class ParseService {
       return {
         draft: this.emptyDraft(dto.url),
         needsManualInput: false,
+        rawText: text.slice(0, 20000),
         notice: this.llm.enabled
           ? '자동 분석에 실패했어요. 내용을 직접 확인하고 채워 주세요.'
           : 'AI 분석이 꺼져 있어 기본 양식을 제공해요. 직접 채워 주세요.',
@@ -66,6 +67,7 @@ export class ParseService {
     return {
       draft: parsed,
       needsManualInput: false,
+      rawText: text.slice(0, 20000),
       notice:
         parsed.confidence === 'low'
           ? '일부 항목을 확실히 추출하지 못했어요. 확인 후 수정해 주세요.'

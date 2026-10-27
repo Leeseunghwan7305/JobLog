@@ -34,6 +34,8 @@ export default function AddJobModal({
   const [rawText, setRawText] = useState('');
   const [notice, setNotice] = useState<string | undefined>();
   const [draft, setDraft] = useState<ParsedPosting | null>(null);
+  // 공고 원문(핏 분석 입력). 분석 응답의 rawText를 보관해 생성 시 rawPosting으로 저장.
+  const [rawPosting, setRawPosting] = useState('');
   const [jobUrl, setJobUrl] = useState('');
   // 지원일: 공고엔 없는 값이라 등록 시점에 채운다. 기본 오늘, 수정 가능.
   const [appliedAt, setAppliedAt] = useState<string>(todayLocalISO);
@@ -58,6 +60,7 @@ export default function AddJobModal({
         setStep('manual');
       } else {
         setDraft(res.draft);
+        setRawPosting(res.rawText ?? '');
         setStep('draft');
       }
     },
@@ -80,6 +83,7 @@ export default function AddJobModal({
           employmentType: d.employmentType ?? undefined,
           deadline: d.deadline ?? undefined,
           appliedAt: appliedAt || undefined,
+          rawPosting: rawPosting || undefined,
           stages,
         }),
       });
