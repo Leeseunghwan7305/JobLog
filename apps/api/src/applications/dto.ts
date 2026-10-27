@@ -22,6 +22,7 @@ export class CreateApplicationDto {
   @IsOptional() @IsString() employmentType?: string;
   @IsOptional() @IsString() deadline?: string;
   @IsOptional() @IsString() appliedAt?: string;
+  @IsOptional() @IsInt() employeeCount?: number;
   @IsOptional() @IsString() memo?: string;
 
   @IsArray()
@@ -38,6 +39,7 @@ export class UpdateApplicationDto {
   @IsOptional() @IsString() employmentType?: string;
   @IsOptional() @IsString() deadline?: string;
   @IsOptional() @IsString() appliedAt?: string;
+  @IsOptional() @IsInt() employeeCount?: number;
   @IsOptional() @IsString() memo?: string;
   @IsOptional()
   @IsIn(['IN_PROGRESS', 'OFFER', 'REJECTED', 'CLOSED'])

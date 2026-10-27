@@ -11,6 +11,7 @@ import {
   UpdateApplicationDto,
   UpdateStageDto,
 } from './dto';
+import { computeInsights } from './insights.util';
 import { deriveStatus } from './status.util';
 
 const withStages = { stages: { orderBy: { order: 'asc' as const } } };
@@ -35,6 +36,7 @@ export class ApplicationsService {
         appliedAt: dto.appliedAt
           ? parseDateStrict(dto.appliedAt, '지원일')
           : null,
+        employeeCount: dto.employeeCount ?? null,
         memo: dto.memo,
         stages: {
           create: dto.stages.map((s, i) => {
@@ -92,6 +94,7 @@ export class ApplicationsService {
         appliedAt: dto.appliedAt
           ? parseDateStrict(dto.appliedAt, '지원일')
           : undefined,
+        employeeCount: dto.employeeCount,
         memo: dto.memo,
         status: dto.status ? (dto.status as AppStatus) : undefined,
       },
@@ -178,6 +181,14 @@ export class ApplicationsService {
       offer: apps.filter((a) => a.status === 'OFFER').length,
       rejected: apps.filter((a) => a.status === 'REJECTED').length,
     };
+  }
+
+  async insights(userId: string) {
+    const apps = await this.prisma.application.findMany({
+      where: { userId },
+      select: { status: true, stages: { select: { name: true, status: true } } },
+    });
+    return computeInsights(apps);
   }
 
   async calendar(

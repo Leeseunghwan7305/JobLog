@@ -2,6 +2,7 @@
 
 import type {
   ApplicationDto,
+  DashboardInsights,
   DashboardStats,
   StageDto,
   UserDto,
@@ -23,7 +24,6 @@ import {
   getToken,
   setPendingUrl,
 } from '@/lib/auth';
-import { getCompanySize } from '@/lib/company-size';
 import { DEADLINE_TONE_CLASS, deadlineInfo } from '@/lib/date';
 import {
   currentStageLabel,
@@ -189,20 +189,14 @@ function Dashboard() {
     queryKey: ['apps'],
     queryFn: () => apiFetch<ApplicationDto[]>('/applications'),
   });
-  // 상세에서 조회해 캐시해둔 회사규모를 목록 카드 뱃지로 표시(브라우저 로컬, 점진적).
-  const [sizes, setSizes] = useState<Record<string, number>>({});
-  useEffect(() => {
-    const map: Record<string, number> = {};
-    for (const a of apps.data ?? []) {
-      const s = getCompanySize(a.companyName);
-      if (s) map[a.companyName] = s;
-    }
-    setSizes(map);
-  }, [apps.data]);
-
   const stats = useQuery({
     queryKey: ['stats'],
     queryFn: () => apiFetch<DashboardStats>('/dashboard/stats'),
+  });
+
+  const insights = useQuery({
+    queryKey: ['insights'],
+    queryFn: () => apiFetch<DashboardInsights>('/dashboard/insights'),
   });
 
   const grouped = (status: string) =>
@@ -263,6 +257,10 @@ function Dashboard() {
         </button>
       </div>
 
+      {(apps.data?.length ?? 0) > 0 && insights.data && (
+        <InsightsPanel data={insights.data} />
+      )}
+
       {apps.isLoading ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           {COLUMNS.map((col) => (
@@ -318,9 +316,9 @@ function Dashboard() {
                     >
                       <div className="flex items-center gap-1.5 font-bold">
                         <span>{app.companyName}</span>
-                        {sizes[app.companyName] ? (
+                        {app.employeeCount ? (
                           <span className="rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
-                            {sizes[app.companyName].toLocaleString()}명
+                            {app.employeeCount.toLocaleString()}명
                           </span>
                         ) : null}
                       </div>
@@ -381,5 +379,69 @@ function Stat({
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className={`text-xl font-bold tabular-nums ${color}`}>{value}</div>
     </div>
+  );
+}
+
+function InsightsPanel({ data }: { data: DashboardInsights }) {
+  const pct = (r: number | null) => (r === null ? null : Math.round(r * 100));
+  const offer = pct(data.offerRate);
+  // 합격·불합격이 기록된(결정분이 있는) 전형만, 등장 빈도순 상위 6개
+  const stageRows = data.stages.filter((s) => s.passRate !== null).slice(0, 6);
+
+  return (
+    <section className="mb-6 rounded-xl border border-border bg-card p-4">
+      <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        인사이트
+      </div>
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-[auto_1fr]">
+        <div className="flex flex-col justify-center sm:border-r sm:border-border sm:pr-6">
+          <div className="text-xs text-muted-foreground">합격률</div>
+          {offer === null ? (
+            <div className="mt-1 text-sm text-muted-foreground">
+              아직 결론 난 지원이 없어요
+            </div>
+          ) : (
+            <>
+              <div className="text-3xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                {offer}%
+              </div>
+              <div className="mt-0.5 text-xs text-muted-foreground">
+                결론 {data.decided}건 중 {data.offer}건 합격
+              </div>
+            </>
+          )}
+        </div>
+        <div>
+          <div className="mb-2 text-xs text-muted-foreground">전형별 통과율</div>
+          {stageRows.length === 0 ? (
+            <div className="text-sm text-muted-foreground">
+              합격·불합격이 기록된 전형이 아직 없어요
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {stageRows.map((s) => {
+                const p = pct(s.passRate) ?? 0;
+                return (
+                  <div key={s.name} className="flex items-center gap-3 text-sm">
+                    <span className="w-24 shrink-0 truncate" title={s.name}>
+                      {s.name}
+                    </span>
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-emerald-500 transition-all"
+                        style={{ width: `${p}%` }}
+                      />
+                    </div>
+                    <span className="w-20 shrink-0 text-right tabular-nums text-muted-foreground">
+                      {p}% · {s.passed}/{s.passed + s.failed}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }

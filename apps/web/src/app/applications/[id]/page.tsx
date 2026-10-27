@@ -16,7 +16,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { apiFetch } from '@/lib/api';
 import { getToken } from '@/lib/auth';
-import { rememberCompanySize } from '@/lib/company-size';
 import { DEADLINE_TONE_CLASS, deadlineInfo } from '@/lib/date';
 import { STAGE_STATUS_CLASS, STAGE_STATUS_LABEL } from '@/lib/stage';
 import { externalHref } from '@/lib/url';
@@ -117,12 +116,29 @@ export default function ApplicationDetail({
     },
   });
 
-  // 조회된 회사규모(NPS 가입자수)를 로컬에 기억 → 대시보드 목록 카드 뱃지에 사용.
+  // 조회된 회사규모(NPS 가입자수)를 지원에 스냅샷 저장 → 목록·다른 기기에서도 일관.
+  const saveSize = useMutation({
+    mutationFn: (employeeCount: number) =>
+      apiFetch(`/applications/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ employeeCount }),
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['app', id] });
+      void qc.invalidateQueries({ queryKey: ['apps'] });
+    },
+  });
+  const npsSize = profile.data?.nps?.memberCount ?? null;
   useEffect(() => {
-    const name = app.data?.companyName;
-    const size = profile.data?.nps?.memberCount;
-    if (name && size) rememberCompanySize(name, size);
-  }, [app.data?.companyName, profile.data?.nps?.memberCount]);
+    if (
+      npsSize &&
+      app.data &&
+      app.data.employeeCount !== npsSize &&
+      !saveSize.isPending
+    ) {
+      saveSize.mutate(npsSize);
+    }
+  }, [npsSize, app.data, saveSize]);
 
   if (!ready) return null;
   if (app.isLoading)
@@ -142,8 +158,8 @@ export default function ApplicationDetail({
     return <main className="p-8 text-muted-foreground">찾을 수 없어요.</main>;
 
   const a = app.data;
-  // 회사규모 ≈ 국민연금 가입자수(직원수 근사). 공고가 아니라 NPS에서 가져온다.
-  const companySize = profile.data?.nps?.memberCount ?? null;
+  // 회사규모 ≈ 국민연금 가입자수(직원수 근사). 저장된 스냅샷 우선, 없으면 방금 조회한 값.
+  const companySize = a.employeeCount ?? npsSize;
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-8">

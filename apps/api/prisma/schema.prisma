@@ -37,6 +37,7 @@ model Application {
   stages         Stage[]
   logs           StatusLog[]
   appliedAt      DateTime?
+  employeeCount  Int? // 회사규모 스냅샷(국민연금 가입자수≈직원수). 상세 조회 시 저장.
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 

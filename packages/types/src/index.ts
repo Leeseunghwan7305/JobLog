@@ -28,6 +28,7 @@ export interface ApplicationDto {
   employmentType: string | null;
   deadline: string | null;
   appliedAt: string | null;
+  employeeCount: number | null;
   memo: string | null;
   status: AppStatus;
   stages: StageDto[];
@@ -112,6 +113,36 @@ export interface DashboardStats {
   inProgress: number;
   offer: number;
   rejected: number;
+}
+
+/** 전형 단계명 하나에 대한 통과율 집계. */
+export interface StageInsight {
+  /** 단계 이름 (trim된 자유 문자열, 예: "서류", "1차 면접"). */
+  name: string;
+  /** 이 이름의 단계가 전체 지원에서 등장한 횟수. */
+  total: number;
+  passed: number;
+  failed: number;
+  /** 아직 결정되지 않은 단계 수 (PENDING + IN_PROGRESS). */
+  undecided: number;
+  /** passed / (passed + failed). 결정된 단계가 없으면 null. */
+  passRate: number | null;
+}
+
+/** 합격률·전형별 통과율 인사이트. GET /dashboard/insights */
+export interface DashboardInsights {
+  total: number;
+  offer: number;
+  rejected: number;
+  inProgress: number;
+  /** 사용자가 철회(CLOSED)한 지원 수. 합격률 계산에서는 제외. */
+  closed: number;
+  /** 결론이 난 지원 수 (offer + rejected). */
+  decided: number;
+  /** offer / decided. 결론 난 지원이 없으면 null. */
+  offerRate: number | null;
+  /** 등장 횟수 내림차순, 동률이면 이름 오름차순. */
+  stages: StageInsight[];
 }
 
 /** 개발자에게 문의하기 — 폼이 보내는 입력. */
