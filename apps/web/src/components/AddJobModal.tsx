@@ -4,6 +4,7 @@ import type { ParsedPosting, ParseResponse } from '@joblog/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 
+import { Spinner } from '@/components/ui/spinner';
 import { apiFetch } from '@/lib/api';
 
 type Step = 'input' | 'manual' | 'draft';
@@ -325,7 +326,13 @@ export default function AddJobModal({
                     save.mutate(draft);
                   }}
                 >
-                  {save.isPending ? '저장 중…' : '저장'}
+                  {save.isPending ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Spinner className="h-4 w-4" /> 저장 중…
+                    </span>
+                  ) : (
+                    '저장'
+                  )}
                 </PrimaryButton>
               </div>
             )}

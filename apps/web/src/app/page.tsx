@@ -235,7 +235,9 @@ function Dashboard() {
       </header>
 
       <div className="mb-6 flex items-center justify-between">
-        <div className="flex gap-3">
+        <div
+          className={`flex gap-3 ${stats.isLoading ? 'motion-safe:animate-pulse' : ''}`}
+        >
           <Stat label="전체" value={stats.data?.total ?? 0} />
           <Stat label="진행중" value={stats.data?.inProgress ?? 0} />
           <Stat label="합격" value={stats.data?.offer ?? 0} tone="emerald" />

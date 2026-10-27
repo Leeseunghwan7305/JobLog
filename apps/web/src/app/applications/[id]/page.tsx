@@ -13,6 +13,7 @@ import { use, useEffect, useState } from 'react';
 
 import ThemeToggle from '@/components/ThemeToggle';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Spinner } from '@/components/ui/spinner';
 import { apiFetch } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { DEADLINE_TONE_CLASS, deadlineInfo } from '@/lib/date';
@@ -163,11 +164,13 @@ export default function ApplicationDetail({
           })()}
         </div>
         <button
+          disabled={remove.isPending}
           onClick={() => {
             if (confirm('이 지원을 삭제할까요?')) remove.mutate();
           }}
-          className="text-sm text-muted-foreground hover:text-red-500 dark:hover:text-red-400"
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-red-500 disabled:opacity-60 dark:hover:text-red-400"
         >
+          {remove.isPending && <Spinner className="h-3 w-3" />}
           삭제
         </button>
       </div>
@@ -255,6 +258,11 @@ export default function ApplicationDetail({
                 placeholder="회사명으로 검색"
                 className="w-full rounded-md border border-border bg-background px-2 py-1 text-foreground"
               />
+              {!selectedSeq && candidates.isFetching && (
+                <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                  <Spinner className="h-3 w-3" /> 검색 중…
+                </p>
+              )}
               {!selectedSeq && candidates.data && candidates.data.length > 0 && (
                 <ul className="mt-2 flex flex-col gap-1">
                   {candidates.data.slice(0, 8).map((c) => (

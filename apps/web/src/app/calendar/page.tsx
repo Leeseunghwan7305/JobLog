@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 import ThemeToggle from '@/components/ThemeToggle';
+import { Spinner } from '@/components/ui/spinner';
 import { apiFetch } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { STAGE_STATUS_CLASS } from '@/lib/stage';
@@ -170,7 +171,9 @@ export default function CalendarPage() {
       </div>
 
       {events.isLoading && (
-        <p className="mt-4 text-sm text-muted-foreground">불러오는 중…</p>
+        <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+          <Spinner /> 불러오는 중…
+        </p>
       )}
       <p className="mt-4 text-xs text-muted-foreground">
         <span className="mr-3">
