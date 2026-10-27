@@ -22,6 +22,7 @@ function makeApp(
     employmentType: null,
     deadline: null,
     appliedAt: null,
+    employeeCount: null,
     memo: null,
     status,
     stages: stages.map((s, i) => ({

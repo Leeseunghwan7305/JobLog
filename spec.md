@@ -152,6 +152,7 @@ interface ParsedPosting {
 | GET    | `/calendar?from=&to=`               |  ✓   | 마감·단계 예정일을 이벤트로 집계 (M4)  |
 | POST   | `/notifications/run`                |  ✓   | 알림 수동 트리거 (dev 전용, 운영 404)  |
 | GET    | `/dashboard/stats`                  |  ✓   | 지원 수·진행중·합격·탈락 통계          |
+| GET    | `/dashboard/insights`               |  ✓   | 합격률(결론 대비)·전형명별 통과율 인사이트 (M4) |
 
 ### 5.1 주요 DTO (요약)
 

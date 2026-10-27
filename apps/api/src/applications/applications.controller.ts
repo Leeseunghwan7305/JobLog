@@ -30,6 +30,11 @@ export class ApplicationsController {
     return this.svc.stats(userId);
   }
 
+  @Get('dashboard/insights')
+  insights(@CurrentUser() userId: string) {
+    return this.svc.insights(userId);
+  }
+
   @Get('calendar')
   calendar(
     @CurrentUser() userId: string,
