@@ -3,6 +3,7 @@
 import type {
   ApplicationDto,
   CompanyProfileDto,
+  CompanySearchResult,
   StageStatus,
 } from '@joblog/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -41,12 +42,27 @@ export default function ApplicationDetail({
   });
 
   const [showCompany, setShowCompany] = useState(false);
+  const [companyQuery, setCompanyQuery] = useState('');
+  const [selectedSeq, setSelectedSeq] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (app.data?.companyName) setCompanyQuery(app.data.companyName);
+  }, [app.data?.companyName]);
+
+  const candidates = useQuery({
+    queryKey: ['company-search', companyQuery],
+    queryFn: () =>
+      apiFetch<CompanySearchResult[]>(
+        `/companies/search?name=${encodeURIComponent(companyQuery)}`,
+      ),
+    enabled: showCompany && companyQuery.length > 0 && !selectedSeq,
+  });
 
   const profile = useQuery({
-    queryKey: ['company-profile', app.data?.companyName],
+    queryKey: ['company-profile', app.data?.companyName, selectedSeq],
     queryFn: () =>
       apiFetch<CompanyProfileDto>(
-        `/companies/profile?name=${encodeURIComponent(app.data?.companyName ?? '')}`,
+        `/companies/profile?name=${encodeURIComponent(app.data?.companyName ?? '')}${selectedSeq ? `&seq=${encodeURIComponent(selectedSeq)}` : ''}`,
       ),
     enabled: showCompany && !!app.data?.companyName,
   });
@@ -228,39 +244,117 @@ export default function ApplicationDetail({
 
         {showCompany && (
           <div className="space-y-4 rounded-xl border border-border bg-card px-4 py-3 text-sm">
+            <div>
+              <input
+                value={companyQuery}
+                onChange={(e) => {
+                  setCompanyQuery(e.target.value);
+                  setSelectedSeq(null);
+                }}
+                placeholder="회사명으로 검색"
+                className="w-full rounded-md border border-border bg-background px-2 py-1 text-foreground"
+              />
+              {!selectedSeq && candidates.data && candidates.data.length > 0 && (
+                <ul className="mt-2 flex flex-col gap-1">
+                  {candidates.data.slice(0, 8).map((c) => (
+                    <li key={c.seq}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedSeq(c.seq);
+                        }}
+                        className="w-full rounded-md border border-border px-2 py-1 text-left hover:bg-muted"
+                      >
+                        <span className="font-medium text-foreground">
+                          {c.name}
+                        </span>
+                        {c.region && (
+                          <span className="text-muted-foreground">
+                            {' '}
+                            · {c.region}
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
             {profile.isLoading && <Skeleton className="h-16 w-full" />}
 
-            {profile.data?.nps && (
-              <div>
-                <h3 className="font-semibold text-foreground">
-                  국민연금 공개데이터
-                </h3>
-                <ul className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 text-muted-foreground">
-                  <li>직원 수: {profile.data.nps.memberCount}명</li>
-                  {profile.data.nps.estimatedAnnualSalaryManwon != null && (
-                    <li>
-                      추정 평균연봉:{' '}
-                      {profile.data.nps.estimatedAnnualSalaryManwon}만원
-                    </li>
-                  )}
-                  {profile.data.nps.newThisMonth != null && (
-                    <li>당월 입사: {profile.data.nps.newThisMonth}명</li>
-                  )}
-                  {profile.data.nps.lostThisMonth != null && (
-                    <li>당월 퇴사: {profile.data.nps.lostThisMonth}명</li>
-                  )}
-                  {profile.data.nps.industry && (
-                    <li>업종: {profile.data.nps.industry}</li>
-                  )}
-                  {profile.data.nps.region && (
-                    <li>지역: {profile.data.nps.region}</li>
-                  )}
-                </ul>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  국민연금 가입사업장 공개데이터 기반 추정
-                  {profile.data.nps.dataYm ? ` · ${profile.data.nps.dataYm}` : ''}
-                </p>
-              </div>
+            {profile.data?.nps &&
+              (() => {
+                const nps = profile.data.nps;
+                const maxMembers = Math.max(
+                  ...nps.trend.map((m) => m.memberCount),
+                  1,
+                );
+                return (
+                  <div>
+                    <h3 className="font-semibold text-foreground">
+                      국민연금 공개데이터
+                    </h3>
+                    <ul className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 text-muted-foreground">
+                      <li>직원 수: {nps.memberCount}명</li>
+                      {nps.estimatedAnnualSalaryManwon != null && (
+                        <li>
+                          추정 평균연봉: {nps.estimatedAnnualSalaryManwon}만원
+                        </li>
+                      )}
+                      {nps.newThisMonth != null && (
+                        <li>당월 입사: {nps.newThisMonth}명</li>
+                      )}
+                      {nps.lostThisMonth != null && (
+                        <li>당월 퇴사: {nps.lostThisMonth}명</li>
+                      )}
+                      {nps.turnoverRatePct != null && (
+                        <li>월 회전율: {nps.turnoverRatePct}%</li>
+                      )}
+                      {nps.industry && <li>업종: {nps.industry}</li>}
+                      {nps.region && <li>지역: {nps.region}</li>}
+                    </ul>
+
+                    {nps.trend.length > 1 && (
+                      <div className="mt-2">
+                        <p className="text-xs text-muted-foreground">
+                          직원 수 추이
+                        </p>
+                        <div className="mt-1 flex h-14 items-end gap-1">
+                          {nps.trend.map((m) => (
+                            <div
+                              key={m.ym}
+                              className="flex flex-col items-center gap-0.5"
+                              title={`${m.ym}: ${m.memberCount}명`}
+                            >
+                              <div
+                                className="w-4 rounded-sm bg-primary/60"
+                                style={{
+                                  height: `${(m.memberCount / maxMembers) * 40 + 4}px`,
+                                }}
+                              />
+                              <span className="text-[9px] text-muted-foreground">
+                                {m.ym.slice(4)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      국민연금 가입사업장 공개데이터 기반 추정
+                      {nps.dataYm ? ` · ${nps.dataYm}` : ''}
+                    </p>
+                  </div>
+                );
+              })()}
+
+            {!profile.isLoading && !profile.data?.nps && (
+              <p className="text-xs text-muted-foreground">
+                이 회사의 국민연금 지표를 찾지 못했어요. 위에서 검색해 사업장을
+                선택하거나 아래 링크로 확인하세요.
+              </p>
             )}
 
             {profile.data?.review && (
