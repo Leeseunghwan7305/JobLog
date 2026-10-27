@@ -17,6 +17,7 @@ import { apiFetch } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { DEADLINE_TONE_CLASS, deadlineInfo } from '@/lib/date';
 import { STAGE_STATUS_CLASS, STAGE_STATUS_LABEL } from '@/lib/stage';
+import { externalHref } from '@/lib/url';
 
 const STATUSES: StageStatus[] = ['PENDING', 'IN_PROGRESS', 'PASSED', 'FAILED'];
 
@@ -173,7 +174,7 @@ export default function ApplicationDetail({
 
       {a.jobUrl && (
         <a
-          href={a.jobUrl}
+          href={externalHref(a.jobUrl)}
           target="_blank"
           rel="noreferrer"
           className="mt-2 inline-block text-sm text-primary hover:underline"
