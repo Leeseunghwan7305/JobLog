@@ -1,10 +1,17 @@
 import './globals.css';
 
+import { GoogleAnalytics } from '@next/third-parties/google';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from 'next';
+
+import SupportWidget from '@/components/SupportWidget';
 
 import Providers from './providers';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+// GA4는 측정 ID가 설정된 경우에만 로드 (없으면 스크립트 자체를 넣지 않음)
+const gaId = process.env.NEXT_PUBLIC_GA_ID;
 const description =
   '지원한 공고, 어디까지 왔는지 한 곳에서 추적한다. 링크만 붙여넣으면 AI가 회사·직무·전형을 정리하고 서류부터 최종까지 상태를 관리한다.';
 
@@ -51,7 +58,15 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          {/* 전역 "개발자에게 문의하기" 플로팅 버튼 (모든 페이지) */}
+          <SupportWidget />
+        </Providers>
+        {/* Vercel 배포 시 트래픽·Web Vitals 수집 (그 외 환경에선 no-op) */}
+        <Analytics />
+        <SpeedInsights />
+        {gaId && <GoogleAnalytics gaId={gaId} />}
       </body>
     </html>
   );

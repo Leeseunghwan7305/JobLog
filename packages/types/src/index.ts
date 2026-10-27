@@ -112,6 +112,19 @@ export interface DashboardStats {
   rejected: number;
 }
 
+/** 개발자에게 문의하기 — 폼이 보내는 입력. */
+export interface SupportRequest {
+  message: string;
+  /** 답장받을 이메일(선택). 비로그인·로그인 공통. */
+  email?: string;
+  /** 문의가 발생한 페이지 경로(선택, 맥락 파악용). */
+  path?: string;
+}
+
+export interface SupportResponse {
+  ok: true;
+}
+
 export type CalendarEventType = 'deadline' | 'stage';
 
 export interface CalendarEvent {
