@@ -123,13 +123,10 @@ export class CompaniesService {
   async getProfile(nameRaw: string, seq?: string): Promise<CompanyProfileDto> {
     const name = this.normalize(nameRaw);
     const links = buildLinks(name || nameRaw);
-    const review = await this.getReviews(name);
-    const reviewDto = {
-      rating: review.rating,
-      summary: review.summary,
-      sourceUrl: review.sourceUrl,
-    };
 
+    // 잡플래닛 후기는 Firecrawl 스크랩이 수 초 걸려 프로필 응답을 블록한다.
+    // 후기는 /companies/reviews로 분리해 프론트에서 지연 로딩하고,
+    // 여기서는 즉시 응답 가능한 NPS 지표만 반환한다.
     let nps: CompanyProfileDto['nps'] = null;
     let resolvedSeq: string | null = seq ?? null;
 
@@ -144,7 +141,7 @@ export class CompaniesService {
       }
     }
 
-    return { companyName: name, seq: resolvedSeq, nps, review: reviewDto, links };
+    return { companyName: name, seq: resolvedSeq, nps, links };
   }
 
   /** seq 캐시(7일) 우선, 없으면 국민연금 조회 후 캐시. */

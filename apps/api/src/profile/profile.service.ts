@@ -1,37 +1,68 @@
+import type { HomeLocation, ProfileStatus } from '@joblog/types';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import pdfParse from 'pdf-parse';
 
 import { PrismaService } from '../prisma/prisma.service';
-
-export interface ResumeStatus {
-  hasResume: boolean;
-  resumeFilename: string | null;
-  resumeUpdatedAt: string | null;
-}
+import { GeoService } from '../shared/geo.service';
 
 @Injectable()
 export class ProfileService {
   private readonly logger = new Logger(ProfileService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private geo: GeoService,
+  ) {}
 
-  async getStatus(userId: string): Promise<ResumeStatus> {
+  async getStatus(userId: string): Promise<ProfileStatus> {
     const u = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { resumeText: true, resumeFilename: true, resumeUpdatedAt: true },
+      select: {
+        resumeText: true,
+        resumeFilename: true,
+        resumeUpdatedAt: true,
+        homeAddress: true,
+        homeLat: true,
+        homeLng: true,
+      },
     });
     return {
       hasResume: !!u?.resumeText,
       resumeFilename: u?.resumeFilename ?? null,
       resumeUpdatedAt: u?.resumeUpdatedAt?.toISOString() ?? null,
+      home: toHome(u),
     };
+  }
+
+  /** 집 주소 저장: 지오코딩해 좌표까지 저장. 빈 주소면 해제. */
+  async setHome(userId: string, address: string): Promise<ProfileStatus> {
+    const q = address.trim();
+    if (!q) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { homeAddress: null, homeLat: null, homeLng: null },
+      });
+      return this.getStatus(userId);
+    }
+    const geo = await this.geo.geocode(q);
+    if (!geo) {
+      throw new BadRequestException(
+        '주소를 찾지 못했어요. 도로명/지번 주소나 지역명을 확인해 주세요.',
+      );
+    }
+    await this.prisma.user.update({
+      where: { id: userId },
+      // 지오코딩으로 정규화된 주소를 저장(사용자가 확인하기 쉽게).
+      data: { homeAddress: geo.address, homeLat: geo.lat, homeLng: geo.lng },
+    });
+    return this.getStatus(userId);
   }
 
   async saveResume(
     userId: string,
     buffer: Buffer,
     filename: string,
-  ): Promise<ResumeStatus> {
+  ): Promise<ProfileStatus> {
     let text = '';
     try {
       const data = await pdfParse(buffer);
@@ -57,18 +88,22 @@ export class ProfileService {
         resumeUpdatedAt: now,
       },
     });
-    return {
-      hasResume: true,
-      resumeFilename: filename,
-      resumeUpdatedAt: now.toISOString(),
-    };
+    return this.getStatus(userId);
   }
 
-  async deleteResume(userId: string): Promise<ResumeStatus> {
+  async deleteResume(userId: string): Promise<ProfileStatus> {
     await this.prisma.user.update({
       where: { id: userId },
       data: { resumeText: null, resumeFilename: null, resumeUpdatedAt: null },
     });
-    return { hasResume: false, resumeFilename: null, resumeUpdatedAt: null };
+    return this.getStatus(userId);
   }
+}
+
+/** User 행의 home* 필드 → HomeLocation(좌표 완비 시에만). */
+function toHome(
+  u: { homeAddress: string | null; homeLat: number | null; homeLng: number | null } | null,
+): HomeLocation | null {
+  if (!u?.homeAddress || u.homeLat == null || u.homeLng == null) return null;
+  return { address: u.homeAddress, lat: u.homeLat, lng: u.homeLng };
 }

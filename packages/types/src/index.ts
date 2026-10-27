@@ -75,6 +75,26 @@ export interface ResumeStatus {
   resumeUpdatedAt: string | null; // ISO
 }
 
+/** 집 위치(통근 길찾기 기준). 주소 입력 시 지오코딩해 좌표까지 저장. */
+export interface HomeLocation {
+  address: string;
+  lat: number;
+  lng: number;
+}
+
+/** GET /profile — 이력서 + 집 위치 상태. */
+export interface ProfileStatus extends ResumeStatus {
+  home: HomeLocation | null;
+}
+
+/** GET /applications/:id/commute — 집→회사 네이버 길찾기. 조건 미충족 시 null. */
+export interface CommuteInfo {
+  /** 네이버 지도 대중교통 길찾기 딥링크 (집→회사). */
+  naverUrl: string;
+  /** 목적지(회사) 표시명. */
+  goalName: string;
+}
+
 export interface ParseResponse {
   draft: ParsedPosting;
   /** 공고 원문 텍스트(핏 분석 입력용). 수집/붙여넣기 본문. */
@@ -130,11 +150,8 @@ export interface CompanyProfileDto {
   companyName: string; // 정규화된 표시명
   seq: string | null; // 선택된 국민연금 사업장 seq (검색→선택 결과)
   nps: NpsMetrics | null; // 매칭 모호/키없음/실패 시 null
-  review: {
-    rating: number | null;
-    summary: string | null;
-    sourceUrl: string;
-  } | null;
+  // 기업 후기(잡플래닛)는 Firecrawl 스크랩이 느려 프로필 응답에서 분리했다.
+  // 프론트가 /companies/reviews(CompanyReviewDto)로 별도 지연 로딩한다.
   links: CompanyProfileLink[];
 }
 

@@ -19,6 +19,10 @@ model User {
   resumeText      String?   @db.Text
   resumeFilename  String?
   resumeUpdatedAt DateTime?
+  // 집 위치(통근 길찾기 기준). 주소 입력 시 지오코딩해 좌표 저장.
+  homeAddress  String?
+  homeLat      Float?
+  homeLng      Float?
   applications Application[]
   createdAt    DateTime      @default(now())
 }

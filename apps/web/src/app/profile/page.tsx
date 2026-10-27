@@ -1,6 +1,6 @@
 'use client';
 
-import type { ResumeStatus } from '@joblog/types';
+import type { ProfileStatus } from '@joblog/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -28,7 +28,7 @@ export default function ProfilePage() {
 
   const profile = useQuery({
     queryKey: ['profile'],
-    queryFn: () => apiFetch<ResumeStatus>('/profile'),
+    queryFn: () => apiFetch<ProfileStatus>('/profile'),
     enabled: ready,
   });
 
@@ -47,7 +47,7 @@ export default function ProfilePage() {
         } | null;
         throw new Error(body?.message ?? '업로드에 실패했어요.');
       }
-      return (await res.json()) as ResumeStatus;
+      return (await res.json()) as ProfileStatus;
     },
     onSuccess: (data) => {
       setError(null);
@@ -60,9 +60,28 @@ export default function ProfilePage() {
 
   const remove = useMutation({
     mutationFn: () =>
-      apiFetch<ResumeStatus>('/profile/resume', { method: 'DELETE' }),
+      apiFetch<ProfileStatus>('/profile/resume', { method: 'DELETE' }),
     onSuccess: (data) => {
       qc.setQueryData(['profile'], data);
+    },
+  });
+
+  const [homeInput, setHomeInput] = useState('');
+  const [homeError, setHomeError] = useState<string | null>(null);
+  const saveHome = useMutation({
+    mutationFn: (address: string) =>
+      apiFetch<ProfileStatus>('/profile/home', {
+        method: 'PATCH',
+        body: JSON.stringify({ address }),
+      }),
+    onSuccess: (data) => {
+      setHomeError(null);
+      setHomeInput('');
+      qc.setQueryData(['profile'], data);
+      void qc.invalidateQueries({ queryKey: ['commute'] });
+    },
+    onError: (e: unknown) => {
+      setHomeError(e instanceof Error ? e.message : '주소를 저장하지 못했어요.');
     },
   });
 
@@ -151,6 +170,62 @@ export default function ProfilePage() {
         />
 
         {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
+      </div>
+
+      <h1 className="mt-10 text-2xl font-extrabold tracking-tight">집 위치</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
+        집 주소를 저장해두면, 각 공고에서 “집→회사 네이버 길찾기”로 대중교통
+        소요시간을 바로 확인할 수 있어요.
+      </p>
+
+      <div className="mt-6 rounded-xl border border-border bg-card p-5">
+        {data?.home ? (
+          <div className="mb-4">
+            <div className="text-xs text-muted-foreground">현재 집 위치</div>
+            <div className="font-semibold">{data.home.address}</div>
+          </div>
+        ) : (
+          <p className="mb-4 text-sm text-muted-foreground">
+            아직 저장된 집 위치가 없어요.
+          </p>
+        )}
+        <div className="flex gap-2">
+          <input
+            value={homeInput}
+            onChange={(e) => {
+              setHomeInput(e.target.value);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && homeInput.trim()) {
+                saveHome.mutate(homeInput.trim());
+              }
+            }}
+            placeholder="예: 서울 강남구 테헤란로 152"
+            className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <button
+            disabled={saveHome.isPending || !homeInput.trim()}
+            onClick={() => {
+              saveHome.mutate(homeInput.trim());
+            }}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+          >
+            {saveHome.isPending && <Spinner className="h-3.5 w-3.5" />}
+            {data?.home ? '변경' : '저장'}
+          </button>
+          {data?.home && (
+            <button
+              disabled={saveHome.isPending}
+              onClick={() => {
+                saveHome.mutate('');
+              }}
+              className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition hover:text-red-500 disabled:opacity-60"
+            >
+              해제
+            </button>
+          )}
+        </div>
+        {homeError && <p className="mt-3 text-sm text-red-500">{homeError}</p>}
       </div>
     </main>
   );

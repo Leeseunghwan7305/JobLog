@@ -3,12 +3,17 @@ import { mock, test } from 'node:test';
 
 import type { LlmService } from '../parse/llm.service';
 import type { PrismaService } from '../prisma/prisma.service';
+import type { GeoService } from '../shared/geo.service';
 import { ApplicationsService } from './applications.service';
 
-// updateStage 테스트는 LLM을 쓰지 않으므로 빈 스텁으로 충분.
+// updateStage 테스트는 LLM·지오코딩을 쓰지 않으므로 빈 스텁으로 충분.
 const llmStub = {
   analyzeFit: () => Promise.resolve(null),
 } as unknown as LlmService;
+
+const geoStub = {
+  geocode: () => Promise.resolve(null),
+} as unknown as GeoService;
 
 function createPrismaMock(stage: {
   id: string;
@@ -51,7 +56,7 @@ test('updateStage: scheduledAt: null 전달 시 stage.update가 scheduledAt: nul
     completedAt: null,
   };
   const prisma = createPrismaMock(stage);
-  const svc = new ApplicationsService(prisma, llmStub);
+  const svc = new ApplicationsService(prisma, llmStub, geoStub);
 
   await svc.updateStage('user1', 'app1', 'stage1', { scheduledAt: null });
 
@@ -69,7 +74,7 @@ test('updateStage: scheduledAt 미전달(undefined)이면 stage.update의 data.s
     completedAt: null,
   };
   const prisma = createPrismaMock(stage);
-  const svc = new ApplicationsService(prisma, llmStub);
+  const svc = new ApplicationsService(prisma, llmStub, geoStub);
 
   await svc.updateStage('user1', 'app1', 'stage1', {});
 

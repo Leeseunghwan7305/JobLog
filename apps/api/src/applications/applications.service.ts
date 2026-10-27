@@ -1,4 +1,4 @@
-import type { CalendarEvent } from '@joblog/types';
+import type { CalendarEvent, CommuteInfo } from '@joblog/types';
 import {
   BadRequestException,
   Injectable,
@@ -9,8 +9,10 @@ import { AppStatus, Prisma, StageStatus } from '@prisma/client';
 
 import { LlmService } from '../parse/llm.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { GeoService } from '../shared/geo.service';
 import { archiveWhere, resolveArchivedAt } from './archive.util';
 import { toCalendarEvents } from './calendar.util';
+import { naverDirectionsUrl } from './commute.util';
 import { parseDateStrict } from './date.util';
 import {
   CreateApplicationDto,
@@ -29,6 +31,7 @@ export class ApplicationsService {
   constructor(
     private prisma: PrismaService,
     private llm: LlmService,
+    private geo: GeoService,
   ) {}
 
   create(userId: string, dto: CreateApplicationDto) {
@@ -205,6 +208,31 @@ export class ApplicationsService {
       select: { status: true, stages: { select: { name: true, status: true } } },
     });
     return computeInsights(apps);
+  }
+
+  /**
+   * 집→회사 네이버 대중교통 길찾기 링크. (M4 통근)
+   * 집 미설정/회사위치 지오코딩 실패 시 null (→ 프론트에서 숨김/안내).
+   */
+  async commute(userId: string, id: string): Promise<CommuteInfo | null> {
+    const app = await this.findOne(userId, id); // 소유권 검증 포함
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { homeAddress: true, homeLat: true, homeLng: true },
+    });
+    if (!user?.homeAddress || user.homeLat == null || user.homeLng == null) {
+      return null; // 집 미설정
+    }
+    // 회사 위치: 공고 location 우선, 없으면 회사명으로 지오코딩.
+    const goal = await this.geo.geocode(app.location ?? app.companyName);
+    if (!goal) return null;
+    return {
+      naverUrl: naverDirectionsUrl(
+        { lat: user.homeLat, lng: user.homeLng, name: '집' },
+        { lat: goal.lat, lng: goal.lng, name: app.companyName },
+      ),
+      goalName: app.companyName,
+    };
   }
 
   async calendar(

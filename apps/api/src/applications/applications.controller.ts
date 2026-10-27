@@ -83,6 +83,11 @@ export class ApplicationsController {
     return this.svc.analyzeFit(userId, id);
   }
 
+  @Get('applications/:id/commute')
+  commute(@CurrentUser() userId: string, @Param('id') id: string) {
+    return this.svc.commute(userId, id);
+  }
+
   @Post('applications/:id/stages')
   addStage(
     @CurrentUser() userId: string,

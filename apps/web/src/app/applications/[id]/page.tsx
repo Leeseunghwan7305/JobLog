@@ -2,7 +2,9 @@
 
 import type {
   ApplicationDto,
+  CommuteInfo,
   CompanyProfileDto,
+  CompanyReviewDto,
   CompanySearchResult,
   StageStatus,
 } from '@joblog/types';
@@ -43,6 +45,14 @@ export default function ApplicationDetail({
     enabled: ready,
   });
 
+  // 집→회사 네이버 길찾기 (집 미설정/지오코딩 실패 시 null)
+  const commute = useQuery({
+    queryKey: ['commute', id],
+    queryFn: () => apiFetch<CommuteInfo | null>(`/applications/${id}/commute`),
+    enabled: ready,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const [showCompany, setShowCompany] = useState(true);
   const [companyQuery, setCompanyQuery] = useState('');
   // 입력은 즉시 반영하되 NPS 검색 호출은 250ms 디바운스 (대시보드 검색과 동일 패턴)
@@ -79,6 +89,18 @@ export default function ApplicationDetail({
       ),
     // 상단 규모 뱃지를 위해 회사명이 있으면 패널을 열지 않아도 미리 조회한다.
     enabled: !!app.data?.companyName,
+  });
+
+  // 기업 후기(잡플래닛)는 Firecrawl 스크랩이 느려 프로필과 분리해 지연 로딩한다.
+  // 패널이 열렸을 때만 조회해 불필요한 스크랩을 막는다.
+  const review = useQuery({
+    queryKey: ['company-review', app.data?.companyName],
+    queryFn: () =>
+      apiFetch<CompanyReviewDto>(
+        `/companies/reviews?name=${encodeURIComponent(app.data?.companyName ?? '')}`,
+      ),
+    enabled: showCompany && !!app.data?.companyName,
+    staleTime: 1000 * 60 * 60, // 1시간 (백엔드 캐시 7일)
   });
 
   const setStage = useMutation({
@@ -290,6 +312,26 @@ export default function ApplicationDetail({
           공고 링크 열기 ↗
         </a>
       )}
+
+      <div className="mt-3">
+        {commute.data ? (
+          <a
+            href={commute.data.naverUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium transition hover:border-ring"
+          >
+            🧭 집 → {commute.data.goalName} 네이버 길찾기 ↗
+          </a>
+        ) : !commute.isLoading ? (
+          <Link
+            href="/profile"
+            className="inline-block text-sm text-muted-foreground hover:text-primary"
+          >
+            🏠 마이페이지에서 집 주소를 설정하면 통근 길찾기를 볼 수 있어요 →
+          </Link>
+        ) : null}
+      </div>
 
       <TagEditor
         tags={a.tags}
@@ -543,10 +585,20 @@ export default function ApplicationDetail({
             {profile.data?.nps &&
               (() => {
                 const nps = profile.data.nps;
-                const maxMembers = Math.max(
-                  ...nps.trend.map((m) => m.memberCount),
-                  1,
-                );
+                // 직원 수 추이 막대: 값 범위가 좁을 때(예: 44·44·43) 0~max
+                // 절대 스케일은 모든 막대가 꼭대기에 몰려 변화가 안 보인다.
+                // 보이는 높이를 [min, max] 구간에 매핑해 추세를 드러낸다.
+                const counts = nps.trend.map((m) => m.memberCount);
+                const maxMembers = Math.max(...counts);
+                const minMembers = Math.min(...counts);
+                const range = maxMembers - minMembers;
+                const BAR_MIN = 6; // 최소 막대 높이(px) — 가장 작은 값도 보이게
+                const BAR_MAX = 48; // h-14(56px) 안에서 라벨 공간 남김
+                const barHeight = (count: number) =>
+                  range > 0
+                    ? ((count - minMembers) / range) * (BAR_MAX - BAR_MIN) +
+                      BAR_MIN
+                    : (BAR_MIN + BAR_MAX) / 2; // 전부 동일 → 평평한 중간 높이
                 return (
                   <div>
                     <h3 className="font-semibold text-foreground">
@@ -614,7 +666,7 @@ export default function ApplicationDetail({
                               <div
                                 className="w-4 rounded-sm bg-primary/60"
                                 style={{
-                                  height: `${(m.memberCount / maxMembers) * 40 + 4}px`,
+                                  height: `${barHeight(m.memberCount)}px`,
                                 }}
                               />
                               <span className="text-[9px] text-muted-foreground">
@@ -641,35 +693,42 @@ export default function ApplicationDetail({
               </p>
             )}
 
-            {profile.data?.review && (
-              <div>
-                <h3 className="font-semibold text-foreground">기업 후기</h3>
-                <div className="mt-1 flex items-center gap-2">
-                  {profile.data.review.rating != null ? (
-                    <span className="font-semibold text-amber-600 dark:text-amber-400">
-                      ★ {profile.data.review.rating.toFixed(1)}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">
-                      평점 정보를 바로 가져올 수 없어요.
-                    </span>
+            {/* 후기는 느린 잡플래닛 스크랩이라 NPS와 별도로 로딩된다 */}
+            <div>
+              <h3 className="font-semibold text-foreground">기업 후기</h3>
+              {review.isLoading ? (
+                <p className="mt-1 flex items-center gap-2 text-muted-foreground">
+                  <Spinner className="h-3 w-3" /> 잡플래닛 평점 불러오는 중…
+                </p>
+              ) : review.data ? (
+                <>
+                  <div className="mt-1 flex items-center gap-2">
+                    {review.data.rating != null ? (
+                      <span className="font-semibold text-amber-600 dark:text-amber-400">
+                        ★ {review.data.rating.toFixed(1)}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        평점 정보를 바로 가져올 수 없어요.
+                      </span>
+                    )}
+                    <a
+                      href={review.data.sourceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      잡플래닛에서 보기 ↗
+                    </a>
+                  </div>
+                  {review.data.summary && (
+                    <p className="mt-1 text-muted-foreground">
+                      “{review.data.summary}”
+                    </p>
                   )}
-                  <a
-                    href={profile.data.review.sourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    잡플래닛에서 보기 ↗
-                  </a>
-                </div>
-                {profile.data.review.summary && (
-                  <p className="mt-1 text-muted-foreground">
-                    “{profile.data.review.summary}”
-                  </p>
-                )}
-              </div>
-            )}
+                </>
+              ) : null}
+            </div>
 
             <div>
               <h3 className="font-semibold text-foreground">바로가기</h3>
