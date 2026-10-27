@@ -17,7 +17,7 @@
 | Frontend      | Next.js (App Router), TypeScript, TanStack Query, shadcn/ui, Tailwind CSS |
 | Backend       | NestJS, Prisma, PostgreSQL, Passport (Kakao + JWT)                        |
 | 외부 연동     | Firecrawl(공고 스크래핑), Claude API(파싱), 잡플래닛(기업 후기, M4)       |
-| 인프라        | Vercel(web), Railway/Render(api), Neon/Supabase(DB)                       |
+| 인프라        | Vercel(web), 자체 서버(api, duckdns), 자체 호스팅 PostgreSQL(DB)           |
 | 패키지 매니저 | pnpm (workspace 모노레포)                                                 |
 
 ## 저장소 구조

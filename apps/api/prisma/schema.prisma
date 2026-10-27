@@ -1,14 +1,12 @@
 generator client {
   provider = "prisma-client-js"
-  // Vercel 서버리스(Amazon Linux, openssl3) 런타임 엔진 포함
+  // Linux 배포 서버(openssl3) 런타임 엔진 포함
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
-  provider  = "postgresql"
-  // 런타임은 pooled(DATABASE_URL), 마이그레이션은 direct(UNPOOLED) — Neon + Prisma 권장
-  url       = env("DATABASE_URL")
-  directUrl = env("DATABASE_URL_UNPOOLED")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {

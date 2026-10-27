@@ -66,7 +66,7 @@
   - [x] 키워드 검색 — `GET /applications?q=` (회사명·직무·메모 대소문자무시 부분일치 + 태그 정확일치 OR). 순수 where빌더(`search.util.ts`) + 단위테스트. 대시보드 검색창(250ms 디바운스·`keepPreviousData`·검색결과 빈상태 구분)
   - [x] 태그 — `Application.tags String[]`. 생성/수정 DTO·`ApplicationDto` 반영. 상세 태그 편집기(칩 추가/삭제), 대시보드 카드 `#태그` 칩
   - [x] 공고 아카이브 — `Application.archivedAt`. `GET /applications?archived=`, 목록 기본 활성만. 보관함 뷰(대시보드 토글), 상세 보관/해제 버튼. 순수 `archive.util`(필터·archived→archivedAt) + 단위테스트 5케이스
-  - 마이그레이션 `add_tags_and_archive`(additive: tags·archivedAt 컬럼 + userId·archivedAt 인덱스). 로컬 joblog-db(5434)에 생성·적용, 실DB 스모크 통과. Neon 실적용은 배포 시 `migrate deploy`
+  - 마이그레이션 `add_tags_and_archive`(additive: tags·archivedAt 컬럼 + userId·archivedAt 인덱스). 로컬 joblog-db(5434)에 생성·적용, 실DB 스모크 통과. 운영 적용은 배포 시 `prisma migrate deploy`
 
 ---
 
