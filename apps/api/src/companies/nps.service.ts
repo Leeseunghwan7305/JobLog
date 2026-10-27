@@ -31,7 +31,7 @@ export class NpsService {
   ): Promise<unknown> {
     const qs = new URLSearchParams({
       serviceKey: process.env.NPS_API_KEY ?? '',
-      resultType: 'json',
+      dataType: 'json', // 국민연금 API는 dataType=json 이어야 JSON (resultType 무시)
       ...params,
     });
     const res = await fetch(`${BASE}/${path}?${qs.toString()}`);
