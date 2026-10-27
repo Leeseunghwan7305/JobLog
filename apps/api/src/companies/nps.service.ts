@@ -13,7 +13,7 @@ import {
   toSearchResults,
 } from './nps';
 
-const BASE = 'http://apis.data.go.kr/B552015/NpsBplcInfoInqireServiceV2';
+const BASE = 'https://apis.data.go.kr/B552015/NpsBplcInfoInqireServiceV2';
 const TREND_MONTHS = 6;
 
 /** 국민연금 가입사업장 공개데이터 조회. 키 없거나 실패/모호하면 null → 폴백. */
