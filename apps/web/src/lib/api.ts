@@ -23,7 +23,16 @@ export async function apiFetch<T>(
     if (typeof window !== 'undefined') window.location.href = '/login';
     throw new Error('unauthorized');
   }
-  if (!res.ok) throw new Error(`API ${res.status}`);
+  if (!res.ok) {
+    // 서버(Nest)의 { message } 를 꺼내 사용자에게 보여줄 수 있게 한다.
+    const body = (await res.json().catch(() => null)) as {
+      message?: string | string[];
+    } | null;
+    const msg = Array.isArray(body?.message)
+      ? body?.message.join(', ')
+      : body?.message;
+    throw new Error(msg ?? `API ${res.status}`);
+  }
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }

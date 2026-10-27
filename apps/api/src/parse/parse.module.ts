@@ -19,5 +19,6 @@ import { ParseService } from './parse.service';
     OllamaService,
     GroqService,
   ],
+  exports: [LlmService],
 })
 export class ParseModule {}

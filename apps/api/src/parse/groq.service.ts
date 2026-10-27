@@ -1,5 +1,7 @@
+import type { FitResult } from '@joblog/types';
 import { Injectable, Logger } from '@nestjs/common';
 
+import { FitInput, fitSystemPrompt, fitUserPrompt, normalizeFit } from './fit';
 import { normalizeParsed, ParsedPosting } from './types';
 
 // json_object 모드라 스키마는 프롬프트로 안내한다(응답은 JSON 객체 하나).
@@ -75,6 +77,44 @@ export class GroqService {
       return normalizeParsed(JSON.parse(content) as Record<string, unknown>);
     } catch (e) {
       this.logger.warn(`Groq parse failed: ${String(e)}`);
+      return null;
+    }
+  }
+
+  async analyzeFit(input: FitInput): Promise<FitResult | null> {
+    if (!this.enabled) return null;
+    try {
+      const res = await fetch(
+        'https://api.groq.com/openai/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${process.env.GROQ_API_KEY ?? ''}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: this.model,
+            temperature: 0.2,
+            response_format: { type: 'json_object' },
+            messages: [
+              { role: 'system', content: fitSystemPrompt() },
+              { role: 'user', content: fitUserPrompt(input) },
+            ],
+          }),
+        },
+      );
+      if (!res.ok) {
+        this.logger.warn(`Groq fit ${res.status}`);
+        return null;
+      }
+      const json = (await res.json()) as {
+        choices?: { message?: { content?: string } }[];
+      };
+      const content = json.choices?.[0]?.message?.content;
+      if (!content) return null;
+      return normalizeFit(JSON.parse(content) as Record<string, unknown>);
+    } catch (e) {
+      this.logger.warn(`Groq fit failed: ${String(e)}`);
       return null;
     }
   }

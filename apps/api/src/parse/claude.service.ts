@@ -1,5 +1,7 @@
+import type { FitResult } from '@joblog/types';
 import { Injectable, Logger } from '@nestjs/common';
 
+import { FitInput, fitSystemPrompt, fitUserPrompt, normalizeFit } from './fit';
 import { normalizeParsed, ParsedPosting } from './types';
 
 // 구조화 출력을 강제하기 위한 tool 정의 (tool_choice로 호출 강제)
@@ -126,5 +128,44 @@ export class ClaudeService {
       }
     }
     return null;
+  }
+
+  async analyzeFit(input: FitInput): Promise<FitResult | null> {
+    if (!this.enabled) return null;
+    const model = process.env.ANTHROPIC_MODEL ?? 'claude-opus-4-8';
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': process.env.ANTHROPIC_API_KEY ?? '',
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 1500,
+          system: fitSystemPrompt(),
+          messages: [{ role: 'user', content: fitUserPrompt(input) }],
+        }),
+      });
+      if (!res.ok) {
+        this.logger.warn(`Claude fit ${res.status}`);
+        return null;
+      }
+      const json = (await res.json()) as {
+        content?: { type: string; text?: string }[];
+      };
+      const text = (json.content ?? []).find((b) => b.type === 'text')?.text;
+      if (!text) return null;
+      const start = text.indexOf('{');
+      const end = text.lastIndexOf('}');
+      if (start < 0 || end < 0) return null;
+      return normalizeFit(
+        JSON.parse(text.slice(start, end + 1)) as Record<string, unknown>,
+      );
+    } catch (e) {
+      this.logger.warn(`Claude fit failed: ${String(e)}`);
+      return null;
+    }
   }
 }

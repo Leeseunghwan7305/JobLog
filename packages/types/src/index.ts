@@ -29,6 +29,8 @@ export interface ApplicationDto {
   deadline: string | null;
   appliedAt: string | null;
   employeeCount: number | null;
+  fitResult: FitResult | null;
+  fitAt: string | null;
   memo: string | null;
   tags: string[];
   /** 보관(아카이브) 시점. null=활성. */
@@ -40,6 +42,23 @@ export interface ApplicationDto {
 }
 
 /** 공고 파싱 결과(초안). Claude가 이 스키마로만 출력하도록 강제. */
+/** 이력서 ↔ 공고 핏 분석 결과 (LLM 산출, 서버에서 정규화·캐시). */
+export interface FitResult {
+  techFit: {
+    score: number; // 0~100
+    matched: string[]; // 이력서에서 확인되는 충족 역량
+    missing: string[]; // 공고가 요구하나 이력서에 안 보이는 것
+    note: string;
+  };
+  cultureFit: {
+    score: number; // 0~100
+    rationale: string;
+    basis: string; // 판단 근거의 출처/한계
+  };
+  recommendations: string[];
+  summary: string;
+}
+
 export interface ParsedPosting {
   companyName: string;
   position: string;

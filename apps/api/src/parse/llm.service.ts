@@ -1,6 +1,8 @@
+import type { FitResult } from '@joblog/types';
 import { Injectable, Logger } from '@nestjs/common';
 
 import { ClaudeService } from './claude.service';
+import { FitInput } from './fit';
 import { GroqService } from './groq.service';
 import { OllamaService } from './ollama.service';
 import { ParsedPosting } from './types';
@@ -44,6 +46,20 @@ export class LlmService {
         return this.groq.parse(text);
       case 'ollama':
         return this.ollama.parse(text);
+      default:
+        return null;
+    }
+  }
+
+  /** 이력서 ↔ 공고 핏 분석. groq/anthropic만 지원(품질상 ollama/none은 미지원→null). */
+  async analyzeFit(input: FitInput): Promise<FitResult | null> {
+    const provider = this.provider;
+    this.logger.log(`analyzing fit via "${provider}"`);
+    switch (provider) {
+      case 'groq':
+        return this.groq.analyzeFit(input);
+      case 'anthropic':
+        return this.claude.analyzeFit(input);
       default:
         return null;
     }

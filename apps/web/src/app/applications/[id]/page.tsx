@@ -127,6 +127,20 @@ export default function ApplicationDetail({
     },
   });
 
+  const [fitError, setFitError] = useState<string | null>(null);
+  const fit = useMutation({
+    mutationFn: () =>
+      apiFetch<ApplicationDto>(`/applications/${id}/fit`, { method: 'POST' }),
+    onSuccess: (data) => {
+      setFitError(null);
+      qc.setQueryData(['app', id], data);
+      void qc.invalidateQueries({ queryKey: ['apps'] });
+    },
+    onError: (e: unknown) => {
+      setFitError(e instanceof Error ? e.message : '핏 분석에 실패했어요.');
+    },
+  });
+
   const archive = useMutation({
     mutationFn: (archived: boolean) =>
       apiFetch(`/applications/${id}`, {
@@ -284,6 +298,141 @@ export default function ApplicationDetail({
           setTags.mutate(next);
         }}
       />
+
+      <section className="mt-8">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            핏 분석
+          </h2>
+          {a.fitResult && (
+            <button
+              disabled={fit.isPending}
+              onClick={() => {
+                fit.mutate();
+              }}
+              className="text-xs text-muted-foreground hover:text-primary disabled:opacity-60"
+            >
+              {fit.isPending ? '분석 중…' : '다시 분석'}
+            </button>
+          )}
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
+          {fitError && (
+            <p className="mb-3 text-sm text-red-500">
+              {fitError}{' '}
+              <Link href="/profile" className="underline">
+                이력서 관리 →
+              </Link>
+            </p>
+          )}
+          {a.fitResult ? (
+            <div className="flex flex-col gap-4 text-sm">
+              {a.fitResult.summary && (
+                <p className="font-medium">{a.fitResult.summary}</p>
+              )}
+              <div>
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="font-semibold">기술스택 매칭</span>
+                  <span className="font-bold text-primary">
+                    {a.fitResult.techFit.score}%
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${a.fitResult.techFit.score}%` }}
+                  />
+                </div>
+                {a.fitResult.techFit.matched.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {a.fitResult.techFit.matched.map((s, i) => (
+                      <span
+                        key={`m${i}`}
+                        className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                      >
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {a.fitResult.techFit.missing.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {a.fitResult.techFit.missing.map((s, i) => (
+                      <span
+                        key={`x${i}`}
+                        className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                      >
+                        부족: {s}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {a.fitResult.techFit.note && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {a.fitResult.techFit.note}
+                  </p>
+                )}
+              </div>
+              <div>
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="font-semibold">인재상 매칭</span>
+                  <span className="font-bold text-primary">
+                    {a.fitResult.cultureFit.score}%
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${a.fitResult.cultureFit.score}%` }}
+                  />
+                </div>
+                {a.fitResult.cultureFit.rationale && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {a.fitResult.cultureFit.rationale}
+                  </p>
+                )}
+                {a.fitResult.cultureFit.basis && (
+                  <p className="mt-1 text-[11px] text-muted-foreground/70">
+                    근거: {a.fitResult.cultureFit.basis}
+                  </p>
+                )}
+              </div>
+              {a.fitResult.recommendations.length > 0 && (
+                <div>
+                  <div className="mb-1 font-semibold">준비하면 좋은 점</div>
+                  <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
+                    {a.fitResult.recommendations.map((r, i) => (
+                      <li key={`r${i}`}>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {a.fitAt && (
+                <p className="text-[11px] text-muted-foreground/70">
+                  분석 {a.fitAt.slice(0, 10)}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-sm text-muted-foreground">
+                내 이력서로 이 공고와 얼마나 맞는지, 무엇을 준비하면 좋을지
+                분석해요.
+              </p>
+              <button
+                disabled={fit.isPending}
+                onClick={() => {
+                  fit.mutate();
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+              >
+                {fit.isPending && <Spinner className="h-3.5 w-3.5" />}
+                핏 분석
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
 
       <section className="mt-8">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">

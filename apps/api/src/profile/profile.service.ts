@@ -35,7 +35,7 @@ export class ProfileService {
     let text = '';
     try {
       const data = await pdfParse(buffer);
-      text = (data.text ?? '').trim();
+      text = data.text.trim();
     } catch (e) {
       this.logger.warn(`PDF 파싱 실패: ${String(e)}`);
       throw new BadRequestException(
