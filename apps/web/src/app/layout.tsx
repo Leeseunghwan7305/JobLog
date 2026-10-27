@@ -6,10 +6,11 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from 'next';
 
 import SupportWidget from '@/components/SupportWidget';
+import { getSiteUrl } from '@/lib/site-url';
 
 import Providers from './providers';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+const siteUrl = getSiteUrl();
 // GA4는 측정 ID가 설정된 경우에만 로드 (없으면 스크립트 자체를 넣지 않음)
 const gaId = process.env.NEXT_PUBLIC_GA_ID;
 const description =
