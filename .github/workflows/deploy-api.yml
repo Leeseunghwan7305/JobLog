@@ -1,0 +1,57 @@
+name: Deploy API (EC2)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/deploy-api.yml'
+  workflow_dispatch: {}
+
+# 동시 배포 방지 (겹치면 앞 배포 취소)
+concurrency:
+  group: deploy-api
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        env:
+          SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s' "$SSH_KEY" > ~/.ssh/key.pem
+          chmod 600 ~/.ssh/key.pem
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Rsync source to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          rsync -az --delete \
+            --exclude node_modules --exclude '.git' --exclude '.next' --exclude dist \
+            --exclude '.env' --exclude '*.pem' --exclude '.claude' \
+            -e "ssh -i ~/.ssh/key.pem -o StrictHostKeyChecking=no" \
+            ./ "ubuntu@${EC2_HOST}:/home/ubuntu/JobLog/"
+
+      - name: Build and restart API on EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          ssh -i ~/.ssh/key.pem -o StrictHostKeyChecking=no "ubuntu@${EC2_HOST}" '
+            set -e
+            cd ~/JobLog
+            pnpm install
+            pnpm --filter @joblog/api exec prisma generate
+            pnpm --filter @joblog/api exec prisma migrate deploy
+            pnpm --filter @joblog/api build
+            cd apps/api && pm2 restart joblog-api --update-env && pm2 save
+          '
