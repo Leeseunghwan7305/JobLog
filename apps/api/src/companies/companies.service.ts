@@ -1,4 +1,9 @@
-import type { CompanyProfileDto, CompanyReviewDto } from '@joblog/types';
+import type {
+  CompanyProfileDto,
+  CompanyReviewDto,
+  CompanySearchResult,
+  NpsMetrics,
+} from '@joblog/types';
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
@@ -104,45 +109,71 @@ export class CompaniesService {
     }
   }
 
-  /** 회사 통합 프로필: 국민연금 지표(캐시 7일) + 잡플래닛 후기 + 바로가기. */
-  async getProfile(nameRaw: string): Promise<CompanyProfileDto> {
+  /** 회사명으로 국민연금 사업장 후보 검색 (검색→선택 UX용). */
+  async searchCompanies(nameRaw: string): Promise<CompanySearchResult[]> {
+    const name = this.normalize(nameRaw);
+    if (!name || !this.nps.enabled) return [];
+    return this.nps.searchCandidates(name);
+  }
+
+  /**
+   * 회사 통합 프로필: 국민연금 지표(캐시 7일, seq 키) + 잡플래닛 후기 + 바로가기.
+   * seq 지정 시 그 사업장, 없으면 이름 완전일치 단일 사업장을 자동 해소.
+   */
+  async getProfile(nameRaw: string, seq?: string): Promise<CompanyProfileDto> {
     const name = this.normalize(nameRaw);
     const links = buildLinks(name || nameRaw);
-    if (!name) {
-      return { companyName: name, nps: null, review: null, links };
-    }
+    const review = await this.getReviews(name);
+    const reviewDto = {
+      rating: review.rating,
+      summary: review.summary,
+      sourceUrl: review.sourceUrl,
+    };
 
-    // 1) 국민연금 지표 (캐시 우선)
     let nps: CompanyProfileDto['nps'] = null;
-    const cached = await this.prisma.companyProfile.findUnique({
-      where: { companyName: name },
-    });
-    if (cached && isCacheFresh(cached.fetchedAt.getTime(), Date.now())) {
-      nps = (cached.nps as unknown as CompanyProfileDto['nps']) ?? null;
-    } else if (this.nps.enabled) {
-      nps = await this.nps.fetchMetrics(name, (s) => this.normalize(s));
-      if (nps) {
-        const snapshot = nps as unknown as Prisma.InputJsonObject;
-        await this.prisma.companyProfile.upsert({
-          where: { companyName: name },
-          update: { nps: snapshot, fetchedAt: new Date() },
-          create: { companyName: name, nps: snapshot },
-        });
+    let resolvedSeq: string | null = seq ?? null;
+
+    if (seq) {
+      nps = await this.loadBySeq(seq, name);
+    } else if (name && this.nps.enabled) {
+      const r = await this.nps.fetchByName(name, (s) => this.normalize(s));
+      if (r) {
+        resolvedSeq = r.seq;
+        nps = r.metrics;
+        await this.cacheProfile(r.seq, name, r.metrics);
       }
     }
 
-    // 2) 잡플래닛 후기 (기존 로직 재사용)
-    const review = await this.getReviews(name);
+    return { companyName: name, seq: resolvedSeq, nps, review: reviewDto, links };
+  }
 
-    return {
-      companyName: name,
-      nps,
-      review: {
-        rating: review.rating,
-        summary: review.summary,
-        sourceUrl: review.sourceUrl,
-      },
-      links,
-    };
+  /** seq 캐시(7일) 우선, 없으면 국민연금 조회 후 캐시. */
+  private async loadBySeq(
+    seq: string,
+    name: string,
+  ): Promise<CompanyProfileDto['nps']> {
+    const cached = await this.prisma.companyProfile.findUnique({
+      where: { seq },
+    });
+    if (cached && isCacheFresh(cached.fetchedAt.getTime(), Date.now())) {
+      return (cached.nps as unknown as CompanyProfileDto['nps']) ?? null;
+    }
+    if (!this.nps.enabled) return null;
+    const metrics = await this.nps.fetchBySeq(seq);
+    if (metrics) await this.cacheProfile(seq, name, metrics);
+    return metrics;
+  }
+
+  private async cacheProfile(
+    seq: string,
+    name: string,
+    metrics: NpsMetrics,
+  ): Promise<void> {
+    const snapshot = metrics as unknown as Prisma.InputJsonObject;
+    await this.prisma.companyProfile.upsert({
+      where: { seq },
+      update: { name, nps: snapshot, fetchedAt: new Date() },
+      create: { seq, name, nps: snapshot },
+    });
   }
 }

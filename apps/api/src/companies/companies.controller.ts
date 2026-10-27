@@ -14,10 +14,18 @@ export class CompaniesController {
     return this.svc.getReviews(name ?? '');
   }
 
+  // 국민연금 사업장 후보 검색 (검색→선택 UX). 로그인 전용.
+  @UseGuards(JwtAuthGuard)
+  @Get('search')
+  search(@Query('name') name: string) {
+    return this.svc.searchCompanies(name ?? '');
+  }
+
   // 회사 통합 프로필(국민연금 지표 포함)은 로그인 사용자 전용 (spec §3.2: reviews만 공개).
+  // seq 지정 시 그 사업장, 없으면 이름 완전일치 단일 사업장 자동 해소.
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  profile(@Query('name') name: string) {
-    return this.svc.getProfile(name ?? '');
+  profile(@Query('name') name: string, @Query('seq') seq?: string) {
+    return this.svc.getProfile(name ?? '', seq);
   }
 }

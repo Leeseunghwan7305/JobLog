@@ -61,6 +61,21 @@ export interface CompanyReviewDto {
   sourceUrl: string; // 잡플래닛 딥링크 (항상 존재)
 }
 
+export interface CompanySearchResult {
+  seq: string;
+  name: string;
+  region: string | null;
+  industry: string | null;
+}
+
+export interface NpsMonthly {
+  ym: string; // YYYYMM
+  memberCount: number;
+  joined: number | null;
+  left: number | null;
+  estimatedAnnualSalaryManwon: number | null;
+}
+
 export interface NpsMetrics {
   memberCount: number;
   estimatedAnnualSalaryManwon: number | null;
@@ -69,6 +84,8 @@ export interface NpsMetrics {
   industry: string | null;
   region: string | null;
   dataYm: string | null; // 자료생성연월 (YYYYMM)
+  turnoverRatePct: number | null; // (입+퇴)/직원수*100, 최신월
+  trend: NpsMonthly[]; // 최근 N개월 (ym 오름차순)
 }
 
 export interface CompanyProfileLink {
@@ -78,6 +95,7 @@ export interface CompanyProfileLink {
 
 export interface CompanyProfileDto {
   companyName: string; // 정규화된 표시명
+  seq: string | null; // 선택된 국민연금 사업장 seq (검색→선택 결과)
   nps: NpsMetrics | null; // 매칭 모호/키없음/실패 시 null
   review: {
     rating: number | null;

@@ -1,6 +1,8 @@
 // 국민연금 가입사업장 공개데이터 파싱·계산 — 순수 헬퍼 (네트워크 없음, 단위 테스트 대상)
 // 숫자는 전부 "국민연금 공개데이터 기반 추정"이다 (호출부에서 출처 표기).
 
+import type { CompanySearchResult, NpsMonthly } from '@joblog/types';
+
 const PENSION_RATE = 0.09; // 국민연금 보험료율 9%
 
 /** (당월고지금액/가입자수)를 1인 월보험료로 보고 월소득→연소득(만원)으로 추정. */
@@ -82,6 +84,7 @@ export interface NpsDetail {
   newThisMonth: number | null;
   lostThisMonth: number | null;
   industry: string | null;
+  dataYm: string | null; // 응답이 알려주는 실제 자료생성연월 (월 파라미터 무시 감지용)
 }
 
 /** getDetailInfoSearchV2 응답 → 상세. 항목 없으면 null. */
@@ -95,7 +98,29 @@ export function parseDetail(json: unknown): NpsDetail | null {
     newThisMonth: num(it.nwAcqzrCnt),
     lostThisMonth: num(it.lssJdgmntCnt),
     industry: str(it.wkplIntpCd),
+    dataYm: str(it.dataCrtYm),
   };
+}
+
+/** YYYYMM에서 최근 n개월(내림차순, 자신 포함). 파싱 불가하면 [latestYm]. */
+export function recentYms(latestYm: string, n: number): string[] {
+  const y = Number(latestYm.slice(0, 4));
+  const m = Number(latestYm.slice(4, 6));
+  if (!Number.isInteger(y) || !Number.isInteger(m) || m < 1 || m > 12) {
+    return [latestYm];
+  }
+  const out: string[] = [];
+  let yy = y;
+  let mm = m;
+  for (let i = 0; i < n; i++) {
+    out.push(`${yy}${String(mm).padStart(2, '0')}`);
+    mm -= 1;
+    if (mm === 0) {
+      mm = 12;
+      yy -= 1;
+    }
+  }
+  return out;
 }
 
 /** 회사명으로 가는 공개 소스 바로가기 묶음. */
@@ -110,4 +135,49 @@ export function buildLinks(name: string): { label: string; url: string }[] {
     { label: '크레딧잡', url: `https://kreditjob.com/search?q=${q}` },
     { label: '채용공고 검색', url: `https://www.google.com/search?q=${q}+채용` },
   ];
+}
+
+/** 검색 후보: seq 있는 사업장만 노출용으로 매핑. */
+export function toSearchResults(items: NpsWorkplace[]): CompanySearchResult[] {
+  return items
+    .filter((w) => w.seq)
+    .map((w) => ({
+      seq: w.seq,
+      name: w.name,
+      region: w.address,
+      industry: w.industry,
+    }));
+}
+
+export interface NpsMonthSnapshot {
+  ym: string;
+  memberCount: number;
+  crrmmNtcAmt: number | null;
+  joined: number | null;
+  left: number | null;
+}
+
+/** 월별 스냅샷 → 추이(ym 오름차순) + 최신월 회전율(%). 빈 입력이면 추이 []·회전율 null. */
+export function computeTrends(snapshots: NpsMonthSnapshot[]): {
+  trend: NpsMonthly[];
+  turnoverRatePct: number | null;
+} {
+  const sorted = [...snapshots].sort((a, b) => a.ym.localeCompare(b.ym));
+  const trend: NpsMonthly[] = sorted.map((s) => ({
+    ym: s.ym,
+    memberCount: s.memberCount,
+    joined: s.joined,
+    left: s.left,
+    estimatedAnnualSalaryManwon: estimateAnnualSalaryManwon(
+      s.crrmmNtcAmt,
+      s.memberCount,
+    ),
+  }));
+  const latest = sorted.at(-1);
+  let turnoverRatePct: number | null = null;
+  if (latest && latest.memberCount > 0) {
+    const inOut = (latest.joined ?? 0) + (latest.left ?? 0);
+    turnoverRatePct = Math.round((inOut / latest.memberCount) * 1000) / 10;
+  }
+  return { trend, turnoverRatePct };
 }

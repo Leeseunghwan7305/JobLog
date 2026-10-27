@@ -74,9 +74,10 @@ model CompanyReview {
 
 // M4 — 회사 지표(국민연금 공개데이터) 캐시. 후기와 출처·수명주기가 달라 분리.
 model CompanyProfile {
-  companyName String   @id // 정규화 키
-  nps         Json? // NpsMetrics 스냅샷 (매칭 모호/실패면 저장 안 함)
-  fetchedAt   DateTime @default(now())
+  seq       String   @id // 국민연금 사업장 seq (검색→선택 결과 캐시 키)
+  name      String // 정규화 표시명(참고용)
+  nps       Json? // NpsMetrics 스냅샷(추이 포함)
+  fetchedAt DateTime @default(now())
 }
 
 // M4 — 발송한 알림 기록 (cron 중복/재실행 멱등성)

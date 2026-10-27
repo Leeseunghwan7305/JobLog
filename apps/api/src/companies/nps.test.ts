@@ -3,10 +3,13 @@ import { test } from 'node:test';
 
 import {
   buildLinks,
+  computeTrends,
   estimateAnnualSalaryManwon,
   parseBassItems,
   parseDetail,
   pickWorkplace,
+  recentYms,
+  toSearchResults,
 } from './nps';
 
 const norm = (s: string): string =>
@@ -117,4 +120,48 @@ test('buildLinks: 잡플래닛·잡서치·크레딧잡·공고검색 4개', () 
   assert.equal(links.length, 4);
   for (const l of links) assert.match(l.url, /^https:\/\//);
   assert.ok(links.some((l) => l.url.includes('jobplanet')));
+});
+
+test('computeTrends: ym 오름차순 정렬 + 최신월 회전율(%)', () => {
+  const r = computeTrends([
+    { ym: '202506', memberCount: 12, crrmmNtcAmt: null, joined: 2, left: 1 },
+    { ym: '202505', memberCount: 10, crrmmNtcAmt: null, joined: 1, left: 0 },
+  ]);
+  assert.deepEqual(
+    r.trend.map((t) => t.ym),
+    ['202505', '202506'],
+  );
+  // 최신월(202506): (2+1)/12*100 = 25.0
+  assert.equal(r.turnoverRatePct, 25);
+});
+
+test('computeTrends: 빈 입력 → trend [], 회전율 null', () => {
+  const r = computeTrends([]);
+  assert.deepEqual(r.trend, []);
+  assert.equal(r.turnoverRatePct, null);
+});
+
+test('computeTrends: 직원수 0이면 회전율 null', () => {
+  const r = computeTrends([
+    { ym: '202506', memberCount: 0, crrmmNtcAmt: null, joined: 0, left: 0 },
+  ]);
+  assert.equal(r.turnoverRatePct, null);
+});
+
+test('recentYms: 연말 넘어가며 내림차순 n개월', () => {
+  assert.deepEqual(recentYms('202502', 4), ['202502', '202501', '202412', '202411']);
+});
+
+test('recentYms: 파싱 불가하면 입력 그대로 1개', () => {
+  assert.deepEqual(recentYms('bad', 6), ['bad']);
+});
+
+test('toSearchResults: seq 없는 항목 제외하고 매핑', () => {
+  const items = [
+    { seq: '1', name: 'A', bizno: null, address: '서울', industry: 'IT', dataYm: null },
+    { seq: '', name: 'B', bizno: null, address: null, industry: null, dataYm: null },
+  ];
+  const r = toSearchResults(items);
+  assert.equal(r.length, 1);
+  assert.deepEqual(r[0], { seq: '1', name: 'A', region: '서울', industry: 'IT' });
 });
