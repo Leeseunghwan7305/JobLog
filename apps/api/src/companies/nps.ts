@@ -22,9 +22,19 @@ export interface NpsWorkplace {
   dataYm: string | null;
 }
 
+/** unknown에서 객체 프로퍼티를 안전하게 읽는다 (any 없이). */
+function prop(v: unknown, key: string): unknown {
+  return typeof v === 'object' && v !== null
+    ? (v as Record<string, unknown>)[key]
+    : undefined;
+}
+
 /** 공공데이터포털 응답에서 items.item을 항상 배열로 꺼낸다. */
 function itemsOf(json: unknown): Record<string, unknown>[] {
-  const item = (json as any)?.response?.body?.items?.item;
+  const item = prop(
+    prop(prop(prop(json, 'response'), 'body'), 'items'),
+    'item',
+  );
   if (Array.isArray(item)) return item as Record<string, unknown>[];
   if (item && typeof item === 'object')
     return [item as Record<string, unknown>];
@@ -32,9 +42,12 @@ function itemsOf(json: unknown): Record<string, unknown>[] {
 }
 
 const str = (v: unknown): string | null => {
-  if (v === null || v === undefined) return null;
-  const s = String(v).trim();
-  return s === '' ? null : s;
+  if (typeof v === 'string') {
+    const s = v.trim();
+    return s === '' ? null : s;
+  }
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  return null;
 };
 const num = (v: unknown): number | null => {
   if (v === null || v === undefined || v === '') return null;

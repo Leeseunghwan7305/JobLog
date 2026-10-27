@@ -130,11 +130,11 @@ export default function AddJobModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4 backdrop-blur-sm duration-200 animate-in fade-in"
       onClick={tryClose}
     >
       <div
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-card p-6 shadow-2xl ring-1 ring-black/5"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-card p-6 shadow-2xl ring-1 ring-black/5 duration-200 animate-in fade-in zoom-in-95 slide-in-from-bottom-2"
         onClick={(e) => {
           e.stopPropagation();
         }}
@@ -156,7 +156,7 @@ export default function AddJobModal({
         ) : (
           <>
             {step === 'input' && (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 duration-200 animate-in fade-in">
                 <p className="text-sm text-muted-foreground">
                   채용 공고 링크를 붙여넣으면 회사·직무·전형을 자동으로 정리해
                   드려요.
@@ -193,7 +193,7 @@ export default function AddJobModal({
             )}
 
             {step === 'manual' && (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 duration-200 animate-in fade-in">
                 {notice && <Notice>{notice}</Notice>}
                 <p className="text-sm text-muted-foreground">
                   공고 전문을 붙여넣으면 AI가 똑같이 정리해 드려요.
@@ -219,7 +219,7 @@ export default function AddJobModal({
             )}
 
             {step === 'draft' && draft && (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 duration-200 animate-in fade-in">
                 {notice ? (
                   <Notice>{notice}</Notice>
                 ) : (
@@ -401,7 +401,7 @@ function AnalyzingView({
   });
 
   return (
-    <div className="flex flex-col items-center gap-6 py-4">
+    <div className="flex flex-col items-center gap-6 py-4 duration-200 animate-in fade-in">
       <div className="text-center">
         <h3 className="text-base font-bold">공고를 분석하고 있어요</h3>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -418,7 +418,7 @@ function AnalyzingView({
             <li key={s.key} className="relative flex gap-3 pb-6 last:pb-0">
               {!isLast && (
                 <span
-                  className={`absolute left-[11px] top-7 h-[calc(100%-1rem)] w-0.5 ${
+                  className={`absolute left-[11px] top-7 h-[calc(100%-1rem)] w-0.5 transition-colors duration-500 ${
                     i < active ? 'bg-primary' : 'bg-border'
                   }`}
                 />

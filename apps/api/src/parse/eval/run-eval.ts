@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { ClaudeService } from '../claude.service';
+import { GroqService } from '../groq.service';
 import { LlmService } from '../llm.service';
 import { OllamaService } from '../ollama.service';
 import { type ParsedPosting } from '../types';
@@ -51,7 +52,11 @@ function pct(n: number): string {
 }
 
 async function main(): Promise<void> {
-  const llm = new LlmService(new ClaudeService(), new OllamaService());
+  const llm = new LlmService(
+    new ClaudeService(),
+    new OllamaService(),
+    new GroqService(),
+  );
 
   console.log(
     `\n■ JobLog 파싱 eval  (provider=${llm.provider}, threshold=${pct(THRESHOLD)})\n`,

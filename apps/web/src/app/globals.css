@@ -77,5 +77,19 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* 테마 토글 시 배경·글자색이 부드럽게 전환 */
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
+  }
+}
+
+/* 접근성: 모션 최소화 설정이면 모든 진입 애니메이션을 끈다 */
+@media (prefers-reduced-motion: reduce) {
+  .animate-in {
+    animation: none !important;
+  }
+  * {
+    transition-duration: 0.01ms !important;
   }
 }

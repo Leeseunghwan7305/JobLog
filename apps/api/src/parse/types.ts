@@ -133,3 +133,37 @@ export function normalizeParsed(input: Record<string, unknown>): ParsedPosting {
       !droppedPlatform && input.confidence === 'high' ? 'high' : 'low',
   };
 }
+
+// 채용 사이트의 추천/광고/관련 공고 섹션 머리말. 여기서부터는 다른 회사 공고라
+// LLM이 회사명을 틀리는 주범(예: 사람인 공고에서 하단 HOT100의 '농심'을 집음).
+const RECOMMEND_MARKERS = [
+  '이런 공고는 어때요',
+  '함께 본 공고',
+  '추천 공고',
+  '관련 공고',
+  '비슷한 공고',
+  '맞춤 공고',
+  '지금 뜨는 공고',
+  '이 공고를 본',
+  'HOT100',
+  '직업전체',
+  // 사람인 스토어/서비스 광고 (공고 본문 뒤에 끼어드는 배너)
+  '찜하기',
+  '합격자소서',
+  '자소서 컨설팅',
+  // 원티드: 추천 포지션 카드마다 '합격보상금 N만원' (실제 공고 상단 배너는 '합격보상', 400자 이내라 보호됨)
+  '합격보상금',
+];
+
+/**
+ * 수집된 공고 본문에서 추천/광고 섹션(다른 회사 공고)을 잘라내 LLM 입력을
+ * 실제 공고 하나로 한정한다. 최소 400자 이후 등장분만 잘라 실제 공고는 보호한다.
+ */
+export function stripRecommended(text: string): string {
+  let cut = text.length;
+  for (const marker of RECOMMEND_MARKERS) {
+    const i = text.indexOf(marker);
+    if (i >= 400 && i < cut) cut = i;
+  }
+  return text.slice(0, cut).trim();
+}

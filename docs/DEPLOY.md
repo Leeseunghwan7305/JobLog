@@ -21,17 +21,20 @@
    (또는 New → Web Service 수동: build/start는 render.yaml과 동일하게)
 2. **Environment**에서 `sync:false` 값들 입력:
 
-   | 키 | 값 |
-   |---|---|
-   | `DATABASE_URL` | Neon 문자열 |
-   | `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` | 강한 랜덤 |
-   | `KAKAO_REST_API_KEY` / `KAKAO_CLIENT_SECRET` | 카카오 키 |
-   | `KAKAO_REDIRECT_URI` | `https://<render-도메인>/auth/kakao/callback` |
-   | `ANTHROPIC_API_KEY` | `sk-ant-...` |
-   | `FIRECRAWL_API_KEY` | `fc-...` (잡플래닛 평점, 선택) |
-   | `WEB_ORIGIN` / `APP_BASE_URL` | 웹 도메인 (3번 후 확정) |
+   | 키                                           | 값                                            |
+   | -------------------------------------------- | --------------------------------------------- |
+   | `DATABASE_URL`                               | Neon 문자열                                   |
+   | `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET`   | 강한 랜덤                                     |
+   | `KAKAO_REST_API_KEY` / `KAKAO_CLIENT_SECRET` | 카카오 키                                     |
+   | `KAKAO_REDIRECT_URI`                         | `https://<render-도메인>/auth/kakao/callback` |
+   | `GROQ_API_KEY`                               | `gsk_...` (현재 LLM, console.groq.com 무료)   |
+   | `ANTHROPIC_API_KEY`                          | `sk-ant-...` (선택, 나중에 전환용)            |
+   | `FIRECRAWL_API_KEY`                          | `fc-...` (잡플래닛 평점, 선택)                |
+   | `WEB_ORIGIN` / `APP_BASE_URL`                | 웹 도메인 (3번 후 확정)                       |
 
-   (`LLM_PROVIDER=anthropic`, `ANTHROPIC_MODEL=claude-haiku-4-5`, `NOTIFY_DAYS_AHEAD` 는 render.yaml에 이미 있음)
+   (`LLM_PROVIDER=groq`, `GROQ_MODEL`, `ANTHROPIC_MODEL`, `NOTIFY_DAYS_AHEAD` 는 render.yaml에 이미 있음)
+   **LLM 전환**: Claude 크레딧 충전 후 Render 환경변수 `LLM_PROVIDER` 를 `anthropic` 으로만 바꾸면 끝(재배포 자동).
+
 3. 배포 → Render가 준 `https://<render-도메인>` 확보 → `KAKAO_REDIRECT_URI` 확정.
 
 ## 3. Vercel (Next.js 웹, 무료)
@@ -43,6 +46,7 @@
 ## 4. 도메인 상호 연결
 
 Render Environment 업데이트 후 재배포:
+
 - `WEB_ORIGIN = https://<vercel-도메인>`
 - `APP_BASE_URL = https://<vercel-도메인>`
 
@@ -60,13 +64,14 @@ Render Environment 업데이트 후 재배포:
 
 ## 비용 메모
 
-| 서비스 | 요금 |
-|---|---|
-| Vercel / Neon / Render | 무료 티어 ($0) |
-| Anthropic (haiku) | 공고 분석 건당 사실상 0원 수준, 쓴 만큼 |
-| Firecrawl / Resend | 무료 티어 |
+| 서비스                 | 요금                                    |
+| ---------------------- | --------------------------------------- |
+| Vercel / Neon / Render | 무료 티어 ($0)                          |
+| Anthropic (haiku)      | 공고 분석 건당 사실상 0원 수준, 쓴 만큼 |
+| Firecrawl / Resend     | 무료 티어                               |
 
 **실질 고정비 ≈ $0.** (요금 정책은 바뀔 수 있으니 배포 시 확인 권장.)
 
 ### 알림까지 켜고 싶어지면
+
 API만 Render → **Railway**(~$5/월, always-on)로 이전하면 `@Cron` D-3 알림이 동작한다. 그 외 설정은 동일, 코드 변경 없음.

@@ -3,7 +3,12 @@ import { IsOptional, IsString } from 'class-validator';
 
 import { FirecrawlService } from '../shared/firecrawl.service';
 import { LlmService } from './llm.service';
-import { DEFAULT_STAGES, ParsedPosting, ParseResponse } from './types';
+import {
+  DEFAULT_STAGES,
+  ParsedPosting,
+  ParseResponse,
+  stripRecommended,
+} from './types';
 
 export class ParseDto {
   @IsOptional() @IsString() url?: string;
@@ -24,7 +29,8 @@ export class ParseService {
     if (!text && dto.url) {
       const scraped = await this.firecrawl.scrape(dto.url);
       if (scraped && scraped.trim().length > 50) {
-        text = scraped.trim();
+        // 추천/광고 섹션(다른 회사 공고)을 제거해 실제 공고만 LLM에 넘긴다
+        text = stripRecommended(scraped.trim());
       } else {
         // 수집 실패 → 붙여넣기 폴백
         return {

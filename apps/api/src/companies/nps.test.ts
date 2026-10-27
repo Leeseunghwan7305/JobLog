@@ -148,5 +148,5 @@ test('buildLinks: 잡플래닛·잡서치·크레딧잡·공고검색 4개', () 
   const links = buildLinks('카카오');
   assert.equal(links.length, 4);
   for (const l of links) assert.match(l.url, /^https:\/\//);
-  assert.ok(links.some((l) => /jobplanet/.test(l.url)));
+  assert.ok(links.some((l) => l.url.includes('jobplanet')));
 });

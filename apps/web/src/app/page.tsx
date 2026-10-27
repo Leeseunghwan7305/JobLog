@@ -300,7 +300,7 @@ function Dashboard() {
                     <Link
                       key={app.id}
                       href={`/applications/${app.id}`}
-                      className="block rounded-xl border border-border bg-card p-3 transition hover:border-ring"
+                      className="block rounded-xl border border-border bg-card p-3 transition duration-300 animate-in fade-in slide-in-from-bottom-1 hover:border-ring hover:shadow-sm"
                     >
                       <div className="font-bold">{app.companyName}</div>
                       <div className="text-sm text-muted-foreground">

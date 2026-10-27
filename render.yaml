@@ -9,10 +9,13 @@ services:
     buildCommand: pnpm install --frozen-lockfile && pnpm --filter @joblog/api exec prisma generate && pnpm --filter @joblog/api build
     startCommand: pnpm --filter @joblog/api exec prisma migrate deploy && node apps/api/dist/main.js
     envVars:
+      # 지금은 무료(Groq). Claude 크레딧 충전 후 LLM_PROVIDER=anthropic 으로 바꾸면 끝.
       - key: LLM_PROVIDER
-        value: anthropic
+        value: groq
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-120b # Groq 무료 티어
       - key: ANTHROPIC_MODEL
-        value: claude-haiku-4-5 # 비용 최소화 (opus 대비 1/5~1/25)
+        value: claude-haiku-4-5 # (anthropic 전환 시) 비용 최소화
       - key: NOTIFY_DAYS_AHEAD
         value: '3'
       - key: MAIL_FROM
@@ -32,6 +35,8 @@ services:
         sync: false
       - key: KAKAO_REDIRECT_URI
         sync: false
+      - key: GROQ_API_KEY
+        sync: false # console.groq.com 무료 발급 (현재 프로바이더)
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: FIRECRAWL_API_KEY
