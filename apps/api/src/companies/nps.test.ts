@@ -3,10 +3,13 @@ import { test } from 'node:test';
 
 import {
   buildLinks,
+  companyMonths,
   computeTrends,
   estimateAnnualSalaryManwon,
+  groupCompanies,
   parseBassItems,
   parseDetail,
+  parsePeriod,
   pickWorkplace,
   recentYms,
   toSearchResults,
@@ -92,27 +95,35 @@ test('pickWorkplace: 일치 0건이면 null', () => {
   assert.equal(pickWorkplace(items, '카카오', norm), null);
 });
 
-test('parseDetail: 가입자수/고지금액/입퇴사 매핑', () => {
+test('parseDetail: 가입자수·고지금액·업종명 매핑', () => {
   const json = {
     response: {
       body: {
         items: {
           item: {
-            jnngpCnt: '7',
-            crrmmNtcAmt: '1423800',
-            nwAcqzrCnt: '1',
-            lssJdgmntCnt: '2',
-            wkplIntpCd: '영화·방송',
+            jnngpCnt: '551',
+            crrmmNtcAmt: '337785000',
+            vldtVlKrnNm: '일반 창고업',
+            dataCrtYm: '202609',
           },
         },
       },
     },
   };
   const d = parseDetail(json);
-  assert.equal(d?.memberCount, 7);
-  assert.equal(d?.crrmmNtcAmt, 1423800);
-  assert.equal(d?.newThisMonth, 1);
-  assert.equal(d?.lostThisMonth, 2);
+  assert.equal(d?.memberCount, 551);
+  assert.equal(d?.crrmmNtcAmt, 337785000);
+  assert.equal(d?.industry, '일반 창고업');
+  assert.equal(d?.dataYm, '202609');
+});
+
+test('parsePeriod: 입(nwAcqzrCnt)·퇴(lssJnngpCnt) 매핑', () => {
+  const json = {
+    response: { body: { items: { item: [{ lssJnngpCnt: 2, nwAcqzrCnt: 0 }] } } },
+  };
+  const p = parsePeriod(json);
+  assert.equal(p.joined, 0);
+  assert.equal(p.left, 2);
 });
 
 test('buildLinks: 잡플래닛·잡서치·크레딧잡·공고검색 4개', () => {
@@ -154,6 +165,29 @@ test('recentYms: 연말 넘어가며 내림차순 n개월', () => {
 
 test('recentYms: 파싱 불가하면 입력 그대로 1개', () => {
   assert.deepEqual(recentYms('bad', 6), ['bad']);
+});
+
+test('groupCompanies: 회사×월 중복을 회사 단위로, 대표 seq=최신월', () => {
+  const items = [
+    { seq: 'A2', name: '카카오', bizno: '120', address: '제주', industry: 'IT', dataYm: '202508' },
+    { seq: 'A1', name: '카카오', bizno: '120', address: '제주', industry: 'IT', dataYm: '202507' },
+    { seq: 'B1', name: '카카오', bizno: '999', address: '서울', industry: 'IT', dataYm: '202508' },
+  ];
+  const g = groupCompanies(items);
+  assert.equal(g.length, 2);
+  assert.equal(g.find((c) => c.region === '제주')?.seq, 'A2');
+});
+
+test('companyMonths: seq가 속한 회사의 월들 최신 내림차순', () => {
+  const items = [
+    { seq: 'A2', name: '카카오', bizno: '120', address: '제주', industry: null, dataYm: '202508' },
+    { seq: 'A1', name: '카카오', bizno: '120', address: '제주', industry: null, dataYm: '202507' },
+    { seq: 'B1', name: '카카오', bizno: '999', address: '서울', industry: null, dataYm: '202508' },
+  ];
+  assert.deepEqual(
+    companyMonths(items, 'A1').map((w) => w.seq),
+    ['A2', 'A1'],
+  );
 });
 
 test('toSearchResults: seq 없는 항목 제외하고 매핑', () => {

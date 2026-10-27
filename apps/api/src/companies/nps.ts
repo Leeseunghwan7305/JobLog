@@ -79,12 +79,10 @@ export function pickWorkplace(
 }
 
 export interface NpsDetail {
-  memberCount: number;
-  crrmmNtcAmt: number | null;
-  newThisMonth: number | null;
-  lostThisMonth: number | null;
-  industry: string | null;
-  dataYm: string | null; // 응답이 알려주는 실제 자료생성연월 (월 파라미터 무시 감지용)
+  memberCount: number; // jnngpCnt 가입자수
+  crrmmNtcAmt: number | null; // 당월고지금액
+  industry: string | null; // vldtVlKrnNm 업종명
+  dataYm: string | null; // dataCrtYm (상세엔 없을 수 있음)
 }
 
 /** getDetailInfoSearchV2 응답 → 상세. 항목 없으면 null. */
@@ -95,11 +93,21 @@ export function parseDetail(json: unknown): NpsDetail | null {
   return {
     memberCount: num(it.jnngpCnt) ?? 0,
     crrmmNtcAmt: num(it.crrmmNtcAmt),
-    newThisMonth: num(it.nwAcqzrCnt),
-    lostThisMonth: num(it.lssJdgmntCnt),
-    industry: str(it.wkplIntpCd),
+    industry: str(it.vldtVlKrnNm),
     dataYm: str(it.dataCrtYm),
   };
+}
+
+export interface NpsPeriod {
+  joined: number | null; // nwAcqzrCnt 신규 취득자수(입사)
+  left: number | null; // lssJnngpCnt 상실 가입자수(퇴사)
+}
+
+/** getPdAcctoSttusInfoSearchV2 응답 → 당월 입/퇴. 항목 없으면 둘 다 null. */
+export function parsePeriod(json: unknown): NpsPeriod {
+  const it = itemsOf(json)[0];
+  if (!it) return { joined: null, left: null };
+  return { joined: num(it.nwAcqzrCnt), left: num(it.lssJnngpCnt) };
 }
 
 /** YYYYMM에서 최근 n개월(내림차순, 자신 포함). 파싱 불가하면 [latestYm]. */
@@ -147,6 +155,41 @@ export function toSearchResults(items: NpsWorkplace[]): CompanySearchResult[] {
       region: w.address,
       industry: w.industry,
     }));
+}
+
+/** 회사 식별 키 (이름+사업자번호+주소). bass가 회사×월로 행을 돌려주므로 묶는 데 쓴다. */
+function companyKey(w: NpsWorkplace): string {
+  return `${w.name}|${w.bizno ?? ''}|${w.address ?? ''}`;
+}
+
+/** 월별 중복 행을 회사 단위로 묶어 후보 1개씩(대표 seq=최신월). */
+export function groupCompanies(items: NpsWorkplace[]): CompanySearchResult[] {
+  const latest = new Map<string, NpsWorkplace>();
+  for (const w of items) {
+    if (!w.seq) continue;
+    const k = companyKey(w);
+    const prev = latest.get(k);
+    if (!prev || (w.dataYm ?? '') > (prev.dataYm ?? '')) latest.set(k, w);
+  }
+  return [...latest.values()].map((w) => ({
+    seq: w.seq,
+    name: w.name,
+    region: w.address,
+    industry: w.industry,
+  }));
+}
+
+/** 주어진 seq가 속한 회사의 월별 행들을 최신월 내림차순으로. */
+export function companyMonths(
+  items: NpsWorkplace[],
+  seq: string,
+): NpsWorkplace[] {
+  const target = items.find((w) => w.seq === seq);
+  if (!target) return [];
+  const k = companyKey(target);
+  return items
+    .filter((w) => w.seq && companyKey(w) === k)
+    .sort((a, b) => (b.dataYm ?? '').localeCompare(a.dataYm ?? ''));
 }
 
 export interface NpsMonthSnapshot {

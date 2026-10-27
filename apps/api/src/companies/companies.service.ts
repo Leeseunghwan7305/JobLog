@@ -159,7 +159,7 @@ export class CompaniesService {
       return (cached.nps as unknown as CompanyProfileDto['nps']) ?? null;
     }
     if (!this.nps.enabled) return null;
-    const metrics = await this.nps.fetchBySeq(seq);
+    const metrics = await this.nps.fetchProfile(name, seq);
     if (metrics) await this.cacheProfile(seq, name, metrics);
     return metrics;
   }

@@ -2,15 +2,13 @@ import type { CompanySearchResult, NpsMetrics } from '@joblog/types';
 import { Injectable, Logger } from '@nestjs/common';
 
 import {
+  companyMonths,
   computeTrends,
-  estimateAnnualSalaryManwon,
-  type NpsDetail,
+  groupCompanies,
   type NpsMonthSnapshot,
   parseBassItems,
   parseDetail,
-  pickWorkplace,
-  recentYms,
-  toSearchResults,
+  parsePeriod,
 } from './nps';
 
 const BASE = 'https://apis.data.go.kr/B552015/NpsBplcInfoInqireServiceV2';
@@ -42,98 +40,95 @@ export class NpsService {
     return res.json();
   }
 
-  /** 사업장명 검색 → 후보 목록 (상세 호출 없이 가볍게). */
+  /** 사업장명 검색 → bass는 회사×월로 행을 주므로 회사 단위로 묶어 후보 반환. */
   async searchCandidates(name: string): Promise<CompanySearchResult[]> {
     if (!this.enabled || !name) return [];
     try {
-      const bass = await this.get('getBassInfoSearchV2', {
-        wkpl_nm: name,
-        pageNo: '1',
-        numOfRows: '30',
-      });
-      return toSearchResults(parseBassItems(bass));
+      const rows = parseBassItems(await this.bass(name));
+      return groupCompanies(rows);
     } catch (e) {
       this.logger.warn(`NPS search 실패 (${name}): ${String(e)}`);
       return [];
     }
   }
 
-  /** seq로 최근 N개월 상세를 모아 추이 포함 지표 산출. 실패/빈값이면 null. */
-  async fetchBySeq(seq: string, region?: string | null): Promise<NpsMetrics | null> {
+  /** seq가 속한 회사의 최근 N개월 상세를 모아 추이 포함 지표 산출. */
+  async fetchProfile(name: string, seq: string): Promise<NpsMetrics | null> {
     if (!this.enabled || !seq) return null;
     try {
-      // 월 무지정 → 최신월 파악
-      const latest = parseDetail(await this.get('getDetailInfoSearchV2', { seq }));
-      if (!latest) return null;
-      const latestYm = latest.dataYm ?? '';
+      const rows = parseBassItems(await this.bass(name));
+      let months = companyMonths(rows, seq);
+      if (months.length === 0) months = rows.filter((w) => w.seq === seq);
+      if (months.length === 0) return null;
 
       const snapshots: NpsMonthSnapshot[] = [];
-      const seen = new Set<string>();
-      const push = (d: NpsDetail, ymFallback: string): void => {
-        const ym = d.dataYm ?? ymFallback;
-        // 실제 자료월 기준 dedup — API가 월 파라미터를 무시해 같은 월을 반복
-        // 돌려줘도 가짜 추이가 안 생긴다(그 경우 단월로 축소).
-        if (!ym || seen.has(ym)) return;
-        seen.add(ym);
+      let industry: string | null = null;
+      const recent = months.slice(0, TREND_MONTHS);
+      for (let i = 0; i < recent.length; i++) {
+        const r = recent[i];
+        const d = parseDetail(
+          await this.get('getDetailInfoSearchV2', { seq: r.seq }),
+        );
+        if (!d) continue;
+        const p = parsePeriod(
+          await this.get('getPdAcctoSttusInfoSearchV2', { seq: r.seq }),
+        );
+        if (i === 0) industry = d.industry; // months[0] = 최신월
         snapshots.push({
-          ym,
+          ym: r.dataYm ?? d.dataYm ?? '',
           memberCount: d.memberCount,
           crrmmNtcAmt: d.crrmmNtcAmt,
-          joined: d.newThisMonth,
-          left: d.lostThisMonth,
+          joined: p.joined,
+          left: p.left,
         });
-      };
-      push(latest, latestYm);
-      if (latestYm) {
-        for (const ym of recentYms(latestYm, TREND_MONTHS)) {
-          if (seen.has(ym)) continue;
-          const d = parseDetail(
-            await this.get('getDetailInfoSearchV2', { seq, data_crt_ym: ym }),
-          );
-          if (d) push(d, ym);
-        }
       }
+      if (snapshots.length === 0) return null;
 
       const { trend, turnoverRatePct } = computeTrends(snapshots);
+      const latest = trend[trend.length - 1];
+      const latestRow = months[0];
       return {
         memberCount: latest.memberCount,
-        estimatedAnnualSalaryManwon: estimateAnnualSalaryManwon(
-          latest.crrmmNtcAmt,
-          latest.memberCount,
-        ),
-        newThisMonth: latest.newThisMonth,
-        lostThisMonth: latest.lostThisMonth,
-        industry: latest.industry,
-        region: region ?? null,
-        dataYm: latestYm || null,
+        estimatedAnnualSalaryManwon: latest.estimatedAnnualSalaryManwon,
+        newThisMonth: latest.joined,
+        lostThisMonth: latest.left,
+        industry: industry ?? latestRow.industry,
+        region: latestRow.address,
+        dataYm: latest.ym || null,
         turnoverRatePct,
         trend,
       };
     } catch (e) {
-      this.logger.warn(`NPS fetchBySeq 실패 (${seq}): ${String(e)}`);
+      this.logger.warn(`NPS fetchProfile 실패 (${seq}): ${String(e)}`);
       return null;
     }
   }
 
-  /** 이름 → 완전일치 단일 사업장 → fetchBySeq. seq 동봉 반환. */
+  /** 이름 → 완전일치 단일 회사 → fetchProfile. seq 동봉 반환. */
   async fetchByName(
     name: string,
     normalize: (s: string) => string,
   ): Promise<{ seq: string; metrics: NpsMetrics } | null> {
     if (!this.enabled || !name) return null;
     try {
-      const bass = await this.get('getBassInfoSearchV2', {
-        wkpl_nm: name,
-        pageNo: '1',
-        numOfRows: '20',
-      });
-      const picked = pickWorkplace(parseBassItems(bass), name, normalize);
-      if (!picked) return null; // 0건/복수 → 보수적으로 지표 없음
-      const metrics = await this.fetchBySeq(picked.seq, picked.address);
-      return metrics ? { seq: picked.seq, metrics } : null;
+      const companies = groupCompanies(parseBassItems(await this.bass(name)));
+      const q = normalize(name);
+      const matches = companies.filter((c) => normalize(c.name) === q);
+      if (matches.length !== 1) return null; // 0건/복수 → 보수적으로 지표 없음
+      const seq = matches[0].seq;
+      const metrics = await this.fetchProfile(name, seq);
+      return metrics ? { seq, metrics } : null;
     } catch (e) {
       this.logger.warn(`NPS fetchByName 실패 (${name}): ${String(e)}`);
       return null;
     }
+  }
+
+  private bass(name: string): Promise<unknown> {
+    return this.get('getBassInfoSearchV2', {
+      wkplNm: name,
+      pageNo: '1',
+      numOfRows: '100',
+    });
   }
 }
