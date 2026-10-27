@@ -85,6 +85,8 @@ export interface NpsMetrics {
   region: string | null;
   dataYm: string | null; // 자료생성연월 (YYYYMM)
   turnoverRatePct: number | null; // (입+퇴)/직원수*100, 최신월
+  npsJoinedYear: number | null; // 국민연금 가입 연도 (업력 proxy)
+  estTenureMonths: number | null; // 추정 평균 근속(개월) — 회전율 기반 추정
   trend: NpsMonthly[]; // 최근 N개월 (ym 오름차순)
 }
 

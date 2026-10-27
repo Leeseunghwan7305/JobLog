@@ -83,6 +83,7 @@ export interface NpsDetail {
   crrmmNtcAmt: number | null; // 당월고지금액
   industry: string | null; // vldtVlKrnNm 업종명
   dataYm: string | null; // dataCrtYm (상세엔 없을 수 있음)
+  joinedYear: number | null; // adptDt(국민연금 가입일) 연도 — 업력 proxy
 }
 
 /** getDetailInfoSearchV2 응답 → 상세. 항목 없으면 null. */
@@ -90,11 +91,14 @@ export function parseDetail(json: unknown): NpsDetail | null {
   const list = itemsOf(json);
   if (list.length === 0) return null;
   const it = list[0];
+  const adpt = str(it.adptDt); // YYYYMMDD
+  const y = adpt ? Number(adpt.slice(0, 4)) : NaN;
   return {
     memberCount: num(it.jnngpCnt) ?? 0,
     crrmmNtcAmt: num(it.crrmmNtcAmt),
     industry: str(it.vldtVlKrnNm),
     dataYm: str(it.dataCrtYm),
+    joinedYear: Number.isInteger(y) && y > 1900 && y < 2100 ? y : null,
   };
 }
 
@@ -223,4 +227,19 @@ export function computeTrends(snapshots: NpsMonthSnapshot[]): {
     turnoverRatePct = Math.round((inOut / latest.memberCount) * 1000) / 10;
   }
   return { trend, turnoverRatePct };
+}
+
+/**
+ * 추정 평균 근속(개월) — 월평균 퇴사율의 역수(jotso식 근사).
+ * 공개데이터에 근속 원값이 없어 추정이며, 데이터 부족/퇴사 0이면 null.
+ */
+export function estimateTenureMonths(trend: NpsMonthly[]): number | null {
+  const rates: number[] = [];
+  for (const m of trend) {
+    if (m.memberCount > 0 && m.left != null) rates.push(m.left / m.memberCount);
+  }
+  if (rates.length === 0) return null;
+  const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
+  if (avg <= 0) return null; // 퇴사 0 → 장기(근속 추정 불가)
+  return Math.round(1 / avg);
 }

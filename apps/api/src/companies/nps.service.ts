@@ -4,6 +4,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   companyMonths,
   computeTrends,
+  estimateTenureMonths,
   groupCompanies,
   type NpsMonthSnapshot,
   parseBassItems,
@@ -80,6 +81,7 @@ export class NpsService {
 
       const snapshots: NpsMonthSnapshot[] = [];
       let industry: string | null = null;
+      let joinedYear: number | null = null;
       const recent = months.slice(0, TREND_MONTHS);
       for (let i = 0; i < recent.length; i++) {
         const r = recent[i];
@@ -90,7 +92,10 @@ export class NpsService {
         const p = parsePeriod(
           await this.get('getPdAcctoSttusInfoSearchV2', { seq: r.seq }),
         );
-        if (i === 0) industry = d.industry; // months[0] = 최신월
+        if (i === 0) {
+          industry = d.industry; // months[0] = 최신월
+          joinedYear = d.joinedYear;
+        }
         snapshots.push({
           ym: r.dataYm ?? d.dataYm ?? '',
           memberCount: d.memberCount,
@@ -113,6 +118,8 @@ export class NpsService {
         region: latestRow.address,
         dataYm: latest.ym || null,
         turnoverRatePct,
+        npsJoinedYear: joinedYear,
+        estTenureMonths: estimateTenureMonths(trend),
         trend,
       };
     } catch (e) {

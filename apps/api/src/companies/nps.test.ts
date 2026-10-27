@@ -6,6 +6,7 @@ import {
   companyMonths,
   computeTrends,
   estimateAnnualSalaryManwon,
+  estimateTenureMonths,
   groupCompanies,
   parseBassItems,
   parseDetail,
@@ -105,6 +106,7 @@ test('parseDetail: 가입자수·고지금액·업종명 매핑', () => {
             crrmmNtcAmt: '337785000',
             vldtVlKrnNm: '일반 창고업',
             dataCrtYm: '202609',
+            adptDt: '20170401',
           },
         },
       },
@@ -115,6 +117,23 @@ test('parseDetail: 가입자수·고지금액·업종명 매핑', () => {
   assert.equal(d?.crrmmNtcAmt, 337785000);
   assert.equal(d?.industry, '일반 창고업');
   assert.equal(d?.dataYm, '202609');
+  assert.equal(d?.joinedYear, 2017);
+});
+
+test('estimateTenureMonths: 월평균 퇴사율의 역수(개월)', () => {
+  // 10명 중 매월 1명 퇴사 → 월퇴사율 0.1 → 근속 ~10개월
+  const months = [
+    { ym: '202505', memberCount: 10, joined: 0, left: 1, estimatedAnnualSalaryManwon: null },
+    { ym: '202506', memberCount: 10, joined: 0, left: 1, estimatedAnnualSalaryManwon: null },
+  ];
+  assert.equal(estimateTenureMonths(months), 10);
+});
+
+test('estimateTenureMonths: 퇴사 0이면 null(추정 불가)', () => {
+  const months = [
+    { ym: '202506', memberCount: 9, joined: 0, left: 0, estimatedAnnualSalaryManwon: null },
+  ];
+  assert.equal(estimateTenureMonths(months), null);
 });
 
 test('parsePeriod: 입(nwAcqzrCnt)·퇴(lssJnngpCnt) 매핑', () => {
