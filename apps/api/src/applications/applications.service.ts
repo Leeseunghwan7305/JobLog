@@ -12,6 +12,7 @@ import {
   UpdateStageDto,
 } from './dto';
 import { computeInsights } from './insights.util';
+import { applicationSearchWhere } from './search.util';
 import { deriveStatus } from './status.util';
 
 const withStages = { stages: { orderBy: { order: 'asc' as const } } };
@@ -57,11 +58,12 @@ export class ApplicationsService {
     });
   }
 
-  findAll(userId: string, status?: string) {
+  findAll(userId: string, status?: string, q?: string) {
     return this.prisma.application.findMany({
       where: {
         userId,
         ...(status ? { status: status as AppStatus } : {}),
+        ...applicationSearchWhere(q),
       },
       include: withStages,
       orderBy: { updatedAt: 'desc' },

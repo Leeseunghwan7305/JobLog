@@ -7,7 +7,7 @@ import type {
   StageDto,
   UserDto,
 } from '@joblog/types';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -185,9 +185,24 @@ function Dashboard() {
     queryKey: ['me'],
     queryFn: () => apiFetch<UserDto>('/auth/me'),
   });
+  const [q, setQ] = useState('');
+  const [debouncedQ, setDebouncedQ] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedQ(q.trim());
+    }, 250);
+    return () => {
+      clearTimeout(t);
+    };
+  }, [q]);
+
   const apps = useQuery({
-    queryKey: ['apps'],
-    queryFn: () => apiFetch<ApplicationDto[]>('/applications'),
+    queryKey: ['apps', debouncedQ],
+    queryFn: () =>
+      apiFetch<ApplicationDto[]>(
+        `/applications${debouncedQ ? `?q=${encodeURIComponent(debouncedQ)}` : ''}`,
+      ),
+    placeholderData: keepPreviousData,
   });
   const stats = useQuery({
     queryKey: ['stats'],
@@ -249,15 +264,25 @@ function Dashboard() {
           <Stat label="합격" value={stats.data?.offer ?? 0} tone="emerald" />
           <Stat label="불합격" value={stats.data?.rejected ?? 0} tone="red" />
         </div>
-        <button
-          onClick={openAdd}
-          className="rounded-lg bg-primary px-4 py-2 font-semibold text-primary-foreground transition hover:bg-primary/90"
-        >
-          + 공고 추가
-        </button>
+        <div className="flex items-center gap-2">
+          <input
+            value={q}
+            onChange={(e) => {
+              setQ(e.target.value);
+            }}
+            placeholder="회사·직무·메모 검색"
+            className="w-36 rounded-lg border border-input bg-background px-3 py-2 text-sm transition focus:w-52 focus:outline-none focus:ring-2 focus:ring-ring sm:w-44"
+          />
+          <button
+            onClick={openAdd}
+            className="shrink-0 rounded-lg bg-primary px-4 py-2 font-semibold text-primary-foreground transition hover:bg-primary/90"
+          >
+            + 공고 추가
+          </button>
+        </div>
       </div>
 
-      {(apps.data?.length ?? 0) > 0 && insights.data && (
+      {!debouncedQ && (apps.data?.length ?? 0) > 0 && insights.data && (
         <InsightsPanel data={insights.data} />
       )}
 
@@ -282,21 +307,31 @@ function Dashboard() {
           ))}
         </div>
       ) : (apps.data?.length ?? 0) === 0 ? (
-        <div className="mt-16 flex flex-col items-center gap-4 text-center">
-          <div className="text-5xl">📋</div>
-          <div>
-            <p className="text-lg font-bold">아직 등록한 공고가 없어요</p>
+        debouncedQ ? (
+          <div className="mt-16 flex flex-col items-center gap-2 text-center">
+            <div className="text-5xl">🔍</div>
+            <p className="text-lg font-bold">검색 결과가 없어요</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              채용 공고 링크를 붙여넣으면 전형까지 자동으로 정리해 드려요.
+              ‘{debouncedQ}’에 맞는 공고를 찾지 못했어요.
             </p>
           </div>
-          <button
-            onClick={openAdd}
-            className="rounded-lg bg-primary px-5 py-2.5 font-semibold text-primary-foreground transition hover:bg-primary/90"
-          >
-            + 첫 공고 추가하기
-          </button>
-        </div>
+        ) : (
+          <div className="mt-16 flex flex-col items-center gap-4 text-center">
+            <div className="text-5xl">📋</div>
+            <div>
+              <p className="text-lg font-bold">아직 등록한 공고가 없어요</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                채용 공고 링크를 붙여넣으면 전형까지 자동으로 정리해 드려요.
+              </p>
+            </div>
+            <button
+              onClick={openAdd}
+              className="rounded-lg bg-primary px-5 py-2.5 font-semibold text-primary-foreground transition hover:bg-primary/90"
+            >
+              + 첫 공고 추가하기
+            </button>
+          </div>
+        )
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           {COLUMNS.map((col) => {

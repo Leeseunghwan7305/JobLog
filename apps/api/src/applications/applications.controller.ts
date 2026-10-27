@@ -50,8 +50,12 @@ export class ApplicationsController {
   }
 
   @Get('applications')
-  findAll(@CurrentUser() userId: string, @Query('status') status?: string) {
-    return this.svc.findAll(userId, status);
+  findAll(
+    @CurrentUser() userId: string,
+    @Query('status') status?: string,
+    @Query('q') q?: string,
+  ) {
+    return this.svc.findAll(userId, status, q);
   }
 
   @Get('applications/:id')
