@@ -37,3 +37,4 @@ coverage/
 
 # Neon 스킬 문서(재생성 가능: neon skills)
 .claude/skills/
+.vercel
