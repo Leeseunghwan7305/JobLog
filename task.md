@@ -67,6 +67,7 @@
   - [x] 태그 — `Application.tags String[]`. 생성/수정 DTO·`ApplicationDto` 반영. 상세 태그 편집기(칩 추가/삭제), 대시보드 카드 `#태그` 칩
   - [x] 공고 아카이브 — `Application.archivedAt`. `GET /applications?archived=`, 목록 기본 활성만. 보관함 뷰(대시보드 토글), 상세 보관/해제 버튼. 순수 `archive.util`(필터·archived→archivedAt) + 단위테스트 5케이스
   - 마이그레이션 `add_tags_and_archive`(additive: tags·archivedAt 컬럼 + userId·archivedAt 인덱스). 로컬 joblog-db(5434)에 생성·적용, 실DB 스모크 통과. 운영 적용은 배포 시 `prisma migrate deploy`
+- [x] 집 주소 기반 통근 길찾기 — 마이페이지(`PATCH /profile/home`)에 집 주소 저장(지오코딩→좌표, `User.homeAddress/homeLat/homeLng`). 각 공고 상세에서 `GET /applications/:id/commute` → **집→회사 네이버 지도 대중교통 길찾기 딥링크**. 지오코딩 `GeoService`(Kakao Local 우선→Nominatim 폴백, 키 없어도 동작), 순수 `naverDirectionsUrl`·`parseKakaoGeocode`·`parseNominatim` 단위테스트. 집 미설정/실패 시 우아한 폴백. 마이그레이션 `add_home_location`(additive)
 
 ---
 

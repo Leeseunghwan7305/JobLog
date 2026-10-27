@@ -147,6 +147,8 @@ interface ParsedPosting {
 | PATCH  | `/applications/:id/stages/:stageId` |  ✓   | 단계 상태·일정 갱신 → 전체 상태 재계산 |
 | POST   | `/applications/:id/stages`          |  ✓   | 단계 추가                              |
 | DELETE | `/applications/:id/stages/:stageId` |  ✓   | 단계 삭제                              |
+| GET    | `/applications/:id/commute`         |  ✓   | 집→회사 네이버 길찾기 딥링크 (집 미설정/지오코딩 실패 시 null) |
+| PATCH  | `/profile/home`                     |  ✓   | 집 주소 저장(지오코딩→좌표). 빈 값이면 해제 |
 | GET    | `/companies/reviews?name=`          |  -   | 기업 후기 평점·요약 (M4, best-effort)  |
 | GET    | `/companies/profile?name=`          |  ✓   | 회사 통합 프로필: 국민연금 지표+후기+바로가기 (M4) |
 | GET    | `/calendar?from=&to=`               |  ✓   | 마감·단계 예정일을 이벤트로 집계 (M4)  |
