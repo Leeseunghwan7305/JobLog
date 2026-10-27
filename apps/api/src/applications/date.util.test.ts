@@ -1,6 +1,7 @@
-import { BadRequestException } from '@nestjs/common';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+
+import { BadRequestException } from '@nestjs/common';
 
 import { parseDateStrict } from './date.util';
 
@@ -22,6 +23,6 @@ test('에러 메시지에 필드명을 포함한다 (어떤 값이 문제인지 
     assert.fail('던졌어야 한다');
   } catch (e) {
     assert.ok(e instanceof BadRequestException);
-    assert.match((e as BadRequestException).message, /마감일/);
+    assert.match(e.message, /마감일/);
   }
 });

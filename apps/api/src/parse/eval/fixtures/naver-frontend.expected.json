@@ -5,11 +5,11 @@
   "employmentType": "정규직",
   "deadline": "2026-11-30",
   "stages": [
-    { "name": "서류", "order": 0 },
+    { "name": "서류 전형", "order": 0 },
     { "name": "코딩 테스트", "order": 1 },
     { "name": "1차 기술 면접", "order": 2 },
     { "name": "2차 컬쳐핏 면접", "order": 3 },
-    { "name": "최종", "order": 4 }
+    { "name": "최종 합격", "order": 4 }
   ],
   "confidence": "high"
 }

@@ -5,11 +5,11 @@ import { kakaoLoginUrl } from '@/lib/api';
 export default function LoginModal({ onClose }: { onClose: () => void }) {
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 duration-200 animate-in fade-in"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl bg-card p-8 text-center shadow-xl"
+        className="w-full max-w-sm rounded-2xl bg-card p-8 text-center shadow-xl duration-200 animate-in fade-in zoom-in-95 slide-in-from-bottom-2"
         onClick={(e) => {
           e.stopPropagation();
         }}

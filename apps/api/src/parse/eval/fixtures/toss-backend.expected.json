@@ -5,11 +5,11 @@
   "employmentType": "정규직",
   "deadline": null,
   "stages": [
-    { "name": "서류", "order": 0 },
+    { "name": "서류 전형", "order": 0 },
     { "name": "사전 과제", "order": 1 },
     { "name": "1차 실무 인터뷰", "order": 2 },
     { "name": "2차 임원 인터뷰", "order": 3 },
-    { "name": "최종", "order": 4 }
+    { "name": "처우 협의 및 최종 합격", "order": 4 }
   ],
   "confidence": "high"
 }

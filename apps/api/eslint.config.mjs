@@ -1,6 +1,8 @@
 import config from '@joblog/eslint-config/nest';
 
 export default [
+  // Vercel 서버리스 엔트리(순수 JS, TS 프로젝트 밖) — 린트 제외
+  { ignores: ['api/**', 'dist/**'] },
   ...config,
   {
     languageOptions: {

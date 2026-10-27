@@ -5,6 +5,9 @@
 **/coverage/**
 pnpm-lock.yaml
 
+# git worktree (레포 복사본 — 각자 포맷)
+.claude/worktrees/**
+
 # Prisma 마이그레이션 SQL
 apps/api/prisma/migrations/**
 

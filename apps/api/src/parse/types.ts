@@ -51,13 +51,29 @@ function normalizeDeadline(v: unknown): string | null {
   return `${year}-${pad2(month)}-${pad2(day)}`;
 }
 
-/** 단계명에서 모델이 흔히 덧붙이는 감싸는 괄호([],(),「」,『』,【】)를 벗기고 trim. */
-function cleanStageName(name: string): string {
-  return name
-    .trim()
-    .replace(/^[[(「『【]+/, '')
-    .replace(/[\])」』】]+$/, '')
+/** 문자열 어디에 있든 괄호 블록((), [], 「」, 『』, 【】)을 통째로 제거하고 공백 정리. */
+function stripParens(s: string): string {
+  return s
+    .replace(/\s*[[(（「『【][^)\]）」』】]*[)\]）」』】]/g, '')
+    .replace(/\s{2,}/g, ' ')
     .trim();
+}
+
+/**
+ * 단계명 정리: 괄호 부연설명(예: "1차 면접(직무 적합성)"→"1차 면접"),
+ * 콜론 뒤 설명("지원서 심사: ..."→"지원서 심사"), "&" 뒤 부가절("처우 협의&입사일 조정"→"처우 협의") 제거.
+ */
+function cleanStageName(name: string): string {
+  const base = name.trim();
+  let s = stripParens(base);
+  // 이름 전체가 괄호였다면(제거 시 빈 값) 감싸는 괄호만 벗긴다.
+  if (!s) {
+    s = base
+      .replace(/^[[(（「『【]+/, '')
+      .replace(/[\])）」』】]+$/, '')
+      .trim();
+  }
+  return s.split(/\s*[:：]/)[0].split('&')[0].trim();
 }
 
 // 채용 플랫폼/잡보드 이름. 공고를 "게시한" 곳일 뿐 "채용하는 회사"가 아니므로
@@ -118,18 +134,54 @@ export function normalizeParsed(input: Record<string, unknown>): ParsedPosting {
           .sort((a, b) => a.sortKey - b.sortKey)
           .map((s, i) => ({ name: s.name, order: i }))
       : DEFAULT_STAGES;
-  const rawCompany = asString(input.companyName);
+  // 괄호 안 별칭·법인명·영문명 제거 (예: "토스(비바리퍼블리카)"→"토스")
+  const rawCompany = stripParens(asString(input.companyName));
   const companyName = stripPlatformName(rawCompany);
   // 플랫폼명을 걷어냈다면(= 모델이 고용주를 못 집음) 사용자 보정을 유도한다.
   const droppedPlatform = rawCompany !== '' && companyName === '';
   return {
     companyName,
     position: asString(input.position),
-    location: asStringOrNull(input.location),
+    // 괄호 안 건물명/부가정보 제거 (예: "성남시 분당구 (네이버 1784)"→"성남시 분당구")
+    location: asStringOrNull(stripParens(asString(input.location))),
     employmentType: asStringOrNull(input.employmentType),
     deadline: normalizeDeadline(input.deadline),
     stages,
     confidence:
       !droppedPlatform && input.confidence === 'high' ? 'high' : 'low',
   };
+}
+
+// 채용 사이트의 추천/광고/관련 공고 섹션 머리말. 여기서부터는 다른 회사 공고라
+// LLM이 회사명을 틀리는 주범(예: 사람인 공고에서 하단 HOT100의 '농심'을 집음).
+const RECOMMEND_MARKERS = [
+  '이런 공고는 어때요',
+  '함께 본 공고',
+  '추천 공고',
+  '관련 공고',
+  '비슷한 공고',
+  '맞춤 공고',
+  '지금 뜨는 공고',
+  '이 공고를 본',
+  'HOT100',
+  '직업전체',
+  // 사람인 스토어/서비스 광고 (공고 본문 뒤에 끼어드는 배너)
+  '찜하기',
+  '합격자소서',
+  '자소서 컨설팅',
+  // 원티드: 추천 포지션 카드마다 '합격보상금 N만원' (실제 공고 상단 배너는 '합격보상', 400자 이내라 보호됨)
+  '합격보상금',
+];
+
+/**
+ * 수집된 공고 본문에서 추천/광고 섹션(다른 회사 공고)을 잘라내 LLM 입력을
+ * 실제 공고 하나로 한정한다. 최소 400자 이후 등장분만 잘라 실제 공고는 보호한다.
+ */
+export function stripRecommended(text: string): string {
+  let cut = text.length;
+  for (const marker of RECOMMEND_MARKERS) {
+    const i = text.indexOf(marker);
+    if (i >= 400 && i < cut) cut = i;
+  }
+  return text.slice(0, cut).trim();
 }

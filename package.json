@@ -15,12 +15,17 @@
     "format:check": "prettier --check .",
     "parse:eval": "pnpm --filter @joblog/api parse:eval",
     "api": "pnpm --filter @joblog/api",
-    "web": "pnpm --filter @joblog/web"
+    "web": "pnpm --filter @joblog/web",
+    "build": "pnpm -r --if-present build"
   },
   "devDependencies": {
     "@joblog/prettier-config": "workspace:*",
     "prettier": "^3.4.2",
     "prettier-plugin-tailwindcss": "^0.6.9",
     "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@neon/config": "^1.9.4",
+    "@neon/env": "^1.6.5"
   }
 }
