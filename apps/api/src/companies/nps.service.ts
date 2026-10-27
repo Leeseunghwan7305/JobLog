@@ -32,12 +32,29 @@ export class NpsService {
       dataType: 'json', // 국민연금 API는 dataType=json 이어야 JSON (resultType 무시)
       ...params,
     });
-    const res = await fetch(`${BASE}/${path}?${qs.toString()}`);
-    if (!res.ok) {
-      this.logger.warn(`NPS ${path} ${res.status}`);
-      return null;
+    const url = `${BASE}/${path}?${qs.toString()}`;
+    // data.go.kr 게이트웨이가 간헐적으로 504/5xx를 뱉어 → 짧은 백오프로 재시도.
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await fetch(url);
+        if (res.status === 429 || res.status >= 500) {
+          this.logger.warn(`NPS ${path} ${res.status} (attempt ${attempt}/3)`);
+        } else if (!res.ok) {
+          this.logger.warn(`NPS ${path} ${res.status}`);
+          return null; // 4xx 등 영구 오류는 재시도 무의미
+        } else {
+          return await res.json();
+        }
+      } catch (e) {
+        this.logger.warn(
+          `NPS ${path} 네트워크 실패 (attempt ${attempt}/3): ${String(e)}`,
+        );
+      }
+      if (attempt < 3) {
+        await new Promise((r) => setTimeout(r, 300 * attempt));
+      }
     }
-    return res.json();
+    return null;
   }
 
   /** 사업장명 검색 → bass는 회사×월로 행을 주므로 회사 단위로 묶어 후보 반환. */
