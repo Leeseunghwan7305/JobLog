@@ -12,12 +12,13 @@ test('빈 문자열·공백만 있으면 필터 없음 {} (전체 매칭 방지)
   assert.deepEqual(applicationSearchWhere('   '), {});
 });
 
-test('검색어가 있으면 회사명·직무·메모를 대소문자 무시 부분일치 OR', () => {
+test('검색어가 있으면 회사명·직무·메모는 부분일치, 태그는 정확일치로 OR', () => {
   assert.deepEqual(applicationSearchWhere('네이버'), {
     OR: [
       { companyName: { contains: '네이버', mode: 'insensitive' } },
       { position: { contains: '네이버', mode: 'insensitive' } },
       { memo: { contains: '네이버', mode: 'insensitive' } },
+      { tags: { has: '네이버' } },
     ],
   });
 });
@@ -28,6 +29,7 @@ test('앞뒤 공백은 trim해서 검색어로 쓴다', () => {
       { companyName: { contains: '프론트', mode: 'insensitive' } },
       { position: { contains: '프론트', mode: 'insensitive' } },
       { memo: { contains: '프론트', mode: 'insensitive' } },
+      { tags: { has: '프론트' } },
     ],
   });
 });

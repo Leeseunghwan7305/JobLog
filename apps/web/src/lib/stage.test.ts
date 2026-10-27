@@ -24,6 +24,8 @@ function makeApp(
     appliedAt: null,
     employeeCount: null,
     memo: null,
+    tags: [],
+    archivedAt: null,
     status,
     stages: stages.map((s, i) => ({
       id: `s${i}`,

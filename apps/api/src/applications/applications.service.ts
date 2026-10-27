@@ -3,6 +3,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { AppStatus, StageStatus } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { archiveWhere, resolveArchivedAt } from './archive.util';
 import { toCalendarEvents } from './calendar.util';
 import { parseDateStrict } from './date.util';
 import {
@@ -39,6 +40,7 @@ export class ApplicationsService {
           : null,
         employeeCount: dto.employeeCount ?? null,
         memo: dto.memo,
+        tags: dto.tags ?? [],
         stages: {
           create: dto.stages.map((s, i) => {
             const order = s.order ?? i;
@@ -58,10 +60,11 @@ export class ApplicationsService {
     });
   }
 
-  findAll(userId: string, status?: string, q?: string) {
+  findAll(userId: string, status?: string, q?: string, archived = false) {
     return this.prisma.application.findMany({
       where: {
         userId,
+        ...archiveWhere(archived),
         ...(status ? { status: status as AppStatus } : {}),
         ...applicationSearchWhere(q),
       },
@@ -98,6 +101,8 @@ export class ApplicationsService {
           : undefined,
         employeeCount: dto.employeeCount,
         memo: dto.memo,
+        tags: dto.tags,
+        archivedAt: resolveArchivedAt(dto.archived, new Date()),
         status: dto.status ? (dto.status as AppStatus) : undefined,
       },
       include: withStages,

@@ -62,9 +62,11 @@
 - [x] 마감·면접 임박 D-3 이메일 알림 (Resend) — @Cron 매일 09:00 KST, `SentNotification` 멱등(중복 발송 차단), 키 없으면 콘솔 로그 폴백. `NOTIFY_DAYS_AHEAD`로 D-N 조정. 수동 트리거 `POST /notifications/run`. 날짜 유틸 단위테스트(`notifications.util.test.ts`). 실발송은 RESEND_API_KEY 연결 후
 - [x] 캘린더 뷰 — 백엔드(`GET /calendar`, `toCalendarEvents`, 소유권 필터) + 프론트 월간 그리드(`/calendar`, 이전/다음 달, 마감/전형 이벤트 뱃지→상세 딥링크). 대시보드에 캘린더 링크
 - [x] 합격률·전형별 통계 인사이트 — `GET /dashboard/insights` + 순수 `computeInsights`(합격률=offer/(offer+rejected), 진행중·철회 제외 / 전형명별 통과율=passed/(passed+failed), 등장빈도순). 단위테스트 7케이스(`insights.util.test.ts`), 대시보드 인사이트 패널(합격률 + 전형별 통과율 바)
-- [~] 태그·메모 검색, 공고 아카이브
-  - [x] 키워드 검색 — `GET /applications?q=` (회사명·직무·메모 대소문자무시 부분일치 OR). 순수 where빌더(`search.util.ts`) + 단위테스트 4케이스. 대시보드 검색창(250ms 디바운스·`keepPreviousData`·검색결과 빈상태 구분)
-  - [ ] 태그, 공고 아카이브 — Application 스키마에 `tags`·`archivedAt` 추가 필요(마이그레이션). 병렬 작업/공유 DB 충돌 피해 안전한 시점에 진행
+- [x] 태그·메모 검색, 공고 아카이브
+  - [x] 키워드 검색 — `GET /applications?q=` (회사명·직무·메모 대소문자무시 부분일치 + 태그 정확일치 OR). 순수 where빌더(`search.util.ts`) + 단위테스트. 대시보드 검색창(250ms 디바운스·`keepPreviousData`·검색결과 빈상태 구분)
+  - [x] 태그 — `Application.tags String[]`. 생성/수정 DTO·`ApplicationDto` 반영. 상세 태그 편집기(칩 추가/삭제), 대시보드 카드 `#태그` 칩
+  - [x] 공고 아카이브 — `Application.archivedAt`. `GET /applications?archived=`, 목록 기본 활성만. 보관함 뷰(대시보드 토글), 상세 보관/해제 버튼. 순수 `archive.util`(필터·archived→archivedAt) + 단위테스트 5케이스
+  - 마이그레이션 `add_tags_and_archive`(additive: tags·archivedAt 컬럼 + userId·archivedAt 인덱스). 로컬 joblog-db(5434)에 생성·적용, 실DB 스모크 통과. Neon 실적용은 배포 시 `migrate deploy`
 
 ---
 

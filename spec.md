@@ -140,7 +140,7 @@ interface ParsedPosting {
 | POST   | `/auth/refresh`                     | 쿠키 | access token 재발급                    |
 | POST   | `/applications/parse`               |  ✓   | 링크/본문 → 파싱 초안 반환 (저장 X)    |
 | POST   | `/applications`                     |  ✓   | 보정된 초안으로 지원 생성              |
-| GET    | `/applications`                     |  ✓   | 내 지원 목록 (`?status=` 필터, `?q=` 회사·직무·메모 검색, 정렬) |
+| GET    | `/applications`                     |  ✓   | 내 지원 목록 (`?status=`·`?archived=` 필터, `?q=` 회사·직무·메모·태그 검색, 정렬) |
 | GET    | `/applications/:id`                 |  ✓   | 지원 상세 (stages 포함)                |
 | PATCH  | `/applications/:id`                 |  ✓   | 회사·직무·메모 등 수정                 |
 | DELETE | `/applications/:id`                 |  ✓   | 지원 삭제                              |
@@ -168,8 +168,10 @@ interface CreateApplicationDto {
   deadline?: string;
   appliedAt?: string;
   memo?: string;
+  tags?: string[]; // 사용자 자유 태그
   stages: { name: string; order: number }[];
 }
+// PATCH /applications/:id 는 위 필드(부분) + archived?: boolean(보관 토글) 지원
 
 // PATCH /applications/:id/stages/:stageId
 interface UpdateStageDto {

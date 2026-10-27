@@ -116,6 +116,30 @@ export default function ApplicationDetail({
     },
   });
 
+  const archive = useMutation({
+    mutationFn: (archived: boolean) =>
+      apiFetch(`/applications/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ archived }),
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['app', id] });
+      void qc.invalidateQueries({ queryKey: ['apps'] });
+    },
+  });
+
+  const setTags = useMutation({
+    mutationFn: (tags: string[]) =>
+      apiFetch(`/applications/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ tags }),
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['app', id] });
+      void qc.invalidateQueries({ queryKey: ['apps'] });
+    },
+  });
+
   // 조회된 회사규모(NPS 가입자수)를 지원에 스냅샷 저장 → 목록·다른 기기에서도 일관.
   const saveSize = useMutation({
     mutationFn: (employeeCount: number) =>
@@ -190,6 +214,11 @@ export default function ApplicationDetail({
             ) : null;
           })()}
           <div className="mt-2 flex flex-wrap items-center gap-2">
+            {a.archivedAt ? (
+              <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+                보관됨
+              </span>
+            ) : null}
             {companySize ? (
               <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
                 규모 {companySize.toLocaleString()}명
@@ -202,16 +231,28 @@ export default function ApplicationDetail({
             ) : null}
           </div>
         </div>
-        <button
-          disabled={remove.isPending}
-          onClick={() => {
-            if (confirm('이 지원을 삭제할까요?')) remove.mutate();
-          }}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-red-500 disabled:opacity-60 dark:hover:text-red-400"
-        >
-          {remove.isPending && <Spinner className="h-3 w-3" />}
-          삭제
-        </button>
+        <div className="flex shrink-0 items-center gap-3">
+          <button
+            disabled={archive.isPending}
+            onClick={() => {
+              archive.mutate(!a.archivedAt);
+            }}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-60"
+          >
+            {archive.isPending && <Spinner className="h-3 w-3" />}
+            {a.archivedAt ? '보관 해제' : '보관'}
+          </button>
+          <button
+            disabled={remove.isPending}
+            onClick={() => {
+              if (confirm('이 지원을 삭제할까요?')) remove.mutate();
+            }}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-red-500 disabled:opacity-60 dark:hover:text-red-400"
+          >
+            {remove.isPending && <Spinner className="h-3 w-3" />}
+            삭제
+          </button>
+        </div>
       </div>
 
       {a.jobUrl && (
@@ -224,6 +265,14 @@ export default function ApplicationDetail({
           공고 링크 열기 ↗
         </a>
       )}
+
+      <TagEditor
+        tags={a.tags}
+        pending={setTags.isPending}
+        onChange={(next) => {
+          setTags.mutate(next);
+        }}
+      />
 
       <section className="mt-8">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
@@ -482,5 +531,65 @@ export default function ApplicationDetail({
         )}
       </section>
     </main>
+  );
+}
+
+function TagEditor({
+  tags,
+  pending,
+  onChange,
+}: {
+  tags: string[];
+  pending: boolean;
+  onChange: (next: string[]) => void;
+}) {
+  const [input, setInput] = useState('');
+  const add = () => {
+    const t = input.trim();
+    setInput('');
+    if (!t || tags.includes(t)) return;
+    onChange([...tags, t]);
+  };
+  return (
+    <div className="mt-4">
+      <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        태그
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {tags.map((t) => (
+          <span
+            key={t}
+            className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground"
+          >
+            {t}
+            <button
+              aria-label={`${t} 태그 삭제`}
+              disabled={pending}
+              onClick={() => {
+                onChange(tags.filter((x) => x !== t));
+              }}
+              className="text-muted-foreground hover:text-red-500 disabled:opacity-60"
+            >
+              ✕
+            </button>
+          </span>
+        ))}
+        <input
+          value={input}
+          onChange={(e) => {
+            setInput(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              add();
+            }
+          }}
+          placeholder="+ 태그"
+          disabled={pending}
+          className="w-20 rounded-full border border-dashed border-input bg-background px-2.5 py-1 text-xs transition focus:w-28 focus:outline-none focus:ring-1 focus:ring-ring"
+        />
+      </div>
+    </div>
   );
 }
