@@ -1,5 +1,6 @@
-import type { CompanyReviewDto } from '@joblog/types';
+import type { CompanyProfileDto, CompanyReviewDto } from '@joblog/types';
 import { Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { FirecrawlService } from '../shared/firecrawl.service';
@@ -11,6 +12,8 @@ import {
   SCRAPE_WAIT_MS,
   searchUrl,
 } from './jobplanet';
+import { buildLinks } from './nps';
+import { NpsService } from './nps.service';
 
 @Injectable()
 export class CompaniesService {
@@ -19,6 +22,7 @@ export class CompaniesService {
   constructor(
     private prisma: PrismaService,
     private firecrawl: FirecrawlService,
+    private nps: NpsService,
   ) {}
 
   /** 회사명 정규화: 법인 접미사·여분 공백 제거 (spec 6.1) */
@@ -98,5 +102,47 @@ export class CompaniesService {
       this.logger.warn(`jobplanet 수집 실패 (${name}): ${String(e)}`);
       return fallback;
     }
+  }
+
+  /** 회사 통합 프로필: 국민연금 지표(캐시 7일) + 잡플래닛 후기 + 바로가기. */
+  async getProfile(nameRaw: string): Promise<CompanyProfileDto> {
+    const name = this.normalize(nameRaw);
+    const links = buildLinks(name || nameRaw);
+    if (!name) {
+      return { companyName: name, nps: null, review: null, links };
+    }
+
+    // 1) 국민연금 지표 (캐시 우선)
+    let nps: CompanyProfileDto['nps'] = null;
+    const cached = await this.prisma.companyProfile.findUnique({
+      where: { companyName: name },
+    });
+    if (cached && isCacheFresh(cached.fetchedAt.getTime(), Date.now())) {
+      nps = (cached.nps as unknown as CompanyProfileDto['nps']) ?? null;
+    } else if (this.nps.enabled) {
+      nps = await this.nps.fetchMetrics(name, (s) => this.normalize(s));
+      if (nps) {
+        const snapshot = nps as unknown as Prisma.InputJsonObject;
+        await this.prisma.companyProfile.upsert({
+          where: { companyName: name },
+          update: { nps: snapshot, fetchedAt: new Date() },
+          create: { companyName: name, nps: snapshot },
+        });
+      }
+    }
+
+    // 2) 잡플래닛 후기 (기존 로직 재사용)
+    const review = await this.getReviews(name);
+
+    return {
+      companyName: name,
+      nps,
+      review: {
+        rating: review.rating,
+        summary: review.summary,
+        sourceUrl: review.sourceUrl,
+      },
+      links,
+    };
   }
 }
