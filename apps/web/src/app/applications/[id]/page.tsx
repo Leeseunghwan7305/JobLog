@@ -45,19 +45,30 @@ export default function ApplicationDetail({
 
   const [showCompany, setShowCompany] = useState(true);
   const [companyQuery, setCompanyQuery] = useState('');
+  // 입력은 즉시 반영하되 NPS 검색 호출은 250ms 디바운스 (대시보드 검색과 동일 패턴)
+  const [debouncedCompanyQuery, setDebouncedCompanyQuery] = useState('');
   const [selectedSeq, setSelectedSeq] = useState<string | null>(null);
 
   useEffect(() => {
     if (app.data?.companyName) setCompanyQuery(app.data.companyName);
   }, [app.data?.companyName]);
 
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedCompanyQuery(companyQuery.trim());
+    }, 250);
+    return () => {
+      clearTimeout(t);
+    };
+  }, [companyQuery]);
+
   const candidates = useQuery({
-    queryKey: ['company-search', companyQuery],
+    queryKey: ['company-search', debouncedCompanyQuery],
     queryFn: () =>
       apiFetch<CompanySearchResult[]>(
-        `/companies/search?name=${encodeURIComponent(companyQuery)}`,
+        `/companies/search?name=${encodeURIComponent(debouncedCompanyQuery)}`,
       ),
-    enabled: showCompany && companyQuery.length > 0 && !selectedSeq,
+    enabled: showCompany && debouncedCompanyQuery.length > 0 && !selectedSeq,
   });
 
   const profile = useQuery({
