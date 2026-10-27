@@ -44,7 +44,7 @@ export default function ApplicationDetail({
     enabled: ready,
   });
 
-  const [showCompany, setShowCompany] = useState(false);
+  const [showCompany, setShowCompany] = useState(true);
   const [companyQuery, setCompanyQuery] = useState('');
   const [selectedSeq, setSelectedSeq] = useState<string | null>(null);
 
