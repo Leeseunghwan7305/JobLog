@@ -2,7 +2,7 @@
 
 import type {
   ApplicationDto,
-  CompanyReviewDto,
+  CompanyProfileDto,
   StageStatus,
 } from '@joblog/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -40,13 +40,15 @@ export default function ApplicationDetail({
     enabled: ready,
   });
 
-  const reviews = useQuery({
-    queryKey: ['reviews', app.data?.companyName],
+  const [showCompany, setShowCompany] = useState(false);
+
+  const profile = useQuery({
+    queryKey: ['company-profile', app.data?.companyName],
     queryFn: () =>
-      apiFetch<CompanyReviewDto>(
-        `/companies/reviews?name=${encodeURIComponent(app.data?.companyName ?? '')}`,
+      apiFetch<CompanyProfileDto>(
+        `/companies/profile?name=${encodeURIComponent(app.data?.companyName ?? '')}`,
       ),
-    enabled: !!app.data?.companyName,
+    enabled: showCompany && !!app.data?.companyName,
   });
 
   const setStage = useMutation({
@@ -216,37 +218,99 @@ export default function ApplicationDetail({
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          기업 후기
-        </h2>
-        <div className="rounded-xl border border-border bg-card px-4 py-3 text-sm">
-          <div className="flex items-center gap-2">
-            {reviews.data?.rating != null ? (
-              <span className="font-semibold text-amber-600 dark:text-amber-400">
-                ★ {reviews.data.rating.toFixed(1)}
-              </span>
-            ) : (
-              <span className="text-muted-foreground">
-                평점 정보를 바로 가져올 수 없어요.
-              </span>
+        <button
+          type="button"
+          onClick={() => { setShowCompany((v) => !v); }}
+          className="mb-3 flex items-center gap-1 text-sm font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
+        >
+          {a.companyName} 회사 정보 {showCompany ? '▲' : '▼'}
+        </button>
+
+        {showCompany && (
+          <div className="space-y-4 rounded-xl border border-border bg-card px-4 py-3 text-sm">
+            {profile.isLoading && <Skeleton className="h-16 w-full" />}
+
+            {profile.data?.nps && (
+              <div>
+                <h3 className="font-semibold text-foreground">
+                  국민연금 공개데이터
+                </h3>
+                <ul className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 text-muted-foreground">
+                  <li>직원 수: {profile.data.nps.memberCount}명</li>
+                  {profile.data.nps.estimatedAnnualSalaryManwon != null && (
+                    <li>
+                      추정 평균연봉:{' '}
+                      {profile.data.nps.estimatedAnnualSalaryManwon}만원
+                    </li>
+                  )}
+                  {profile.data.nps.newThisMonth != null && (
+                    <li>당월 입사: {profile.data.nps.newThisMonth}명</li>
+                  )}
+                  {profile.data.nps.lostThisMonth != null && (
+                    <li>당월 퇴사: {profile.data.nps.lostThisMonth}명</li>
+                  )}
+                  {profile.data.nps.industry && (
+                    <li>업종: {profile.data.nps.industry}</li>
+                  )}
+                  {profile.data.nps.region && (
+                    <li>지역: {profile.data.nps.region}</li>
+                  )}
+                </ul>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  국민연금 가입사업장 공개데이터 기반 추정
+                  {profile.data.nps.dataYm ? ` · ${profile.data.nps.dataYm}` : ''}
+                </p>
+              </div>
             )}
-            {reviews.data?.sourceUrl && (
-              <a
-                href={reviews.data.sourceUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-primary hover:underline"
-              >
-                잡플래닛에서 보기 ↗
-              </a>
+
+            {profile.data?.review && (
+              <div>
+                <h3 className="font-semibold text-foreground">기업 후기</h3>
+                <div className="mt-1 flex items-center gap-2">
+                  {profile.data.review.rating != null ? (
+                    <span className="font-semibold text-amber-600 dark:text-amber-400">
+                      ★ {profile.data.review.rating.toFixed(1)}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      평점 정보를 바로 가져올 수 없어요.
+                    </span>
+                  )}
+                  <a
+                    href={profile.data.review.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    잡플래닛에서 보기 ↗
+                  </a>
+                </div>
+                {profile.data.review.summary && (
+                  <p className="mt-1 text-muted-foreground">
+                    “{profile.data.review.summary}”
+                  </p>
+                )}
+              </div>
             )}
+
+            <div>
+              <h3 className="font-semibold text-foreground">바로가기</h3>
+              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                {(profile.data?.links ?? []).map((l) => (
+                  <a
+                    key={l.url}
+                    href={l.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    {l.label} ↗
+                  </a>
+                ))}
+              </div>
+            </div>
           </div>
-          {reviews.data?.summary && (
-            <p className="mt-2 text-muted-foreground">
-              “{reviews.data.summary}”
-            </p>
-          )}
-        </div>
+        )}
       </section>
     </main>
   );
