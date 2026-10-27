@@ -10,6 +10,13 @@ import { apiFetch } from '@/lib/api';
 type Step = 'input' | 'manual' | 'draft';
 type AnalyzeMode = 'url' | 'text';
 
+/** 오늘 날짜를 로컬 기준 YYYY-MM-DD 로 (지원일 기본값·date input). */
+function todayLocalISO(): string {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
 function isAbort(err: unknown): boolean {
   return err instanceof Error && err.name === 'AbortError';
 }
@@ -28,6 +35,8 @@ export default function AddJobModal({
   const [notice, setNotice] = useState<string | undefined>();
   const [draft, setDraft] = useState<ParsedPosting | null>(null);
   const [jobUrl, setJobUrl] = useState('');
+  // 지원일: 공고엔 없는 값이라 등록 시점에 채운다. 기본 오늘, 수정 가능.
+  const [appliedAt, setAppliedAt] = useState<string>(todayLocalISO);
   const [mode, setMode] = useState<AnalyzeMode>('url');
   const urlInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -70,6 +79,7 @@ export default function AddJobModal({
           location: d.location ?? undefined,
           employmentType: d.employmentType ?? undefined,
           deadline: d.deadline ?? undefined,
+          appliedAt: appliedAt || undefined,
           stages,
         }),
       });
@@ -260,14 +270,29 @@ export default function AddJobModal({
                     placeholder="예: 정규직"
                   />
                 </div>
-                <Field
-                  label="마감일"
-                  value={draft.deadline ?? ''}
-                  onChange={(v) => {
-                    updateDraft({ deadline: v || null });
-                  }}
-                  placeholder="YYYY-MM-DD"
-                />
+                <div className="grid grid-cols-2 gap-3">
+                  <Field
+                    label="마감일"
+                    value={draft.deadline ?? ''}
+                    onChange={(v) => {
+                      updateDraft({ deadline: v || null });
+                    }}
+                    placeholder="YYYY-MM-DD"
+                  />
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      지원일
+                    </span>
+                    <input
+                      type="date"
+                      value={appliedAt}
+                      onChange={(e) => {
+                        setAppliedAt(e.target.value);
+                      }}
+                      className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                    />
+                  </label>
+                </div>
 
                 <div>
                   <div className="mb-1.5 text-xs font-semibold text-muted-foreground">

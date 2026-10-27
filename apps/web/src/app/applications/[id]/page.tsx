@@ -66,7 +66,8 @@ export default function ApplicationDetail({
       apiFetch<CompanyProfileDto>(
         `/companies/profile?name=${encodeURIComponent(app.data?.companyName ?? '')}${selectedSeq ? `&seq=${encodeURIComponent(selectedSeq)}` : ''}`,
       ),
-    enabled: showCompany && !!app.data?.companyName,
+    // 상단 규모 뱃지를 위해 회사명이 있으면 패널을 열지 않아도 미리 조회한다.
+    enabled: !!app.data?.companyName,
   });
 
   const setStage = useMutation({
@@ -133,6 +134,8 @@ export default function ApplicationDetail({
     return <main className="p-8 text-muted-foreground">찾을 수 없어요.</main>;
 
   const a = app.data;
+  // 회사규모 ≈ 국민연금 가입자수(직원수 근사). 공고가 아니라 NPS에서 가져온다.
+  const companySize = profile.data?.nps?.memberCount ?? null;
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-8">
@@ -162,6 +165,18 @@ export default function ApplicationDetail({
               </p>
             ) : null;
           })()}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {companySize ? (
+              <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+                규모 {companySize.toLocaleString()}명
+              </span>
+            ) : null}
+            {a.appliedAt ? (
+              <span className="text-xs text-muted-foreground">
+                지원일 {a.appliedAt.slice(0, 10)}
+              </span>
+            ) : null}
+          </div>
         </div>
         <button
           disabled={remove.isPending}
@@ -320,8 +335,35 @@ export default function ApplicationDetail({
                       {nps.turnoverRatePct != null && (
                         <li>월 회전율: {nps.turnoverRatePct}%</li>
                       )}
+                      {nps.estTenureMonths != null && (
+                        <li>
+                          추정 평균근속: 약{' '}
+                          {nps.estTenureMonths >= 12
+                            ? `${(nps.estTenureMonths / 12).toFixed(1)}년`
+                            : `${nps.estTenureMonths}개월`}{' '}
+                          <span className="text-[10px]">(추정)</span>
+                        </li>
+                      )}
+                      {nps.npsJoinedYear != null && (
+                        <li>
+                          업력: 가입 {nps.npsJoinedYear}년 (약{' '}
+                          {new Date().getFullYear() - nps.npsJoinedYear}년차)
+                        </li>
+                      )}
                       {nps.industry && <li>업종: {nps.industry}</li>}
-                      {nps.region && <li>지역: {nps.region}</li>}
+                      {nps.region && (
+                        <li className="col-span-2">
+                          위치: {nps.region}{' '}
+                          <a
+                            href={`https://www.google.com/maps/search/${encodeURIComponent(nps.region)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            지도 ↗
+                          </a>
+                        </li>
+                      )}
                     </ul>
 
                     {nps.trend.length > 1 && (
