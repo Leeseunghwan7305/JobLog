@@ -1,12 +1,40 @@
 import './globals.css';
 
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 
 import Providers from './providers';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+const description =
+  '지원한 공고, 어디까지 왔는지 한 곳에서 추적한다. 링크만 붙여넣으면 AI가 회사·직무·전형을 정리하고 서류부터 최종까지 상태를 관리한다.';
+
 export const metadata: Metadata = {
-  title: 'JobLog',
-  description: '지원한 공고, 어디까지 왔는지 한 곳에서 추적한다',
+  metadataBase: new URL(siteUrl),
+  title: { default: 'JobLog — 구직 현황 추적', template: '%s · JobLog' },
+  description,
+  applicationName: 'JobLog',
+  keywords: ['구직', '취업', '채용', '지원 현황', '전형 관리', '채용 공고', 'JobLog'],
+  authors: [{ name: 'JobLog' }],
+  // 개인 데이터 앱이라 기본은 색인 금지. 공개 진입점(/login)에서만 덮어쓴다.
+  robots: { index: false, follow: false },
+  openGraph: {
+    type: 'website',
+    siteName: 'JobLog',
+    title: 'JobLog — 구직 현황 추적',
+    description: '지원한 공고, 어디까지 왔는지 한 곳에서.',
+    url: '/',
+    locale: 'ko_KR',
+    // 공유 카드 이미지는 app/opengraph-image.tsx(파일 컨벤션)가 자동 주입한다.
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'JobLog — 구직 현황 추적',
+    description: '지원한 공고, 어디까지 왔는지 한 곳에서.',
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#3858e9',
 };
 
 // 하이드레이션 전에 테마 클래스를 심어 깜빡임(FOUC)을 막는다.
