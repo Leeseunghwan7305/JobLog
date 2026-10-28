@@ -36,17 +36,35 @@ jobs:
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
-          rsync -az --delete \
+          # 일과성 SSH 연결 실패(connection timed out 등)에 대비한 재시도 래퍼.
+          # 모든 원격 단계는 멱등하므로 3회까지 지수 백오프로 재시도한다.
+          retry() {
+            local tries=$1; shift; local i=1
+            until "$@"; do
+              if [ "$i" -ge "$tries" ]; then echo "::error::$tries회 모두 실패"; return 1; fi
+              echo "시도 $i/$tries 실패 — $((i * 10))초 후 재시도"; sleep "$((i * 10))"; i=$((i + 1))
+            done
+          }
+          SSH_OPTS="-i $HOME/.ssh/key.pem -o StrictHostKeyChecking=no -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4"
+          retry 3 rsync -az --delete \
             --exclude node_modules --exclude '.git' --exclude '.next' --exclude dist \
             --exclude '.env' --exclude '*.pem' --exclude '.claude' \
-            -e "ssh -i ~/.ssh/key.pem -o StrictHostKeyChecking=no" \
+            -e "ssh $SSH_OPTS" \
             ./ "ubuntu@${EC2_HOST}:/home/ubuntu/JobLog/"
 
       - name: Build and restart API on EC2
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
         run: |
-          ssh -i ~/.ssh/key.pem -o StrictHostKeyChecking=no "ubuntu@${EC2_HOST}" '
+          retry() {
+            local tries=$1; shift; local i=1
+            until "$@"; do
+              if [ "$i" -ge "$tries" ]; then echo "::error::$tries회 모두 실패"; return 1; fi
+              echo "시도 $i/$tries 실패 — $((i * 10))초 후 재시도"; sleep "$((i * 10))"; i=$((i + 1))
+            done
+          }
+          SSH_OPTS="-i $HOME/.ssh/key.pem -o StrictHostKeyChecking=no -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4"
+          retry 3 ssh $SSH_OPTS "ubuntu@${EC2_HOST}" '
             set -e
             cd ~/JobLog
             pnpm install
