@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { AdminGuard } from './admin.guard';
@@ -16,12 +16,15 @@ export class AdminController {
   }
 
   @Get('users')
-  users() {
-    return this.svc.users();
+  users(@Query('page') page?: string, @Query('pageSize') pageSize?: string) {
+    return this.svc.users(page, pageSize);
   }
 
   @Get('applications')
-  applications() {
-    return this.svc.applications();
+  applications(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    return this.svc.applications(page, pageSize);
   }
 }

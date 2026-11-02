@@ -1,12 +1,14 @@
 import type {
   AdminApplicationRow,
   AdminOverview,
+  AdminPage,
   AdminUserRow,
   AppStatus,
 } from '@joblog/types';
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { maskEmail, maskRegion, parsePaging } from './admin.util';
 
 @Injectable()
 export class AdminService {
@@ -40,56 +42,87 @@ export class AdminService {
     };
   }
 
-  /** 전체 사용자 (가입 순). 이력서 원문은 싣지 않고 유무만. */
-  async users(): Promise<AdminUserRow[]> {
-    const rows = await this.prisma.user.findMany({
-      orderBy: { createdAt: 'asc' },
-      select: {
-        id: true,
-        nickname: true,
-        kakaoId: true,
-        email: true,
-        homeAddress: true,
-        createdAt: true,
-        _count: { select: { applications: true } },
-      },
-    });
-    return rows.map((u) => ({
-      id: u.id,
-      nickname: u.nickname,
-      kakaoId: u.kakaoId,
-      email: u.email,
-      homeAddress: u.homeAddress,
-      applicationCount: u._count.applications,
-      createdAt: u.createdAt.toISOString(),
-    }));
+  /**
+   * 전체 사용자 (가입 순, 페이지네이션). 이력서 원문은 싣지 않고,
+   * 이메일·집주소는 PII라 부분 마스킹해 내려준다.
+   */
+  async users(
+    page?: string,
+    pageSize?: string,
+  ): Promise<AdminPage<AdminUserRow>> {
+    const { page: p, pageSize: s, skip, take } = parsePaging(page, pageSize);
+    const [total, rows] = await Promise.all([
+      this.prisma.user.count(),
+      this.prisma.user.findMany({
+        orderBy: { createdAt: 'asc' },
+        skip,
+        take,
+        select: {
+          id: true,
+          nickname: true,
+          kakaoId: true,
+          email: true,
+          homeAddress: true,
+          createdAt: true,
+          _count: { select: { applications: true } },
+        },
+      }),
+    ]);
+    return {
+      page: p,
+      pageSize: s,
+      total,
+      rows: rows.map((u) => ({
+        id: u.id,
+        nickname: u.nickname,
+        kakaoId: u.kakaoId,
+        email: maskEmail(u.email),
+        homeAddress: maskRegion(u.homeAddress),
+        applicationCount: u._count.applications,
+        createdAt: u.createdAt.toISOString(),
+      })),
+    };
   }
 
-  /** 전체 지원 (최신 순, 소유자 포함). */
-  async applications(): Promise<AdminApplicationRow[]> {
-    const rows = await this.prisma.application.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        companyName: true,
-        position: true,
-        status: true,
-        deadline: true,
-        createdAt: true,
-        user: { select: { id: true, nickname: true } },
-        _count: { select: { stages: true } },
-      },
-    });
-    return rows.map((a) => ({
-      id: a.id,
-      companyName: a.companyName,
-      position: a.position,
-      status: a.status,
-      deadline: a.deadline?.toISOString() ?? null,
-      stageCount: a._count.stages,
-      ownerId: a.user.id,
-      ownerNickname: a.user.nickname,
-      createdAt: a.createdAt.toISOString(),
-    }));
+  /** 전체 지원 (최신 순, 소유자 포함, 페이지네이션). */
+  async applications(
+    page?: string,
+    pageSize?: string,
+  ): Promise<AdminPage<AdminApplicationRow>> {
+    const { page: p, pageSize: s, skip, take } = parsePaging(page, pageSize);
+    const [total, rows] = await Promise.all([
+      this.prisma.application.count(),
+      this.prisma.application.findMany({
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+        select: {
+          id: true,
+          companyName: true,
+          position: true,
+          status: true,
+          deadline: true,
+          createdAt: true,
+          user: { select: { id: true, nickname: true } },
+          _count: { select: { stages: true } },
+        },
+      }),
+    ]);
+    return {
+      page: p,
+      pageSize: s,
+      total,
+      rows: rows.map((a) => ({
+        id: a.id,
+        companyName: a.companyName,
+        position: a.position,
+        status: a.status,
+        deadline: a.deadline?.toISOString() ?? null,
+        stageCount: a._count.stages,
+        ownerId: a.user.id,
+        ownerNickname: a.user.nickname,
+        createdAt: a.createdAt.toISOString(),
+      })),
+    };
   }
 }

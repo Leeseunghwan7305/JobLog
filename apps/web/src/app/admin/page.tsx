@@ -3,6 +3,7 @@
 import type {
   AdminApplicationRow,
   AdminOverview,
+  AdminPage,
   AdminUserRow,
   AppStatus,
   UserDto,
@@ -30,6 +31,7 @@ const STATUS_CLASS: Record<AppStatus, string> = {
 };
 
 const fmtDate = (iso: string | null) => (iso ? iso.slice(0, 10) : '—');
+const PAGE_SIZE = 50;
 
 export default function AdminPage() {
   const [ready, setReady] = useState(false);
@@ -37,6 +39,9 @@ export default function AdminPage() {
     setReady(true);
   }, []);
   const hasToken = ready && !!getToken();
+
+  const [userPage, setUserPage] = useState(1);
+  const [appPage, setAppPage] = useState(1);
 
   const me = useQuery({
     queryKey: ['me'],
@@ -51,13 +56,19 @@ export default function AdminPage() {
     enabled: isAdmin,
   });
   const users = useQuery({
-    queryKey: ['admin', 'users'],
-    queryFn: () => apiFetch<AdminUserRow[]>('/admin/users'),
+    queryKey: ['admin', 'users', userPage],
+    queryFn: () =>
+      apiFetch<AdminPage<AdminUserRow>>(
+        `/admin/users?page=${userPage}&pageSize=${PAGE_SIZE}`,
+      ),
     enabled: isAdmin,
   });
   const applications = useQuery({
-    queryKey: ['admin', 'applications'],
-    queryFn: () => apiFetch<AdminApplicationRow[]>('/admin/applications'),
+    queryKey: ['admin', 'applications', appPage],
+    queryFn: () =>
+      apiFetch<AdminPage<AdminApplicationRow>>(
+        `/admin/applications?page=${appPage}&pageSize=${PAGE_SIZE}`,
+      ),
     enabled: isAdmin,
   });
 
@@ -131,7 +142,7 @@ export default function AdminPage() {
       {/* 전체 사용자 */}
       <section className="mb-10">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          전체 사용자 {users.data ? `(${users.data.length})` : ''}
+          전체 사용자 {users.data ? `(${users.data.total})` : ''}
         </h2>
         <div className="overflow-x-auto rounded-xl border border-border">
           <table className="w-full min-w-[640px] text-sm">
@@ -141,12 +152,12 @@ export default function AdminPage() {
                 <Th>kakaoId</Th>
                 <Th>이메일</Th>
                 <Th>지원</Th>
-                <Th>집주소</Th>
+                <Th>집주소(지역)</Th>
                 <Th>가입</Th>
               </tr>
             </thead>
             <tbody>
-              {(users.data ?? []).map((u) => (
+              {(users.data?.rows ?? []).map((u) => (
                 <tr
                   key={u.id}
                   className="border-b border-border last:border-0 hover:bg-muted/30"
@@ -166,12 +177,18 @@ export default function AdminPage() {
             </tbody>
           </table>
         </div>
+        <Pager
+          page={userPage}
+          pageSize={PAGE_SIZE}
+          total={users.data?.total}
+          onPage={setUserPage}
+        />
       </section>
 
       {/* 전체 지원 */}
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          전체 지원 {applications.data ? `(${applications.data.length})` : ''}
+          전체 지원 {applications.data ? `(${applications.data.total})` : ''}
         </h2>
         <div className="overflow-x-auto rounded-xl border border-border">
           <table className="w-full min-w-[640px] text-sm">
@@ -187,7 +204,7 @@ export default function AdminPage() {
               </tr>
             </thead>
             <tbody>
-              {(applications.data ?? []).map((a) => (
+              {(applications.data?.rows ?? []).map((a) => (
                 <tr
                   key={a.id}
                   className="border-b border-border last:border-0 hover:bg-muted/30"
@@ -212,8 +229,56 @@ export default function AdminPage() {
             </tbody>
           </table>
         </div>
+        <Pager
+          page={appPage}
+          pageSize={PAGE_SIZE}
+          total={applications.data?.total}
+          onPage={setAppPage}
+        />
       </section>
     </main>
+  );
+}
+
+function Pager({
+  page,
+  pageSize,
+  total,
+  onPage,
+}: {
+  page: number;
+  pageSize: number;
+  total?: number;
+  onPage: (p: number) => void;
+}) {
+  const last = total ? Math.max(1, Math.ceil(total / pageSize)) : 1;
+  if (last <= 1) return null;
+  const btn =
+    'rounded-lg border border-border px-3 py-1.5 text-sm transition hover:border-ring disabled:cursor-not-allowed disabled:opacity-40';
+  return (
+    <div className="mt-3 flex items-center justify-end gap-3">
+      <button
+        className={btn}
+        disabled={page <= 1}
+        onClick={() => {
+          onPage(page - 1);
+        }}
+      >
+        이전
+      </button>
+      <span className="text-sm tabular-nums text-muted-foreground">
+        {page} / {last}
+      </span>
+      <button
+        className={btn}
+        disabled={page >= last}
+        onClick={() => {
+          onPage(page + 1);
+        }}
+      >
+        다음
+      </button>
+    </div>
   );
 }
 

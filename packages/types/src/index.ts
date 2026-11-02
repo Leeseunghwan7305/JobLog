@@ -51,6 +51,14 @@ export interface AdminApplicationRow {
   createdAt: string;
 }
 
+/** 어드민 목록 페이지네이션 응답. rows=이번 페이지, total=전체 건수. */
+export interface AdminPage<T> {
+  rows: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface StageDto {
   id: string;
   name: string;
