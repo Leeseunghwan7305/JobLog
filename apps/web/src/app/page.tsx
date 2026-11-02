@@ -7,7 +7,12 @@ import type {
   StageDto,
   UserDto,
 } from '@joblog/types';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -15,6 +20,7 @@ import { useEffect, useState } from 'react';
 import AddJobModal from '@/components/AddJobModal';
 import LoginModal from '@/components/LoginModal';
 import ThemeToggle from '@/components/ThemeToggle';
+import { useToast } from '@/components/Toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiFetch } from '@/lib/api';
 import {
@@ -26,6 +32,7 @@ import {
 } from '@/lib/auth';
 import { DEADLINE_TONE_CLASS, deadlineInfo } from '@/lib/date';
 import {
+  currentStage,
   currentStageLabel,
   STAGE_STATUS_CLASS,
   STAGE_STATUS_LABEL,
@@ -164,6 +171,116 @@ function pillClass(status: ApplicationDto['status']): string {
     default:
       return 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300';
   }
+}
+
+/**
+ * 대시보드 카드. 전체는 상세 페이지로 가는 stretched link(절대위치)로 덮고,
+ * 진행중 공고에 한해 '현재 전형'을 카드에서 바로 합격/탈락 처리하는 퀵 액션을 얹는다.
+ * 합격 시 다음 대기 전형을 자동으로 '진행중'으로 승급해 바로 이어서 추적할 수 있다.
+ */
+function AppCard({ app }: { app: ApplicationDto }) {
+  const qc = useQueryClient();
+  const { show } = useToast();
+  const cur = currentStage(app);
+  const actionable = app.status === 'IN_PROGRESS' && cur !== null;
+
+  const mut = useMutation({
+    mutationFn: async (next: 'PASSED' | 'FAILED') => {
+      if (!cur) return;
+      await apiFetch(`/applications/${app.id}/stages/${cur.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: next }),
+      });
+      // 합격이면 다음 대기 전형을 '진행중'으로 자동 승급
+      if (next === 'PASSED') {
+        const idx = app.stages.findIndex((s) => s.id === cur.id);
+        const nextStage = app.stages
+          .slice(idx + 1)
+          .find((s) => s.status === 'PENDING');
+        if (nextStage) {
+          await apiFetch(`/applications/${app.id}/stages/${nextStage.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: 'IN_PROGRESS' }),
+          });
+        }
+      }
+    },
+    onSuccess: (_data, next) => {
+      void qc.invalidateQueries({ queryKey: ['apps'] });
+      void qc.invalidateQueries({ queryKey: ['stats'] });
+      void qc.invalidateQueries({ queryKey: ['insights'] });
+      const name = cur?.name ?? '전형';
+      show(
+        next === 'PASSED' ? `‘${name}’ 합격 처리했어요` : `‘${name}’ 탈락 처리했어요`,
+        next === 'PASSED' ? 'success' : 'info',
+      );
+    },
+    onError: () => {
+      show('처리에 실패했어요. 잠시 후 다시 시도해 주세요.', 'error');
+    },
+  });
+
+  return (
+    <div className="relative rounded-xl border border-border bg-card p-3 transition duration-300 animate-in fade-in slide-in-from-bottom-1 hover:border-ring hover:shadow-sm">
+      <Link
+        href={`/applications/${app.id}`}
+        aria-label={`${app.companyName} 상세 보기`}
+        className="absolute inset-0 rounded-xl"
+      />
+      <div className="flex items-center gap-1.5 font-bold">
+        <span>{app.companyName}</span>
+        {app.employeeCount ? (
+          <span className="rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
+            {app.employeeCount.toLocaleString()}명
+          </span>
+        ) : null}
+      </div>
+      <div className="text-sm text-muted-foreground">{app.position}</div>
+      <span
+        className={`mt-2 inline-block rounded-full px-2.5 py-1 text-[13px] font-semibold ${pillClass(app.status)}`}
+      >
+        {currentStageLabel(app)}
+      </span>
+      <StageTrack stages={app.stages} />
+      <Deadline iso={app.deadline} />
+      {app.tags.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {app.tags.map((t) => (
+            <span
+              key={t}
+              className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary"
+            >
+              #{t}
+            </span>
+          ))}
+        </div>
+      )}
+      {actionable && (
+        <div className="relative z-10 mt-2.5 flex gap-1.5">
+          <button
+            onClick={() => {
+              mut.mutate('PASSED');
+            }}
+            disabled={mut.isPending}
+            title={`${cur.name} 합격 처리`}
+            className="rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
+          >
+            ✓ 합격
+          </button>
+          <button
+            onClick={() => {
+              mut.mutate('FAILED');
+            }}
+            disabled={mut.isPending}
+            title={`${cur.name} 탈락 처리`}
+            className="rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-50 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
+          >
+            ✕ 탈락
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function Dashboard() {
@@ -378,42 +495,7 @@ function Dashboard() {
                 </div>
                 <div className="flex flex-col gap-3">
                   {items.map((app) => (
-                    <Link
-                      key={app.id}
-                      href={`/applications/${app.id}`}
-                      className="block rounded-xl border border-border bg-card p-3 transition duration-300 animate-in fade-in slide-in-from-bottom-1 hover:border-ring hover:shadow-sm"
-                    >
-                      <div className="flex items-center gap-1.5 font-bold">
-                        <span>{app.companyName}</span>
-                        {app.employeeCount ? (
-                          <span className="rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
-                            {app.employeeCount.toLocaleString()}명
-                          </span>
-                        ) : null}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {app.position}
-                      </div>
-                      <span
-                        className={`mt-2 inline-block rounded-full px-2.5 py-1 text-[13px] font-semibold ${pillClass(app.status)}`}
-                      >
-                        {currentStageLabel(app)}
-                      </span>
-                      <StageTrack stages={app.stages} />
-                      <Deadline iso={app.deadline} />
-                      {app.tags.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {app.tags.map((t) => (
-                            <span
-                              key={t}
-                              className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary"
-                            >
-                              #{t}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </Link>
+                    <AppCard key={app.id} app={app} />
                   ))}
                   {items.length === 0 && (
                     <div className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">

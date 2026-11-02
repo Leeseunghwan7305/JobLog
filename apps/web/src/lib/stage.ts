@@ -1,4 +1,13 @@
-import type { ApplicationDto, StageStatus } from '@joblog/types';
+import type { ApplicationDto, StageDto, StageStatus } from '@joblog/types';
+
+/** 카드/퀵액션에서 '지금 처리할' 전형. 진행중 우선, 없으면 첫 대기 전형. */
+export function currentStage(app: ApplicationDto): StageDto | null {
+  return (
+    app.stages.find((s) => s.status === 'IN_PROGRESS') ??
+    app.stages.find((s) => s.status === 'PENDING') ??
+    null
+  );
+}
 
 /** 카드에 표시할 "현재 전형" 요약 라벨 */
 export function currentStageLabel(app: ApplicationDto): string {
