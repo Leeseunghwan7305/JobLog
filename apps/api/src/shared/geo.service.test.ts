@@ -1,7 +1,26 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { parseKakaoGeocode, parseNominatim } from './geo.service';
+import {
+  geoCandidates,
+  parseKakaoGeocode,
+  parseNominatim,
+} from './geo.service';
+
+test('geoCandidates: 건물명 꼬리를 떼고 점점 거칠게 — 전체→번지→도로→시구', () => {
+  assert.deepEqual(geoCandidates('서울 강남구 삼성로85길 26 V & S 빌딩'), [
+    '서울 강남구 삼성로85길 26 V & S 빌딩',
+    '서울 강남구 삼성로85길 26',
+    '서울 강남구 삼성로85길',
+    '서울 강남구',
+  ]);
+});
+
+test('geoCandidates: 짧은 주소는 원본만, 빈 입력은 빈 배열', () => {
+  assert.deepEqual(geoCandidates('카카오'), ['카카오']);
+  assert.deepEqual(geoCandidates('서울 강남구'), ['서울 강남구']);
+  assert.deepEqual(geoCandidates('   '), []);
+});
 
 test('Kakao 주소 응답 첫 문서를 좌표로 파싱 (x=lng, y=lat)', () => {
   const json = {

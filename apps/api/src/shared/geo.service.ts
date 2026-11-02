@@ -49,10 +49,37 @@ export function parseNominatim(json: unknown): GeoResult | null {
 }
 
 /**
+ * 지오코딩 후보 쿼리(점점 거칠게). (순수 함수)
+ * Nominatim은 한국 도로명 주소 끝의 건물명("V & S 빌딩")을 못 찾는 경우가 많아,
+ * 전체 → 건물명 제거(마지막 번지 숫자까지) → 도로 레벨 → 시·구 레벨 순으로 시도한다.
+ * 첫 매칭에서 멈추므로 보통 1~2개만 실제 호출된다.
+ */
+export function geoCandidates(query: string): string[] {
+  const q = query.trim();
+  if (!q) return [];
+  const tokens = q.split(/\s+/).filter((t) => t.length > 0);
+  const cands = [q];
+  // 건물명 등 꼬리 제거: 숫자(번지/건물번호)를 포함한 마지막 토큰까지만 남김
+  let lastNumIdx = -1;
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    if (/\d/.test(tokens[i])) {
+      lastNumIdx = i;
+      break;
+    }
+  }
+  if (lastNumIdx >= 0 && lastNumIdx < tokens.length - 1) {
+    cands.push(tokens.slice(0, lastNumIdx + 1).join(' '));
+  }
+  if (tokens.length > 3) cands.push(tokens.slice(0, 3).join(' ')); // 도로 레벨
+  if (tokens.length > 2) cands.push(tokens.slice(0, 2).join(' ')); // 시·구 레벨
+  return [...new Set(cands)];
+}
+
+/**
  * 주소/지명 → 좌표.
  * Kakao Local API(기존 REST 키, 콘솔에서 카카오맵 활성화 시) 우선,
- * 안 되면 키 불필요한 Nominatim(OSM)으로 폴백. 전부 실패하면 null(→ 길찾기 숨김).
- * 비밀키는 백엔드 전용.
+ * 안 되면 키 불필요한 Nominatim(OSM)으로 폴백. 둘 다 실패하면 건물명을 떼는 등
+ * 점점 거친 후보로 재시도한다. 전부 실패하면 null(→ 길찾기 숨김). 비밀키는 백엔드 전용.
  */
 @Injectable()
 export class GeoService {
@@ -63,14 +90,17 @@ export class GeoService {
   }
 
   async geocode(query: string): Promise<GeoResult | null> {
-    const q = query.trim();
-    if (!q) return null;
-    if (this.kakaoEnabled) {
-      const k =
-        (await this.kakao('address', q)) ?? (await this.kakao('keyword', q));
-      if (k) return k;
+    for (const cand of geoCandidates(query)) {
+      if (this.kakaoEnabled) {
+        const k =
+          (await this.kakao('address', cand)) ??
+          (await this.kakao('keyword', cand));
+        if (k) return k;
+      }
+      const n = await this.nominatim(cand);
+      if (n) return n;
     }
-    return this.nominatim(q);
+    return null;
   }
 
   private async kakao(
