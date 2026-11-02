@@ -221,7 +221,7 @@ function AppCard({ app }: { app: ApplicationDto }) {
   });
 
   return (
-    <div className="relative rounded-xl border border-border bg-card p-3 transition duration-300 animate-in fade-in slide-in-from-bottom-1 hover:border-ring hover:shadow-sm">
+    <div className="relative rounded-xl border border-border bg-card p-3 shadow-card transition duration-300 animate-in fade-in slide-in-from-bottom-1 hover:border-ring hover:shadow-card-hover">
       <Link
         href={`/applications/${app.id}`}
         aria-label={`${app.companyName} 상세 보기`}
@@ -446,7 +446,7 @@ function Dashboard() {
                 {[0, 1].map((n) => (
                   <div
                     key={n}
-                    className="rounded-xl border border-border bg-card p-3"
+                    className="rounded-xl border border-border bg-card p-3 shadow-card"
                   >
                     <Skeleton className="h-4 w-24" />
                     <Skeleton className="mt-2 h-3 w-32" />
@@ -546,7 +546,7 @@ function Stat({
         ? 'text-red-600 dark:text-red-400'
         : 'text-foreground';
   return (
-    <div className="rounded-xl border border-border bg-card px-4 py-2">
+    <div className="rounded-xl border border-border bg-card px-4 py-2 shadow-card">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className={`text-xl font-bold tabular-nums ${color}`}>{value}</div>
     </div>
@@ -560,7 +560,7 @@ function InsightsPanel({ data }: { data: DashboardInsights }) {
   const stageRows = data.stages.filter((s) => s.passRate !== null).slice(0, 6);
 
   return (
-    <section className="mb-6 rounded-xl border border-border bg-card p-4">
+    <section className="mb-6 rounded-xl border border-border bg-card p-4 shadow-card">
       <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         인사이트
       </div>

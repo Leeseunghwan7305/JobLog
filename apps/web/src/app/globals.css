@@ -4,68 +4,70 @@
 
 @layer base {
   :root {
-    --background: 216 24% 97%;
-    --foreground: 222 16% 12%;
+    /* 라이트: 순백·순흑의 강한 대비 대신 차분한 뉴트럴 */
+    --background: 220 24% 98%;
+    --foreground: 222 22% 17%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 16% 12%;
+    --card-foreground: 222 22% 17%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 16% 12%;
+    --popover-foreground: 222 22% 17%;
 
     /* 브랜드 인디고 (#3858e9) */
     --primary: 228 82% 56%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 216 20% 94%;
-    --secondary-foreground: 222 16% 20%;
+    --secondary: 220 18% 95%;
+    --secondary-foreground: 222 18% 26%;
 
-    --muted: 216 20% 94%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 220 18% 95%;
+    --muted-foreground: 220 10% 46%;
 
-    --accent: 216 20% 94%;
-    --accent-foreground: 222 16% 20%;
+    --accent: 220 18% 95%;
+    --accent-foreground: 222 18% 26%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 216 16% 88%;
-    --input: 216 16% 88%;
+    --border: 220 16% 91%;
+    --input: 220 16% 89%;
     --ring: 228 82% 56%;
 
-    --radius: 0.625rem;
+    --radius: 0.75rem;
 
     color-scheme: light;
   }
 
   .dark {
-    --background: 222 20% 9%;
-    --foreground: 210 20% 96%;
+    /* 다크: 순흑 대신 부드러운 네이비-슬레이트로 톤업 (눈이 편한 깊이감) */
+    --background: 222 17% 13%;
+    --foreground: 213 20% 93%;
 
-    --card: 222 18% 12%;
-    --card-foreground: 210 20% 96%;
+    --card: 222 15% 17%;
+    --card-foreground: 213 20% 93%;
 
-    --popover: 222 18% 12%;
-    --popover-foreground: 210 20% 96%;
+    --popover: 222 15% 17%;
+    --popover-foreground: 213 20% 93%;
 
-    --primary: 228 90% 68%;
-    --primary-foreground: 222 30% 12%;
+    --primary: 228 86% 72%;
+    --primary-foreground: 222 35% 13%;
 
-    --secondary: 222 14% 18%;
-    --secondary-foreground: 210 20% 96%;
+    --secondary: 222 13% 22%;
+    --secondary-foreground: 213 20% 93%;
 
-    --muted: 222 14% 18%;
-    --muted-foreground: 217 10% 65%;
+    --muted: 222 13% 22%;
+    --muted-foreground: 216 13% 69%;
 
-    --accent: 222 14% 18%;
-    --accent-foreground: 210 20% 96%;
+    --accent: 222 13% 22%;
+    --accent-foreground: 213 20% 93%;
 
-    --destructive: 0 63% 50%;
+    --destructive: 0 63% 57%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 222 14% 20%;
-    --input: 222 14% 20%;
-    --ring: 228 90% 68%;
+    --border: 222 13% 25%;
+    --input: 222 13% 25%;
+    --ring: 228 86% 72%;
 
     color-scheme: dark;
   }

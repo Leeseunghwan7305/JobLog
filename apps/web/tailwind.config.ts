@@ -57,6 +57,12 @@ export default {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+      // 카드 표면의 은은한 깊이감 (SaaS 느낌). 라이트에서 또렷, 다크에선 보더가 분리를 맡음.
+      boxShadow: {
+        card: '0 1px 2px 0 rgb(16 24 40 / 0.04), 0 1px 3px 0 rgb(16 24 40 / 0.06)',
+        'card-hover':
+          '0 6px 16px -4px rgb(16 24 40 / 0.12), 0 2px 6px -2px rgb(16 24 40 / 0.07)',
+      },
     },
   },
   plugins: [animate],
