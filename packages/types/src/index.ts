@@ -8,6 +8,47 @@ export interface UserDto {
   nickname: string;
   email: string | null;
   profileImage: string | null;
+  /** ADMIN_KAKAO_IDS 허용목록 기반. 어드민 페이지/링크 노출 제어용. */
+  isAdmin: boolean;
+}
+
+/** GET /admin/overview — 전역 통계 (어드민 전용). */
+export interface AdminOverview {
+  users: number;
+  applications: number;
+  stages: number;
+  reviews: number;
+  profiles: number;
+  byStatus: {
+    inProgress: number;
+    offer: number;
+    rejected: number;
+    closed: number;
+  };
+}
+
+/** GET /admin/users — 전체 사용자 한 행. */
+export interface AdminUserRow {
+  id: string;
+  nickname: string;
+  kakaoId: string;
+  email: string | null;
+  homeAddress: string | null;
+  applicationCount: number;
+  createdAt: string;
+}
+
+/** GET /admin/applications — 전체 지원 한 행 (소유자 포함). */
+export interface AdminApplicationRow {
+  id: string;
+  companyName: string;
+  position: string;
+  status: AppStatus;
+  deadline: string | null;
+  stageCount: number;
+  ownerId: string;
+  ownerNickname: string;
+  createdAt: string;
 }
 
 export interface StageDto {
@@ -29,8 +70,6 @@ export interface ApplicationDto {
   deadline: string | null;
   appliedAt: string | null;
   employeeCount: number | null;
-  fitResult: FitResult | null;
-  fitAt: string | null;
   memo: string | null;
   tags: string[];
   /** 보관(아카이브) 시점. null=활성. */
@@ -42,23 +81,6 @@ export interface ApplicationDto {
 }
 
 /** 공고 파싱 결과(초안). Claude가 이 스키마로만 출력하도록 강제. */
-/** 이력서 ↔ 공고 핏 분석 결과 (LLM 산출, 서버에서 정규화·캐시). */
-export interface FitResult {
-  techFit: {
-    score: number; // 0~100
-    matched: string[]; // 이력서에서 확인되는 충족 역량
-    missing: string[]; // 공고가 요구하나 이력서에 안 보이는 것
-    note: string;
-  };
-  cultureFit: {
-    score: number; // 0~100
-    rationale: string;
-    basis: string; // 판단 근거의 출처/한계
-  };
-  recommendations: string[];
-  summary: string;
-}
-
 export interface ParsedPosting {
   companyName: string;
   position: string;
@@ -69,12 +91,6 @@ export interface ParsedPosting {
   confidence: 'high' | 'low';
 }
 
-export interface ResumeStatus {
-  hasResume: boolean;
-  resumeFilename: string | null;
-  resumeUpdatedAt: string | null; // ISO
-}
-
 /** 집 위치(통근 길찾기 기준). 주소 입력 시 지오코딩해 좌표까지 저장. */
 export interface HomeLocation {
   address: string;
@@ -82,8 +98,8 @@ export interface HomeLocation {
   lng: number;
 }
 
-/** GET /profile — 이력서 + 집 위치 상태. */
-export interface ProfileStatus extends ResumeStatus {
+/** GET /profile — 집 위치 상태. */
+export interface ProfileStatus {
   home: HomeLocation | null;
 }
 
@@ -97,7 +113,7 @@ export interface CommuteInfo {
 
 export interface ParseResponse {
   draft: ParsedPosting;
-  /** 공고 원문 텍스트(핏 분석 입력용). 수집/붙여넣기 본문. */
+  /** 공고 원문 텍스트. 수집/붙여넣기 본문(rawPosting으로 저장). */
   rawText?: string;
   /** 링크 수집 실패 등으로 본문 붙여넣기가 필요한 경우 true */
   needsManualInput: boolean;

@@ -1,13 +1,7 @@
 import type { CalendarEvent, CommuteInfo } from '@joblog/types';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  ServiceUnavailableException,
-} from '@nestjs/common';
-import { AppStatus, Prisma, StageStatus } from '@prisma/client';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { AppStatus, StageStatus } from '@prisma/client';
 
-import { LlmService } from '../parse/llm.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { GeoService } from '../shared/geo.service';
 import { archiveWhere, resolveArchivedAt } from './archive.util';
@@ -30,7 +24,6 @@ const withStages = { stages: { orderBy: { order: 'asc' as const } } };
 export class ApplicationsService {
   constructor(
     private prisma: PrismaService,
-    private llm: LlmService,
     private geo: GeoService,
   ) {}
 
@@ -286,39 +279,6 @@ export class ApplicationsService {
     return this.prisma.application.update({
       where: { id },
       data: { status },
-      include: withStages,
-    });
-  }
-
-  /** 이력서 ↔ 공고 핏 분석(온디맨드). 결과를 지원에 캐시. */
-  async analyzeFit(userId: string, id: string) {
-    const app = await this.findOne(userId, id); // 소유권 검증
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { resumeText: true },
-    });
-    if (!user?.resumeText) {
-      throw new BadRequestException(
-        '먼저 이력서를 업로드해 주세요. (상단 "이력서" 메뉴)',
-      );
-    }
-    const result = await this.llm.analyzeFit({
-      resumeText: user.resumeText,
-      companyName: app.companyName,
-      position: app.position,
-      posting: app.rawPosting ?? '',
-    });
-    if (!result) {
-      throw new ServiceUnavailableException(
-        '핏 분석에 실패했어요. 잠시 후 다시 시도해 주세요.',
-      );
-    }
-    return this.prisma.application.update({
-      where: { id },
-      data: {
-        fitResult: result as unknown as Prisma.InputJsonValue,
-        fitAt: new Date(),
-      },
       include: withStages,
     });
   }

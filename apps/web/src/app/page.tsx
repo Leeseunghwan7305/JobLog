@@ -373,7 +373,7 @@ function Dashboard() {
             href="/profile"
             className="text-muted-foreground hover:text-primary"
           >
-            이력서
+            마이페이지
           </Link>
           <Link
             href="/calendar"
@@ -381,6 +381,14 @@ function Dashboard() {
           >
             캘린더
           </Link>
+          {me.data?.isAdmin && (
+            <Link
+              href="/admin"
+              className="font-semibold text-primary hover:underline"
+            >
+              어드민
+            </Link>
+          )}
           {me.data && (
             <span className="text-muted-foreground">{me.data.nickname}님</span>
           )}

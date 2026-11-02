@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
+import { isAdminKakaoId } from '../admin/admin.util';
 import { PrismaService } from '../prisma/prisma.service';
 
 interface KakaoProfile {
@@ -61,6 +62,7 @@ export class AuthService {
       nickname: user.nickname,
       email: user.email,
       profileImage: user.profileImage,
+      isAdmin: isAdminKakaoId(user.kakaoId, process.env.ADMIN_KAKAO_IDS),
     };
   }
 

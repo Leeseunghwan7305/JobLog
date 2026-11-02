@@ -15,10 +15,6 @@ model User {
   email        String?
   nickname     String
   profileImage String?
-  // 이력서(핏 분석 입력). PDF 업로드 시 텍스트만 추출해 저장.
-  resumeText      String?   @db.Text
-  resumeFilename  String?
-  resumeUpdatedAt DateTime?
   // 집 위치(통근 길찾기 기준). 주소 입력 시 지오코딩해 좌표 저장.
   homeAddress  String?
   homeLat      Float?
@@ -46,8 +42,6 @@ model Application {
   logs           StatusLog[]
   appliedAt      DateTime?
   employeeCount  Int? // 회사규모 스냅샷(국민연금 가입자수≈직원수). 상세 조회 시 저장.
-  fitResult      Json? // 이력서↔공고 핏 분석 결과 캐시
-  fitAt          DateTime?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 
+import { AdminModule } from './admin/admin.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { AuthModule } from './auth/auth.module';
 import { CompaniesModule } from './companies/companies.module';
@@ -17,6 +18,7 @@ import { SupportModule } from './support/support.module';
     ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
+    AdminModule,
     ApplicationsModule,
     ParseModule,
     CompaniesModule,

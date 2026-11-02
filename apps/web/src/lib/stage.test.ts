@@ -23,8 +23,6 @@ function makeApp(
     deadline: null,
     appliedAt: null,
     employeeCount: null,
-    fitResult: null,
-    fitAt: null,
     memo: null,
     tags: [],
     archivedAt: null,

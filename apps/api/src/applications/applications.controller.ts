@@ -78,11 +78,6 @@ export class ApplicationsController {
     return this.svc.remove(userId, id);
   }
 
-  @Post('applications/:id/fit')
-  analyzeFit(@CurrentUser() userId: string, @Param('id') id: string) {
-    return this.svc.analyzeFit(userId, id);
-  }
-
   @Get('applications/:id/commute')
   commute(@CurrentUser() userId: string, @Param('id') id: string) {
     return this.svc.commute(userId, id);
