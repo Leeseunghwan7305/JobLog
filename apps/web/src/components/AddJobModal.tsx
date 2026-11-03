@@ -4,6 +4,7 @@ import type { ParsedPosting, ParseResponse } from '@joblog/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 
+import { useToast } from '@/components/Toast';
 import { Spinner } from '@/components/ui/spinner';
 import { apiFetch } from '@/lib/api';
 
@@ -32,6 +33,7 @@ export default function AddJobModal({
   initialRawText?: string;
 }) {
   const qc = useQueryClient();
+  const { show } = useToast();
   const [step, setStep] = useState<Step>('input');
   const [url, setUrl] = useState(initialUrl ?? '');
   const [rawText, setRawText] = useState(initialRawText ?? '');
@@ -92,7 +94,9 @@ export default function AddJobModal({
         }),
       });
     },
-    onSuccess: () => {
+    onSuccess: (_res, d) => {
+      const name = d.companyName.trim() || '공고';
+      show(`‘${name}’ 담았어요 ✓`, 'success');
       void qc.invalidateQueries({ queryKey: ['apps'] });
       void qc.invalidateQueries({ queryKey: ['stats'] });
       onClose();
