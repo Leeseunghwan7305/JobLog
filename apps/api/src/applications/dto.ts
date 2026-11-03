@@ -1,7 +1,6 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsBoolean,
   IsIn,
   IsInt,
   IsOptional,
@@ -42,7 +41,6 @@ export class UpdateApplicationDto {
   @IsOptional() @IsString() appliedAt?: string;
   @IsOptional() @IsInt() employeeCount?: number;
   @IsOptional() @IsString() memo?: string;
-  @IsOptional() @IsBoolean() archived?: boolean;
   @IsOptional()
   @IsIn(['IN_PROGRESS', 'OFFER', 'REJECTED', 'CLOSED'])
   status?: string;

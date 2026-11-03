@@ -495,14 +495,11 @@ function Dashboard() {
     };
   }, [q]);
 
-  const [showArchived, setShowArchived] = useState(false);
-
   const apps = useQuery({
-    queryKey: ['apps', debouncedQ, showArchived],
+    queryKey: ['apps', debouncedQ],
     queryFn: () => {
       const params = new URLSearchParams();
       if (debouncedQ) params.set('q', debouncedQ);
-      if (showArchived) params.set('archived', 'true');
       const qs = params.toString();
       return apiFetch<ApplicationDto[]>(
         `/applications${qs ? `?${qs}` : ''}`,
@@ -539,18 +536,6 @@ function Dashboard() {
         </div>
         <div className="flex items-center gap-4 text-sm">
           <ThemeToggle />
-          <button
-            onClick={() => {
-              setShowArchived((v) => !v);
-            }}
-            className={
-              showArchived
-                ? 'font-semibold text-primary'
-                : 'text-muted-foreground hover:text-primary'
-            }
-          >
-            {showArchived ? '← 대시보드' : '보관함'}
-          </button>
           <Link
             href="/profile"
             className="text-muted-foreground hover:text-primary"
@@ -615,7 +600,6 @@ function Dashboard() {
       </div>
 
       {!debouncedQ &&
-        !showArchived &&
         (apps.data?.length ?? 0) > 0 &&
         insights.data && <InsightsPanel data={insights.data} />}
 
@@ -640,15 +624,7 @@ function Dashboard() {
           ))}
         </div>
       ) : (apps.data?.length ?? 0) === 0 ? (
-        showArchived ? (
-          <div className="mt-16 flex flex-col items-center gap-2 text-center">
-            <div className="text-5xl">🗄️</div>
-            <p className="text-lg font-bold">보관된 공고가 없어요</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              상세 화면에서 ‘보관’하면 여기로 모여요.
-            </p>
-          </div>
-        ) : debouncedQ ? (
+        debouncedQ ? (
           <div className="mt-16 flex flex-col items-center gap-2 text-center">
             <div className="text-5xl">🔍</div>
             <p className="text-lg font-bold">검색 결과가 없어요</p>

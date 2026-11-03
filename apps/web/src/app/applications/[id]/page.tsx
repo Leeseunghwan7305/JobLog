@@ -148,19 +148,6 @@ export default function ApplicationDetail({
     },
   });
 
-  const archive = useMutation({
-    mutationFn: (archived: boolean) =>
-      apiFetch(`/applications/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ archived }),
-      }),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['app', id] });
-      void qc.invalidateQueries({ queryKey: ['apps'] });
-    },
-  });
-
-
   // 조회된 회사규모(NPS 가입자수)를 지원에 스냅샷 저장 → 목록·다른 기기에서도 일관.
   const saveSize = useMutation({
     mutationFn: (employeeCount: number) =>
@@ -235,11 +222,6 @@ export default function ApplicationDetail({
             ) : null;
           })()}
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            {a.archivedAt ? (
-              <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
-                보관됨
-              </span>
-            ) : null}
             {companySize ? (
               <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
                 규모 {companySize.toLocaleString()}명
@@ -253,16 +235,6 @@ export default function ApplicationDetail({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-3">
-          <button
-            disabled={archive.isPending}
-            onClick={() => {
-              archive.mutate(!a.archivedAt);
-            }}
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-60"
-          >
-            {archive.isPending && <Spinner className="h-3 w-3" />}
-            {a.archivedAt ? '보관 해제' : '보관'}
-          </button>
           <button
             disabled={remove.isPending}
             onClick={() => {

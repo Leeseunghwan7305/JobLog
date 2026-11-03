@@ -55,9 +55,8 @@ export class ApplicationsController {
     @CurrentUser() userId: string,
     @Query('status') status?: string,
     @Query('q') q?: string,
-    @Query('archived') archived?: string,
   ) {
-    return this.svc.findAll(userId, status, q, archived === 'true');
+    return this.svc.findAll(userId, status, q);
   }
 
   @Get('applications/:id')

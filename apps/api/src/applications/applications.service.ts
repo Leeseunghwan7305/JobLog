@@ -4,7 +4,6 @@ import { AppStatus, StageStatus } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { GeoService } from '../shared/geo.service';
-import { archiveWhere, resolveArchivedAt } from './archive.util';
 import { toCalendarEvents } from './calendar.util';
 import { naverDirectionsUrl } from './commute.util';
 import { parseDateStrict } from './date.util';
@@ -64,11 +63,10 @@ export class ApplicationsService {
     });
   }
 
-  findAll(userId: string, status?: string, q?: string, archived = false) {
+  findAll(userId: string, status?: string, q?: string) {
     return this.prisma.application.findMany({
       where: {
         userId,
-        ...archiveWhere(archived),
         ...(status ? { status: status as AppStatus } : {}),
         ...applicationSearchWhere(q),
       },
@@ -105,7 +103,6 @@ export class ApplicationsService {
           : undefined,
         employeeCount: dto.employeeCount,
         memo: dto.memo,
-        archivedAt: resolveArchivedAt(dto.archived, new Date()),
         status: dto.status ? (dto.status as AppStatus) : undefined,
       },
       include: withStages,

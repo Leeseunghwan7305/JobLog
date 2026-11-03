@@ -36,7 +36,6 @@ model Application {
   deadline       DateTime?
   status         AppStatus   @default(IN_PROGRESS)
   memo           String?     @db.Text
-  archivedAt     DateTime?   // 보관(아카이브) 시점. null=활성, 값=보관됨.
   stages         Stage[]
   logs           StatusLog[]
   appliedAt      DateTime?
@@ -45,7 +44,6 @@ model Application {
   updatedAt      DateTime    @updatedAt
 
   @@index([userId, status])
-  @@index([userId, archivedAt])
 }
 
 model Stage {

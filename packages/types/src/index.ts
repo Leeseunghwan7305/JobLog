@@ -79,8 +79,6 @@ export interface ApplicationDto {
   appliedAt: string | null;
   employeeCount: number | null;
   memo: string | null;
-  /** 보관(아카이브) 시점. null=활성. */
-  archivedAt: string | null;
   status: AppStatus;
   stages: StageDto[];
   createdAt: string;
