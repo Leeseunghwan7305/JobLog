@@ -9,12 +9,17 @@
 
 ## 주요 기능
 
-- **공고 자동 분석** — 공고 링크를 붙여넣으면 Firecrawl로 본문을 수집하고 LLM이 회사·직무·전형 단계를 추출한다. 수집/파싱이 실패해도 **본문 붙여넣기 폴백**으로 등록은 항상 가능하다.
-- **전형 상태 관리** — 서류·코딩테스트·1차/2차 면접 등 단계별 상태를 추적한다. 지원 전체 상태는 단계 상태에서 **파생 계산**한다(중복 저장 없음).
-- **AI는 초안, 최종 권한은 사용자** — 파싱 결과는 언제든 사용자가 보정할 수 있다.
-- **회사 정보 패널** — 공공데이터포털 국민연금 가입사업장 데이터로 직원 수·입퇴사·추정 연봉·회전율·업력·업종 등을 조회한다(키 없으면 바로가기 링크만 노출).
-- **카카오 로그인** — 모든 `/applications/*` 요청은 JWT의 userId로 본인 리소스인지 소유권을 검증한다.
-- **마감 알림** — 마감 임박 공고를 이메일로 알린다(Resend, 키 없으면 콘솔 로그 폴백).
+- **공고 자동 분석** — 링크를 붙여넣으면 Firecrawl로 본문을 수집하고 LLM이 회사·직무·전형 단계를 추출한다. 수집/파싱 실패해도 **본문 붙여넣기 폴백**으로 등록은 항상 가능. 로그인 전에도 **체험 분석**(`/parse/preview`)으로 결과를 미리 볼 수 있다.
+- **전형 상태 추적** — 전형을 **탭 한 번으로 '현재 단계'로 설정**(이전 단계는 자동 합격), 현재 단계에서 **합격 ✓ / 탈락 ✗**, 잘못 눌러도 **↺ 초기화**로 서류부터 리셋. 지원 전체 상태(진행중/합격/불합격/철회)는 단계에서 **파생 계산**한다(중복 저장 없음).
+- **지원 여정 타임라인** — 전형 상태 변경 이력을 시간순으로 보여준다.
+- **회사 정보 패널** — 국민연금 공개데이터(직원 수·추정 연봉·입퇴사·회전율·업력·업종)와 잡플래닛 공개 평점(best-effort)을 전형 단계와 **나란히** 표시(키 없으면 바로가기 링크만).
+- **집→회사 통근 길찾기** — 마이페이지에 집 주소를 저장(지오코딩: Kakao Local→Nominatim 폴백)하면 각 공고에서 **네이버 대중교통 길찾기** 딥링크를 제공.
+- **대시보드** — 상태별 카드, 통계, 합격률·전형별 통과율 인사이트, 키워드 검색, 캘린더(마감·전형 일정).
+- **카카오 로그인** — 모든 `/applications/*`는 JWT userId로 본인 리소스인지 소유권 검증(불일치 404).
+- **어드민** — 허용목록(`ADMIN_KAKAO_IDS`) 기반 전용 가드로 전체 사용자·지원·활동 지표를 조회(`/admin`).
+- **마감 알림** — 마감·면접 임박을 D-N 이메일로(Resend, 멱등 발송, 키 없으면 콘솔 로그 폴백).
+- **AI는 초안, 최종 권한은 사용자** — 파싱 결과는 언제든 보정 가능.
+- **UX** — 토스인베스트풍 **다크 테마**(기본), 모달 슬라이드업·버튼 프레스 등 마이크로 인터랙션.
 
 ## 기술 스택
 
@@ -22,7 +27,8 @@
 | ------------- | ------------------------------------------------------------------------- |
 | Frontend      | Next.js (App Router), TypeScript, TanStack Query, shadcn/ui, Tailwind CSS |
 | Backend       | NestJS, Prisma, PostgreSQL, Passport (Kakao + JWT)                        |
-| 외부 연동     | Firecrawl(스크래핑), LLM(파싱: Ollama/Groq/Anthropic 라우팅), 국민연금 공개데이터 |
+| 외부 연동     | Firecrawl(스크래핑), LLM 파싱(Ollama/Groq/Anthropic 라우팅), 국민연금 공개데이터, 잡플래닛(공개 평점), Kakao/Nominatim(지오코딩), Resend(알림 메일) |
+| 인프라        | Vercel(web), AWS EC2 + Caddy + pm2(api), Docker PostgreSQL(DB), GitHub Actions(CI·배포) |
 | 패키지 매니저 | pnpm (workspace 모노레포)                                                 |
 
 ## 저장소 구조
@@ -91,7 +97,8 @@ pnpm dev
 | `DATABASE_URL`                     | PostgreSQL 연결 문자열 (로컬: `...@localhost:5434/joblog`) |
 | `PORT` / `WEB_ORIGIN`              | API 포트 / CORS 허용 오리진                               |
 | `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` | JWT 서명 키                                       |
-| `KAKAO_REST_API_KEY` / `KAKAO_REDIRECT_URI` / `KAKAO_CLIENT_SECRET` | 카카오 로그인       |
+| `KAKAO_REST_API_KEY` / `KAKAO_REDIRECT_URI` / `KAKAO_CLIENT_SECRET` | 카카오 로그인 (+ Local API: 통근 지오코딩, 콘솔에서 카카오맵 활성화 시) |
+| `ADMIN_KAKAO_IDS`                  | 어드민 kakaoId 허용목록(쉼표 구분). 비면 어드민 없음(안전 기본값)   |
 | `LLM_PROVIDER`                     | `ollama` \| `groq` \| `anthropic` \| `none`               |
 | `OLLAMA_*` / `GROQ_*` / `ANTHROPIC_API_KEY` | 선택한 프로바이더 설정                           |
 | `FIRECRAWL_API_KEY`                | 공고 스크래핑(없으면 붙여넣기 폴백)                       |
@@ -121,8 +128,11 @@ pnpm dev
 
 ## 배포
 
-- **Web** — Vercel(`joblog-web`). GitHub `main`에 push하면 프로덕션 자동 배포.
-- **API** — 자체 서버 호스팅(`https://joblog.duckdns.org`). 서버에서 `git pull → pnpm install → prisma generate → migrate deploy → build → 재시작`.
-- **DB** — 자체 호스팅 PostgreSQL.
+`git push origin main` 하나로 web·API가 각자 자동 배포된다.
 
-자세한 절차는 [`docs/DEPLOY.md`](docs/DEPLOY.md).
+- **Web** — Vercel(`joblog-web`). `main` push 시 프로덕션 자동 배포.
+- **API** — AWS EC2(Ubuntu) 자체 호스팅, 도메인 `https://joblog.duckdns.org`(DuckDNS→Elastic IP). GitHub Actions(`.github/workflows/deploy-api.yml`)가 `apps/api`·`packages` 변경 시 EC2로 rsync → `pnpm install → prisma generate → migrate deploy → build → pm2 restart`(SSH 재시도 포함)을 수행. 서버 안에서는 **Caddy**(자동 HTTPS)가 Node(pm2 `joblog-api`, :4000)로 리버스 프록시.
+- **DB** — EC2의 **Docker PostgreSQL 16**(`joblog-db`, :5434, 외부 미개방). 마이그레이션은 배포 플로우의 `migrate deploy`로 자동 적용.
+- **CI** — `.github/workflows/ci.yml`이 push/PR마다 lint·typecheck·test.
+
+자세한 절차·토폴로지는 [`docs/DEPLOY.md`](docs/DEPLOY.md).
