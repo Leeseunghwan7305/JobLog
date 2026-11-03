@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { KakaoService } from './kakao.service';
 import { MailerService } from './mailer.service';
 import { dueWindowUtc } from './notifications.util';
 
@@ -12,6 +13,7 @@ export class NotificationsService {
   constructor(
     private prisma: PrismaService,
     private mailer: MailerService,
+    private kakao: KakaoService,
   ) {}
 
   private get daysAhead(): number {
@@ -76,23 +78,34 @@ export class NotificationsService {
           skipped++;
           continue;
         }
-        if (!app.user.email) {
-          this.logger.log(`skip: ${app.companyName} (이메일 없음)`);
+        const email = app.user.email;
+        const kakaoEligible =
+          app.user.notifyKakao && !!app.user.kakaoRefreshToken;
+        if (!email && !kakaoEligible) {
+          this.logger.log(`skip: ${app.companyName} (알림 수단 없음)`);
           skipped++;
           continue;
         }
 
+        const url = `${base}/applications/${app.id}`;
         const subject = `[JobLog] ${app.companyName} ${t.label} D-${days}`;
         const html =
           `<p><b>${app.companyName}</b> · ${app.position}</p>` +
           `<p>${t.label}이(가) ${days}일 뒤입니다.</p>` +
-          `<p><a href="${base}/applications/${app.id}">지원 상세 보기</a></p>`;
+          `<p><a href="${url}">지원 상세 보기</a></p>`;
 
-        const ok = await this.mailer.send({
-          to: app.user.email,
-          subject,
-          html,
-        });
+        // 이메일·카카오 중 가능한 수단으로 발송. 하나라도 성공하면 기록.
+        let ok = false;
+        if (email) {
+          ok = await this.mailer.send({ to: email, subject, html });
+        }
+        if (kakaoEligible) {
+          const text =
+            `[JobLog] ${app.companyName} · ${app.position}\n` +
+            `${t.label}이(가) ${days}일 뒤예요. 잊지 마세요!`;
+          const kakaoOk = await this.kakao.sendMemo(app.user, text, url);
+          ok = ok || kakaoOk;
+        }
         if (ok) {
           await this.prisma.sentNotification.create({
             data: {

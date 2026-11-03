@@ -11,6 +11,12 @@ interface KakaoProfile {
   profileImage: string | null;
 }
 
+interface KakaoTokens {
+  accessToken: string;
+  refreshToken: string | null;
+  expiresAt: Date | null;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -25,13 +31,18 @@ export class AuthService {
       redirect_uri: process.env.KAKAO_REDIRECT_URI ?? '',
       response_type: 'code',
     });
+    // '나에게 보내기' 리마인더용 scope. 카카오 콘솔에서 talk_message 동의항목을
+    // 먼저 켠 뒤 KAKAO_TALK_MESSAGE=on 으로 활성화한다(미설정 시 로그인 영향 없음).
+    if (process.env.KAKAO_TALK_MESSAGE === 'on') {
+      params.set('scope', 'talk_message');
+    }
     return `https://kauth.kakao.com/oauth/authorize?${params.toString()}`;
   }
 
   /** 인가 코드 → 사용자 생성/조회 → 자체 JWT 발급 */
   async loginWithKakaoCode(code: string): Promise<string> {
-    const kakaoToken = await this.exchangeCode(code);
-    const profile = await this.fetchProfile(kakaoToken);
+    const tokens = await this.exchangeCode(code);
+    const profile = await this.fetchProfile(tokens.accessToken);
 
     const user = await this.prisma.user.upsert({
       where: { kakaoId: profile.kakaoId },
@@ -39,12 +50,19 @@ export class AuthService {
         nickname: profile.nickname,
         email: profile.email,
         profileImage: profile.profileImage,
+        kakaoAccessToken: tokens.accessToken,
+        kakaoTokenExpiresAt: tokens.expiresAt,
+        // 재로그인 시 refresh_token이 응답에 없을 수 있어, 있을 때만 갱신(undefined=유지)
+        kakaoRefreshToken: tokens.refreshToken ?? undefined,
       },
       create: {
         kakaoId: profile.kakaoId,
         nickname: profile.nickname,
         email: profile.email,
         profileImage: profile.profileImage,
+        kakaoAccessToken: tokens.accessToken,
+        kakaoRefreshToken: tokens.refreshToken,
+        kakaoTokenExpiresAt: tokens.expiresAt,
       },
     });
 
@@ -66,7 +84,7 @@ export class AuthService {
     };
   }
 
-  private async exchangeCode(code: string): Promise<string> {
+  private async exchangeCode(code: string): Promise<KakaoTokens> {
     const body = new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: process.env.KAKAO_REST_API_KEY ?? '',
@@ -85,8 +103,18 @@ export class AuthService {
       body,
     });
     if (!res.ok) throw new UnauthorizedException('카카오 토큰 교환 실패');
-    const json = (await res.json()) as { access_token: string };
-    return json.access_token;
+    const json = (await res.json()) as {
+      access_token: string;
+      refresh_token?: string;
+      expires_in?: number;
+    };
+    return {
+      accessToken: json.access_token,
+      refreshToken: json.refresh_token ?? null,
+      expiresAt: json.expires_in
+        ? new Date(Date.now() + json.expires_in * 1000)
+        : null,
+    };
   }
 
   private async fetchProfile(accessToken: string): Promise<KakaoProfile> {
