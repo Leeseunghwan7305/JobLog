@@ -42,11 +42,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#3858e9',
+  themeColor: '#0e0f11',
 };
 
 // 하이드레이션 전에 테마 클래스를 심어 깜빡임(FOUC)을 막는다.
-const themeScript = `(function(){try{var t=localStorage.getItem('joblog_theme');var d=t==='dark'||(t!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches);var r=document.documentElement;r.classList.toggle('dark',d);r.setAttribute('data-theme',d?'dark':'light');}catch(e){}})();`;
+const themeScript = `(function(){try{var t=localStorage.getItem('joblog_theme');var d=t!=='light';var r=document.documentElement;r.classList.toggle('dark',d);r.setAttribute('data-theme',d?'dark':'light');}catch(e){}})();`;
 
 export default function RootLayout({
   children,
