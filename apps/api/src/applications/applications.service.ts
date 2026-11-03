@@ -173,6 +173,67 @@ export class ApplicationsService {
     return this.recompute(id);
   }
 
+  /**
+   * 전형 진행 단일 액션 (순서 기반 일괄 갱신). 탭=현재/합격/탈락을 한 번에 원자적으로.
+   * 전체 상태는 recompute가 단계에서 파생.
+   */
+  async setStageProgress(
+    userId: string,
+    id: string,
+    stageId: string,
+    mode: 'current' | 'passed' | 'failed',
+  ) {
+    const app = await this.findOne(userId, id);
+    const target = app.stages.find((s) => s.id === stageId);
+    if (!target) throw new NotFoundException();
+    const o = target.order;
+    const nextOrder = app.stages
+      .filter((s) => s.order > o)
+      .sort((a, b) => a.order - b.order)[0]?.order;
+
+    const statusFor = (s: { id: string; order: number }): StageStatus => {
+      if (mode === 'failed') {
+        if (s.id === stageId) return StageStatus.FAILED;
+        return s.order < o ? StageStatus.PASSED : StageStatus.PENDING;
+      }
+      if (mode === 'passed') {
+        if (s.order <= o) return StageStatus.PASSED;
+        return s.order === nextOrder
+          ? StageStatus.IN_PROGRESS
+          : StageStatus.PENDING;
+      }
+      // current
+      if (s.id === stageId) return StageStatus.IN_PROGRESS;
+      return s.order < o ? StageStatus.PASSED : StageStatus.PENDING;
+    };
+
+    const newTarget = statusFor(target);
+    await this.prisma.$transaction([
+      ...app.stages
+        .filter((s) => s.status !== statusFor(s))
+        .map((s) =>
+          this.prisma.stage.update({
+            where: { id: s.id },
+            data: { status: statusFor(s) },
+          }),
+        ),
+      // 대상 단계의 상태 변경 이력만 기록(일괄 변경 노이즈 방지)
+      ...(target.status !== newTarget
+        ? [
+            this.prisma.statusLog.create({
+              data: {
+                applicationId: id,
+                stageName: target.name,
+                fromStatus: target.status,
+                toStatus: newTarget,
+              },
+            }),
+          ]
+        : []),
+    ]);
+    return this.recompute(id);
+  }
+
   async removeStage(userId: string, id: string, stageId: string) {
     const app = await this.findOne(userId, id);
     if (!app.stages.find((s) => s.id === stageId)) {

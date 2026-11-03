@@ -16,6 +16,7 @@ import { ApplicationsService } from './applications.service';
 import {
   CreateApplicationDto,
   CreateStageDto,
+  StageProgressDto,
   UpdateApplicationDto,
   UpdateStageDto,
 } from './dto';
@@ -100,6 +101,16 @@ export class ApplicationsController {
     @Body() dto: UpdateStageDto,
   ) {
     return this.svc.updateStage(userId, id, stageId, dto);
+  }
+
+  @Patch('applications/:id/stages/:stageId/progress')
+  stageProgress(
+    @CurrentUser() userId: string,
+    @Param('id') id: string,
+    @Param('stageId') stageId: string,
+    @Body() dto: StageProgressDto,
+  ) {
+    return this.svc.setStageProgress(userId, id, stageId, dto.mode);
   }
 
   @Delete('applications/:id/stages/:stageId')

@@ -6,7 +6,6 @@ import type {
   CompanyProfileDto,
   CompanyReviewDto,
   CompanySearchResult,
-  StageStatus,
 } from '@joblog/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -22,8 +21,6 @@ import { DEADLINE_TONE_CLASS, deadlineInfo } from '@/lib/date';
 import { STAGE_STATUS_CLASS, STAGE_STATUS_LABEL } from '@/lib/stage';
 import { externalHref } from '@/lib/url';
 
-const STATUSES: StageStatus[] = ['PENDING', 'IN_PROGRESS', 'PASSED', 'FAILED'];
-
 export default function ApplicationDetail({
   params,
 }: {
@@ -35,7 +32,7 @@ export default function ApplicationDetail({
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!getToken()) router.replace('/login');
+    if (!getToken()) router.replace('/');
     else setReady(true);
   }, [router]);
 
@@ -103,22 +100,24 @@ export default function ApplicationDetail({
     staleTime: 1000 * 60 * 60, // 1시간 (백엔드 캐시 7일)
   });
 
-  const setStage = useMutation({
+  // 전형 진행 단일 액션: current(나 여기)/passed(합격·다음으로)/failed(탈락)
+  const progress = useMutation({
     mutationFn: ({
       stageId,
-      status,
+      mode,
     }: {
       stageId: string;
-      status: StageStatus;
+      mode: 'current' | 'passed' | 'failed';
     }) =>
-      apiFetch(`/applications/${id}/stages/${stageId}`, {
+      apiFetch(`/applications/${id}/stages/${stageId}/progress`, {
         method: 'PATCH',
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ mode }),
       }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['app', id] });
       void qc.invalidateQueries({ queryKey: ['apps'] });
       void qc.invalidateQueries({ queryKey: ['stats'] });
+      void qc.invalidateQueries({ queryKey: ['insights'] });
     },
   });
 
@@ -161,17 +160,6 @@ export default function ApplicationDetail({
     },
   });
 
-  const setTags = useMutation({
-    mutationFn: (tags: string[]) =>
-      apiFetch(`/applications/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ tags }),
-      }),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['app', id] });
-      void qc.invalidateQueries({ queryKey: ['apps'] });
-    },
-  });
 
   // 조회된 회사규모(NPS 가입자수)를 지원에 스냅샷 저장 → 목록·다른 기기에서도 일관.
   const saveSize = useMutation({
@@ -299,15 +287,15 @@ export default function ApplicationDetail({
         </a>
       )}
 
-      <div className="mt-3">
+      <div className="mt-4">
         {commute.data ? (
           <a
             href={commute.data.naverUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium transition hover:border-ring"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground shadow-card transition hover:bg-primary/90"
           >
-            🧭 집 → {commute.data.goalName} 네이버 길찾기 ↗
+            🧭 집 → {commute.data.goalName} 대중교통 길찾기 ↗
           </a>
         ) : !commute.isLoading ? (
           <Link
@@ -319,62 +307,86 @@ export default function ApplicationDetail({
         ) : null}
       </div>
 
-      <TagEditor
-        tags={a.tags}
-        pending={setTags.isPending}
-        onChange={(next) => {
-          setTags.mutate(next);
-        }}
-      />
-
       <section className="mt-8">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          전형 단계
-        </h2>
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            전형 단계
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            전형을 누르면 ‘현재 단계’로 설정돼요 (이전은 합격 처리)
+          </span>
+        </div>
         <div className="flex flex-col gap-2">
-          {a.stages.map((s) => (
-            <div
-              key={s.id}
-              className="flex flex-col gap-2 rounded-xl border border-border bg-card px-4 py-3"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-semibold">{s.name}</span>
-                <div className="flex gap-1.5">
-                  {STATUSES.map((st) => (
-                    <button
-                      key={st}
-                      onClick={() => {
-                        setStage.mutate({ stageId: s.id, status: st });
-                      }}
-                      className={`rounded-full px-2.5 py-1 text-xs font-semibold transition ${
-                        s.status === st
-                          ? STAGE_STATUS_CLASS[st]
-                          : 'bg-muted/50 text-muted-foreground hover:bg-muted'
-                      }`}
+          {a.stages.map((s) => {
+            const isCurrent = s.status === 'IN_PROGRESS';
+            return (
+              <div
+                key={s.id}
+                className={`flex flex-col gap-2 rounded-xl border bg-card px-4 py-3 transition ${
+                  isCurrent ? 'border-ring ring-1 ring-ring' : 'border-border'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  {/* 전형 칩: 누르면 현재 단계로 설정 */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      progress.mutate({ stageId: s.id, mode: 'current' });
+                    }}
+                    className="flex items-center gap-2 text-left"
+                  >
+                    <span
+                      className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${STAGE_STATUS_CLASS[s.status]}`}
                     >
-                      {STAGE_STATUS_LABEL[st]}
-                    </button>
-                  ))}
+                      {STAGE_STATUS_LABEL[s.status]}
+                    </span>
+                    <span className="font-semibold">{s.name}</span>
+                  </button>
+                  {/* 현재 단계에만 합격/탈락 */}
+                  {isCurrent && (
+                    <div className="flex shrink-0 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          progress.mutate({ stageId: s.id, mode: 'passed' });
+                        }}
+                        className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-emerald-700"
+                      >
+                        합격 ✓
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          progress.mutate({ stageId: s.id, mode: 'failed' });
+                        }}
+                        className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-red-700"
+                      >
+                        탈락 ✗
+                      </button>
+                    </div>
+                  )}
                 </div>
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  예정일
+                  <input
+                    type="datetime-local"
+                    defaultValue={
+                      s.scheduledAt ? s.scheduledAt.slice(0, 16) : ''
+                    }
+                    onChange={(e) => {
+                      setSchedule.mutate({
+                        stageId: s.id,
+                        scheduledAt: e.target.value
+                          ? new Date(e.target.value).toISOString()
+                          : '',
+                      });
+                    }}
+                    className="rounded-md border border-border px-2 py-1 text-foreground"
+                  />
+                </label>
               </div>
-              <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                예정일
-                <input
-                  type="datetime-local"
-                  defaultValue={s.scheduledAt ? s.scheduledAt.slice(0, 16) : ''}
-                  onChange={(e) => {
-                    setSchedule.mutate({
-                      stageId: s.id,
-                      scheduledAt: e.target.value
-                        ? new Date(e.target.value).toISOString()
-                        : '',
-                    });
-                  }}
-                  className="rounded-md border border-border px-2 py-1 text-foreground"
-                />
-              </label>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -604,62 +616,3 @@ export default function ApplicationDetail({
   );
 }
 
-function TagEditor({
-  tags,
-  pending,
-  onChange,
-}: {
-  tags: string[];
-  pending: boolean;
-  onChange: (next: string[]) => void;
-}) {
-  const [input, setInput] = useState('');
-  const add = () => {
-    const t = input.trim();
-    setInput('');
-    if (!t || tags.includes(t)) return;
-    onChange([...tags, t]);
-  };
-  return (
-    <div className="mt-4">
-      <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        태그
-      </div>
-      <div className="flex flex-wrap items-center gap-1.5">
-        {tags.map((t) => (
-          <span
-            key={t}
-            className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground"
-          >
-            {t}
-            <button
-              aria-label={`${t} 태그 삭제`}
-              disabled={pending}
-              onClick={() => {
-                onChange(tags.filter((x) => x !== t));
-              }}
-              className="text-muted-foreground hover:text-red-500 disabled:opacity-60"
-            >
-              ✕
-            </button>
-          </span>
-        ))}
-        <input
-          value={input}
-          onChange={(e) => {
-            setInput(e.target.value);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              add();
-            }
-          }}
-          placeholder="+ 태그"
-          disabled={pending}
-          className="w-20 rounded-full border border-dashed border-input bg-background px-2.5 py-1 text-xs transition focus:w-28 focus:outline-none focus:ring-1 focus:ring-ring"
-        />
-      </div>
-    </div>
-  );
-}

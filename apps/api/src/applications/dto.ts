@@ -62,3 +62,14 @@ export class UpdateStageDto {
   @IsOptional() @IsString() scheduledAt?: string | null;
   @IsOptional() @IsString() completedAt?: string | null;
 }
+
+/**
+ * 전형 진행 단일 액션 (순서 기반 일괄 갱신).
+ * - current: 이 단계=진행중, 이전=합격, 이후=대기 ("나 지금 여기")
+ * - passed : 이 단계=합격, 다음 단계=진행중(없으면 최종합격), 이전=합격
+ * - failed : 이 단계=탈락(→불합격), 이전=합격, 이후=대기
+ */
+export class StageProgressDto {
+  @IsIn(['current', 'passed', 'failed'])
+  mode!: 'current' | 'passed' | 'failed';
+}
