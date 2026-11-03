@@ -194,7 +194,7 @@ export default function ApplicationDetail({
   const companySize = a.employeeCount ?? npsSize;
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-8">
+    <main className="mx-auto max-w-5xl px-6 py-8">
       <div className="flex items-center justify-between">
         <Link
           href="/"
@@ -279,7 +279,9 @@ export default function ApplicationDetail({
         ) : null}
       </div>
 
-      <section className="mt-8">
+      {/* 전형 단계 | 회사 정보 — 넓은 화면에서 나란히 */}
+      <div className="mt-8 grid items-start gap-6 lg:grid-cols-2">
+      <section>
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             전형 단계
@@ -362,7 +364,7 @@ export default function ApplicationDetail({
         </div>
       </section>
 
-      <section className="mt-8">
+      <section>
         <button
           type="button"
           onClick={() => { setShowCompany((v) => !v); }}
@@ -584,6 +586,7 @@ export default function ApplicationDetail({
           </div>
         )}
       </section>
+      </div>
     </main>
   );
 }
