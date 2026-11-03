@@ -34,3 +34,16 @@ export const DEADLINE_TONE_CLASS: Record<DeadlineTone, string> = {
   soon: 'text-amber-600 dark:text-amber-400',
   normal: 'text-muted-foreground',
 };
+
+/** 타임라인용 타임스탬프: "M.D HH:mm" (올해가 아니면 연도 포함). 파싱 실패 시 빈 문자열. */
+export function formatLogTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const md = `${d.getMonth() + 1}.${d.getDate()}`;
+  const date =
+    d.getFullYear() === new Date().getFullYear()
+      ? md
+      : `${d.getFullYear()}.${md}`;
+  return `${date} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}

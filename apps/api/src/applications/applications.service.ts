@@ -1,4 +1,4 @@
-import type { CalendarEvent, CommuteInfo } from '@joblog/types';
+import type { CalendarEvent, CommuteInfo, StatusLogDto } from '@joblog/types';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AppStatus, StageStatus } from '@prisma/client';
 
@@ -83,6 +83,22 @@ export class ApplicationsService {
     // 소유권 불일치는 존재를 숨기기 위해 404
     if (app?.userId !== userId) throw new NotFoundException();
     return app;
+  }
+
+  /** 지원 여정 타임라인: 전형 상태 변경 이력(최신순). 이미 기록 중인 StatusLog를 노출. */
+  async getHistory(userId: string, id: string): Promise<StatusLogDto[]> {
+    await this.findOne(userId, id); // 소유권 검증(미보유 시 404)
+    const logs = await this.prisma.statusLog.findMany({
+      where: { applicationId: id },
+      orderBy: { createdAt: 'desc' },
+    });
+    return logs.map((l) => ({
+      stageName: l.stageName,
+      // DB는 String으로 저장하지만 기록되는 값은 항상 유효한 StageStatus 이름이다.
+      fromStatus: l.fromStatus as StageStatus | null,
+      toStatus: l.toStatus as StageStatus,
+      createdAt: l.createdAt.toISOString(),
+    }));
   }
 
   async update(userId: string, id: string, dto: UpdateApplicationDto) {

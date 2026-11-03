@@ -81,6 +81,14 @@ export interface StageDto {
   completedAt: string | null;
 }
 
+/** GET /applications/:id/history — 전형 상태 변경 이력 한 건 (createdAt 내림차순). */
+export interface StatusLogDto {
+  stageName: string;
+  fromStatus: StageStatus | null; // 최초 전환은 null
+  toStatus: StageStatus;
+  createdAt: string; // ISO datetime
+}
+
 export interface ApplicationDto {
   id: string;
   companyName: string;

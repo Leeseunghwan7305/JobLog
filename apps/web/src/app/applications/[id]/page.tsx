@@ -6,6 +6,7 @@ import type {
   CompanyProfileDto,
   CompanyReviewDto,
   CompanySearchResult,
+  StatusLogDto,
 } from '@joblog/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -17,7 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { apiFetch } from '@/lib/api';
 import { getToken } from '@/lib/auth';
-import { DEADLINE_TONE_CLASS, deadlineInfo } from '@/lib/date';
+import { DEADLINE_TONE_CLASS, deadlineInfo, formatLogTime } from '@/lib/date';
 import { STAGE_STATUS_CLASS, STAGE_STATUS_LABEL } from '@/lib/stage';
 import { externalHref } from '@/lib/url';
 
@@ -49,6 +50,14 @@ export default function ApplicationDetail({
     enabled: ready,
     staleTime: 5 * 60 * 1000,
   });
+
+  // 지원 여정 타임라인 (전형 상태 변경 이력)
+  const history = useQuery({
+    queryKey: ['history', id],
+    queryFn: () => apiFetch<StatusLogDto[]>(`/applications/${id}/history`),
+    enabled: ready,
+  });
+  const [showHistory, setShowHistory] = useState(true);
 
   const [showCompany, setShowCompany] = useState(true);
   const [companyQuery, setCompanyQuery] = useState('');
@@ -118,6 +127,7 @@ export default function ApplicationDetail({
       void qc.invalidateQueries({ queryKey: ['apps'] });
       void qc.invalidateQueries({ queryKey: ['stats'] });
       void qc.invalidateQueries({ queryKey: ['insights'] });
+      void qc.invalidateQueries({ queryKey: ['history', id] });
     },
   });
 
@@ -587,6 +597,65 @@ export default function ApplicationDetail({
         )}
       </section>
       </div>
+
+      {/* 지원 여정 타임라인 — 서버가 기록 중인 전형 상태 변경 이력(최신순) */}
+      <section className="mt-6 rounded-xl border border-border bg-card p-4 shadow-card">
+        <button
+          onClick={() => {
+            setShowHistory((v) => !v);
+          }}
+          className="flex w-full items-center justify-between text-sm font-semibold uppercase tracking-wide text-muted-foreground"
+        >
+          <span>지원 여정</span>
+          <span className="text-xs">{showHistory ? '▲' : '▼'}</span>
+        </button>
+        {showHistory && (
+          <div className="mt-4">
+            {history.isLoading ? (
+              <div className="flex flex-col gap-2">
+                {[0, 1, 2].map((n) => (
+                  <Skeleton key={n} className="h-5 w-full" />
+                ))}
+              </div>
+            ) : (history.data?.length ?? 0) === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                아직 기록된 변경 이력이 없어요. 전형 상태를 바꾸면 여기에 쌓여요.
+              </p>
+            ) : (
+              <ol className="flex flex-col gap-4 border-l border-border pl-5">
+                {history.data?.map((log, i) => (
+                  <li key={i} className="relative">
+                    <span className="absolute -left-[23px] top-1 h-2.5 w-2.5 rounded-full border-2 border-card bg-primary" />
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                      <span className="font-semibold">{log.stageName}</span>
+                      <span className="inline-flex items-center gap-1.5 text-xs">
+                        {log.fromStatus && (
+                          <>
+                            <span
+                              className={`rounded px-1.5 py-0.5 font-medium ${STAGE_STATUS_CLASS[log.fromStatus]}`}
+                            >
+                              {STAGE_STATUS_LABEL[log.fromStatus]}
+                            </span>
+                            <span className="text-muted-foreground">→</span>
+                          </>
+                        )}
+                        <span
+                          className={`rounded px-1.5 py-0.5 font-medium ${STAGE_STATUS_CLASS[log.toStatus]}`}
+                        >
+                          {STAGE_STATUS_LABEL[log.toStatus]}
+                        </span>
+                      </span>
+                    </div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      {formatLogTime(log.createdAt)}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        )}
+      </section>
     </main>
   );
 }

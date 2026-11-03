@@ -83,6 +83,11 @@ export class ApplicationsController {
     return this.svc.commute(userId, id);
   }
 
+  @Get('applications/:id/history')
+  history(@CurrentUser() userId: string, @Param('id') id: string) {
+    return this.svc.getHistory(userId, id);
+  }
+
   @Post('applications/:id/stages')
   addStage(
     @CurrentUser() userId: string,
