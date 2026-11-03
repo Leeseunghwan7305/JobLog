@@ -821,9 +821,25 @@ function Dashboard() {
   const router = useRouter();
   const [showAdd, setShowAdd] = useState(false);
   const [addUrl, setAddUrl] = useState<string | undefined>(undefined);
+  const [addRawText, setAddRawText] = useState<string | undefined>(undefined);
 
-  // 로그인 유도 흐름에서 넘어온 URL이 있으면 분석 모달 자동 오픈
+  // 크롬 익스텐션 캡처(본문+URL) 또는 로그인 유도 흐름의 URL이 있으면 분석 모달 자동 오픈
   useEffect(() => {
+    try {
+      const raw = localStorage.getItem('joblog_ext_capture');
+      if (raw) {
+        localStorage.removeItem('joblog_ext_capture');
+        const cap = JSON.parse(raw) as { url?: string; text?: string };
+        if (cap.text || cap.url) {
+          setAddUrl(cap.url);
+          setAddRawText(cap.text);
+          setShowAdd(true);
+          return;
+        }
+      }
+    } catch {
+      /* 손상된 캡처는 무시 */
+    }
     const pending = getPendingUrl();
     if (pending) {
       clearPendingUrl();
@@ -874,6 +890,7 @@ function Dashboard() {
 
   const openAdd = () => {
     setAddUrl(undefined);
+    setAddRawText(undefined);
     setShowAdd(true);
   };
 
@@ -1030,9 +1047,11 @@ function Dashboard() {
       {showAdd && (
         <AddJobModal
           initialUrl={addUrl}
+          initialRawText={addRawText}
           onClose={() => {
             setShowAdd(false);
             setAddUrl(undefined);
+            setAddRawText(undefined);
           }}
         />
       )}

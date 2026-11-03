@@ -36,10 +36,13 @@
 
 ## 권한 사유 (심사용)
 
-- **activeTab**: 사용자가 담기 버튼을 누른 순간에만 현재 탭의 URL을 읽어
-  JobLog로 전달하기 위함. 백그라운드 추적·상시 접근 없음.
+- **activeTab** + **scripting**: 사용자가 담기 버튼을 누른 순간에만 현재 탭의
+  URL과 공고 본문 텍스트를 읽어 JobLog로 전달하기 위함. 백그라운드 추적·상시 접근 없음.
+- **storage**: 캡처한 공고를 JobLog 탭으로 넘기기 위해 잠시 보관(넘긴 뒤 삭제).
+- **host_permissions: `https://joblog-web.vercel.app/*`**: 캡처한 공고를 JobLog
+  웹에만 주입(다른 사이트 접근 없음). content script도 이 도메인에서만 실행.
 - **단일 목적(single purpose)**: 현재 보고 있는 채용 공고를 JobLog에 담는다.
-- 원격 코드 없음, 호스트 광범위 권한 없음.
+- 원격 코드 없음, `<all_urls>` 같은 광범위 호스트 권한 없음.
 
 ## 필요한 에셋
 

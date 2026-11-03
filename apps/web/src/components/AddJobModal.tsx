@@ -24,19 +24,23 @@ function isAbort(err: unknown): boolean {
 export default function AddJobModal({
   onClose,
   initialUrl,
+  initialRawText,
 }: {
   onClose: () => void;
   initialUrl?: string;
+  /** 크롬 익스텐션이 캡처한 공고 본문. 있으면 URL 대신 본문으로 분석. */
+  initialRawText?: string;
 }) {
   const qc = useQueryClient();
   const [step, setStep] = useState<Step>('input');
   const [url, setUrl] = useState(initialUrl ?? '');
-  const [rawText, setRawText] = useState('');
+  const [rawText, setRawText] = useState(initialRawText ?? '');
   const [notice, setNotice] = useState<string | undefined>();
   const [draft, setDraft] = useState<ParsedPosting | null>(null);
   // 공고 원문(핏 분석 입력). 분석 응답의 rawText를 보관해 생성 시 rawPosting으로 저장.
   const [rawPosting, setRawPosting] = useState('');
-  const [jobUrl, setJobUrl] = useState('');
+  // 익스텐션/직접 분석 시 공고 URL을 저장용으로 보존.
+  const [jobUrl, setJobUrl] = useState(initialUrl ?? '');
   // 지원일: 공고엔 없는 값이라 등록 시점에 채운다. 기본 오늘, 수정 가능.
   const [appliedAt, setAppliedAt] = useState<string>(todayLocalISO);
   const [mode, setMode] = useState<AnalyzeMode>('url');
@@ -127,10 +131,14 @@ export default function AddJobModal({
     };
   }, [closable, onClose]);
 
-  // 로그인 후 이어진 흐름: 저장해둔 URL로 분석 자동 시작 (1회만)
+  // 자동 분석 시작 (1회만): 익스텐션 본문 캡처가 있으면 본문으로, 없으면 URL로.
   const autoRan = useRef(false);
   useEffect(() => {
-    if (initialUrl && !autoRan.current) {
+    if (autoRan.current) return;
+    if (initialRawText) {
+      autoRan.current = true;
+      analyze({ rawText: initialRawText });
+    } else if (initialUrl) {
       autoRan.current = true;
       analyze({ url: initialUrl });
     }

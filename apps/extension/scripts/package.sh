@@ -19,6 +19,7 @@ zip -r "$OUT" \
   manifest.json \
   popup.html \
   popup.js \
+  content.js \
   icons \
   -x '*.DS_Store' >/dev/null
 

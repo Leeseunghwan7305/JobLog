@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "JobLog — 공고 담기",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "보고 있는 채용 공고를 클릭 한 번으로 JobLog에 담습니다.",
   "homepage_url": "https://joblog-web.vercel.app",
   "action": {
@@ -18,5 +18,13 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "permissions": ["activeTab"]
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["https://joblog-web.vercel.app/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://joblog-web.vercel.app/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
 }
