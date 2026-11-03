@@ -292,14 +292,28 @@ export default function ApplicationDetail({
       {/* 전형 단계 | 회사 정보 — 넓은 화면에서 나란히 */}
       <div className="mt-8 grid items-start gap-6 lg:grid-cols-2">
       <section>
-        <div className="mb-3 flex items-baseline justify-between">
+        <div className="mb-1 flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
             전형 단계
           </h2>
-          <span className="text-xs text-muted-foreground">
-            전형을 누르면 ‘현재 단계’로 설정돼요 (이전은 합격 처리)
-          </span>
+          {a.stages.length > 0 && (
+            <button
+              type="button"
+              disabled={progress.isPending}
+              onClick={() => {
+                if (confirm('전형 상태를 처음(서류)으로 되돌릴까요?')) {
+                  progress.mutate({ stageId: a.stages[0].id, mode: 'current' });
+                }
+              }}
+              className="flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition hover:border-ring hover:text-foreground disabled:opacity-50"
+            >
+              ↺ 초기화
+            </button>
+          )}
         </div>
+        <p className="mb-3 text-xs text-muted-foreground">
+          전형을 누르면 ‘현재 단계’로 설정돼요 (이전은 합격 처리)
+        </p>
         <div className="flex flex-col gap-2">
           {a.stages.map((s) => {
             const isCurrent = s.status === 'IN_PROGRESS';
