@@ -153,6 +153,11 @@ interface ParsedPosting {
 | GET    | `/companies/profile?name=`          |  ✓   | 회사 통합 프로필: 국민연금 지표+후기+바로가기 (M4) |
 | GET    | `/calendar?from=&to=`               |  ✓   | 마감·단계 예정일을 이벤트로 집계 (M4)  |
 | POST   | `/notifications/run`                |  ✓   | 알림 수동 트리거 (dev 전용, 운영 404)  |
+| GET    | `/integrations/gmail/connect`       |  ✓   | 구글 동의 URL 발급 (state=서명 JWT)    |
+| GET    | `/integrations/gmail/callback`      |  -   | 구글 리다이렉트(공개). state 검증→토큰 저장→/profile 복귀 |
+| GET    | `/integrations/gmail/status`        |  ✓   | Gmail 연결 여부·연결된 이메일          |
+| POST   | `/integrations/gmail/scan`          |  ✓   | 최근 메일 스캔→합격/불합격 감지 제안 (반영 X) |
+| DELETE | `/integrations/gmail/disconnect`    |  ✓   | Gmail 연결 해제(토큰 삭제)             |
 | GET    | `/dashboard/stats`                  |  ✓   | 지원 수·진행중·합격·탈락 통계          |
 | GET    | `/dashboard/insights`               |  ✓   | 합격률(결론 대비)·전형명별 통과율 인사이트 (M4) |
 
@@ -237,6 +242,11 @@ RESEND_API_KEY=...
 MAIL_FROM=JobLog <onboarding@resend.dev>
 APP_BASE_URL=http://localhost:3000   # 메일 내 지원 상세 링크
 NOTIFY_DAYS_AHEAD=3                   # D-N 알림 (기본 3일 전)
+KAKAO_TALK_MESSAGE=                   # "on"이면 로그인 scope에 talk_message 추가(나에게 보내기 리마인더)
+# Gmail 자동 상태감지 (없으면 기능 비활성 — 다른 기능 영향 없음)
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REDIRECT_URI=https://joblog.duckdns.org/integrations/gmail/callback
 
 # apps/web/.env.local
 NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
