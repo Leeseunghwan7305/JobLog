@@ -106,3 +106,14 @@
     transform: none;
   }
 }
+
+/* 랜딩 히어로의 그라데이션 블롭 — 은은하게 떠다니는 모션 */
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}

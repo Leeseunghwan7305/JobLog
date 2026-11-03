@@ -17,7 +17,7 @@ import {
 } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 import AddJobModal from '@/components/AddJobModal';
 import LoginModal from '@/components/LoginModal';
@@ -93,87 +93,189 @@ function Landing() {
       ? raw
       : '분석에 실패했어요. 잠시 후 다시 시도해 주세요.';
 
+  const inputRef = useRef<HTMLInputElement>(null);
+  const goAnalyze = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => inputRef.current?.focus(), 400);
+  };
+
   return (
-    <main className="mx-auto grid min-h-screen max-w-xl place-items-center px-6 py-10">
-      <div className="w-full text-center">
-        <div className="mx-auto mb-6 grid h-12 w-12 place-items-center rounded-2xl bg-primary text-xl font-bold text-primary-foreground">
-          J
-        </div>
-        <h1 className="mb-3 text-3xl font-extrabold tracking-tight">
-          지원한 공고, <span className="text-primary">어디까지 왔는지</span>
-          <br />한 곳에서 추적하세요
-        </h1>
-        <p className="mb-8 text-muted-foreground">
-          공고 링크만 붙여넣으면 회사·직무·전형을 자동으로 정리해 드려요.
-          <br />
-          <span className="text-sm">로그인 없이 먼저 분석해 볼 수 있어요.</span>
-        </p>
-
-        <div className="flex gap-2">
-          <input
-            value={url}
-            onChange={(e) => {
-              setUrl(e.target.value);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') analyze();
-            }}
-            disabled={preview.isPending}
-            placeholder="채용 공고 링크를 붙여넣으세요"
-            className="flex-1 rounded-lg border border-input bg-background px-4 py-3 outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20 disabled:opacity-60"
-          />
-          <button
-            onClick={analyze}
-            disabled={!url.trim() || preview.isPending}
-            className="shrink-0 rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {preview.isPending ? '분석 중…' : '분석'}
-          </button>
+    <main className="relative overflow-x-hidden">
+      {/* ───── 히어로 ───── */}
+      <section className="relative px-6 pb-16 pt-20 sm:pt-28">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+        >
+          <div className="absolute -left-24 top-4 h-72 w-72 rounded-full bg-primary/25 blur-3xl motion-safe:animate-[float-slow_9s_ease-in-out_infinite]" />
+          <div className="absolute -right-16 top-28 h-80 w-80 rounded-full bg-indigo-400/20 blur-3xl motion-safe:animate-[float-slow_11s_ease-in-out_infinite]" />
         </div>
 
-        {preview.isPending && (
-          <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground duration-200 animate-in fade-in">
-            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-primary" />
-            AI가 공고를 읽고 있어요…
+        <div className="mx-auto max-w-2xl text-center">
+          <div className="mx-auto mb-6 grid h-14 w-14 place-items-center rounded-2xl bg-primary text-2xl font-bold text-primary-foreground shadow-lg shadow-primary/30 duration-500 animate-in fade-in zoom-in-95">
+            J
           </div>
-        )}
-
-        {preview.isError && (
-          <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-500/10 dark:text-red-400">
-            {errorText}
-          </div>
-        )}
-
-        {result &&
-          (result.needsManualInput ? (
-            <ManualFallbackCard
-              notice={result.notice}
-              onSave={saveWithLogin}
-              onReset={reset}
-            />
-          ) : (
-            <PreviewCard
-              draft={result.draft}
-              notice={result.notice}
-              onSave={saveWithLogin}
-              onReset={reset}
-            />
-          ))}
-
-        {!result && !preview.isPending && (
-          <p className="mt-3 text-xs text-muted-foreground">
-            이미 계정이 있으신가요?{' '}
-            <button
-              onClick={() => {
-                setShowLogin(true);
-              }}
-              className="text-primary hover:underline"
-            >
-              로그인
-            </button>
+          <span className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground duration-500 animate-in fade-in">
+            🇰🇷 한국 취준생을 위한 구직 트래커
+          </span>
+          <h1 className="text-balance text-4xl font-extrabold leading-[1.12] tracking-tight sm:text-5xl">
+            지원한 공고,{' '}
+            <span className="bg-gradient-to-r from-primary to-indigo-400 bg-clip-text text-transparent">
+              어디까지 왔는지
+            </span>
+            <br />한 곳에서 추적하세요
+          </h1>
+          <p className="mx-auto mt-5 max-w-md text-muted-foreground">
+            공고 링크만 붙여넣으면 회사·직무·전형을 자동으로 정리해 드려요.
+            <br />
+            <span className="text-sm">로그인 없이 먼저 분석해 볼 수 있어요.</span>
           </p>
-        )}
-      </div>
+
+          <div className="mx-auto mt-8 flex max-w-lg gap-2">
+            <input
+              ref={inputRef}
+              value={url}
+              onChange={(e) => {
+                setUrl(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') analyze();
+              }}
+              disabled={preview.isPending}
+              placeholder="채용 공고 링크를 붙여넣으세요"
+              className="flex-1 rounded-lg border border-input bg-background px-4 py-3 outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20 disabled:opacity-60"
+            />
+            <button
+              onClick={analyze}
+              disabled={!url.trim() || preview.isPending}
+              className="shrink-0 rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {preview.isPending ? '분석 중…' : '분석'}
+            </button>
+          </div>
+
+          {preview.isPending && (
+            <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground duration-200 animate-in fade-in">
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-primary" />
+              AI가 공고를 읽고 있어요…
+            </div>
+          )}
+
+          {preview.isError && (
+            <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-500/10 dark:text-red-400">
+              {errorText}
+            </div>
+          )}
+
+          {result &&
+            (result.needsManualInput ? (
+              <ManualFallbackCard
+                notice={result.notice}
+                onSave={saveWithLogin}
+                onReset={reset}
+              />
+            ) : (
+              <PreviewCard
+                draft={result.draft}
+                notice={result.notice}
+                onSave={saveWithLogin}
+                onReset={reset}
+              />
+            ))}
+
+          {!result && !preview.isPending && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              이미 계정이 있으신가요?{' '}
+              <button
+                onClick={() => {
+                  setShowLogin(true);
+                }}
+                className="text-primary hover:underline"
+              >
+                로그인
+              </button>
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/* ───── 왜 JobLog ───── */}
+      <section className="px-6 py-16 sm:py-20">
+        <div className="mx-auto max-w-5xl">
+          <Reveal className="text-center">
+            <h2 className="text-balance text-2xl font-bold tracking-tight sm:text-3xl">
+              엑셀로 관리하기엔, 너무 번거롭잖아요
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
+              붙여넣기 한 번이면 끝. 한국 채용 사이트에 맞춘 AI가 정리하고,
+              회사 정보까지 함께 보여줍니다.
+            </p>
+          </Reveal>
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {FEATURES.map((f, i) => (
+              <Reveal key={f.title} delay={i * 80}>
+                <FeatureCard {...f} />
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ───── 작동 방식 ───── */}
+      <section className="bg-secondary/40 px-6 py-16 sm:py-20">
+        <div className="mx-auto max-w-4xl">
+          <Reveal className="text-center">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              3단계면 충분해요
+            </h2>
+          </Reveal>
+          <div className="mt-12 grid gap-8 sm:grid-cols-3">
+            {STEPS.map((s, i) => (
+              <Reveal key={s.title} delay={i * 100}>
+                <StepItem index={i + 1} title={s.title} desc={s.desc} />
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ───── 칸반 미리보기 ───── */}
+      <section className="px-6 py-16 sm:py-20">
+        <div className="mx-auto max-w-4xl">
+          <Reveal className="text-center">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              서류부터 최종까지, 한눈에
+            </h2>
+          </Reveal>
+          <Reveal delay={120}>
+            <div className="mt-10">
+              <KanbanMock />
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ───── 마지막 CTA ───── */}
+      <section className="px-6 pb-24 pt-6 text-center">
+        <Reveal>
+          <h2 className="text-balance text-2xl font-bold tracking-tight sm:text-3xl">
+            지금 공고 하나로 시작해 보세요
+          </h2>
+          <p className="mt-3 text-muted-foreground">
+            로그인 없이 바로 분석 · 저장은 카카오로 3초면 끝나요.
+          </p>
+          <button
+            onClick={goAnalyze}
+            className="mt-6 rounded-xl bg-primary px-7 py-3.5 font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition hover:bg-primary/90 motion-safe:hover:-translate-y-0.5"
+          >
+            공고 분석하러 가기 ↑
+          </button>
+        </Reveal>
+      </section>
+
+      <footer className="border-t border-border px-6 py-8 text-center text-xs text-muted-foreground">
+        JobLog · 지원 현황 추적 서비스
+      </footer>
 
       {showLogin && (
         <LoginModal
@@ -183,6 +285,187 @@ function Landing() {
         />
       )}
     </main>
+  );
+}
+
+/* ───────────────── 랜딩 섹션 조각 ───────────────── */
+
+const FEATURES = [
+  {
+    icon: '🤖',
+    title: '한국형 AI 파싱',
+    desc: '원티드·잡코리아·사람인 링크를 붙여넣으면 회사·직무·전형을 자동으로 정리해요.',
+  },
+  {
+    icon: '🗂️',
+    title: '전형 추적',
+    desc: '서류부터 최종까지 칸반으로. 카드에서 1클릭 합격/탈락, 실수하면 되돌리기.',
+  },
+  {
+    icon: '🏢',
+    title: '회사 정보',
+    desc: '잡플래닛 평점·국민연금 기반 직원수까지, 지원 전에 한눈에.',
+  },
+  {
+    icon: '⏰',
+    title: '마감 관리',
+    desc: 'D-day·캘린더로 마감과 면접 일정을 놓치지 않게.',
+  },
+];
+
+const STEPS = [
+  { title: '공고 링크 붙여넣기', desc: '채용 공고 URL만 복사해서 붙여넣으세요.' },
+  {
+    title: 'AI가 자동 정리',
+    desc: '회사·직무·전형 단계·마감일을 알아서 추출해요.',
+  },
+  { title: '전형까지 추적', desc: '서류부터 최종까지 상태를 한 곳에서 관리해요.' },
+];
+
+/** 스크롤 진입 시 아래에서 위로 페이드인. 모션 최소화 설정이면 즉시 표시. */
+function Reveal({
+  children,
+  delay = 0,
+  className = '',
+}: {
+  children: ReactNode;
+  delay?: number;
+  className?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setShown(true);
+      return;
+    }
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setShown(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.15 },
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+    };
+  }, []);
+  return (
+    <div
+      ref={ref}
+      style={{ transitionDelay: `${delay}ms` }}
+      className={`transition-all duration-700 ${shown ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'} ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function FeatureCard({
+  icon,
+  title,
+  desc,
+}: {
+  icon: string;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <div className="h-full rounded-2xl border border-border bg-card p-5 text-left shadow-card transition duration-300 hover:border-ring hover:shadow-card-hover motion-safe:hover:-translate-y-1">
+      <div className="mb-3 grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-2xl">
+        {icon}
+      </div>
+      <h3 className="font-bold">{title}</h3>
+      <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+        {desc}
+      </p>
+    </div>
+  );
+}
+
+function StepItem({
+  index,
+  title,
+  desc,
+}: {
+  index: number;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <div className="text-center">
+      <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary text-lg font-bold text-primary-foreground shadow-md shadow-primary/25">
+        {index}
+      </div>
+      <h3 className="mt-4 font-bold">{title}</h3>
+      <p className="mt-1.5 text-sm text-muted-foreground">{desc}</p>
+    </div>
+  );
+}
+
+type MockTone = 'amber' | 'emerald' | 'red';
+
+/** 칸반 미리보기(정적 목업) — 로그인 전 서비스 느낌을 보여준다. */
+function KanbanMock() {
+  const cols: {
+    label: string;
+    items: { c: string; p: string; tone: MockTone }[];
+  }[] = [
+    {
+      label: '진행중',
+      items: [
+        { c: '토스', p: '프론트엔드', tone: 'amber' },
+        { c: '네이버', p: '백엔드', tone: 'amber' },
+      ],
+    },
+    { label: '최종합격', items: [{ c: '카카오', p: '서버', tone: 'emerald' }] },
+    { label: '불합격', items: [{ c: '쿠팡', p: 'iOS', tone: 'red' }] },
+    { label: '철회', items: [] },
+  ];
+  const toneClass: Record<MockTone, string> = {
+    amber: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+    emerald:
+      'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+    red: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300',
+  };
+  return (
+    <div className="overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-card">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {cols.map((col) => (
+          <div key={col.label}>
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {col.label}
+            </div>
+            <div className="flex flex-col gap-2">
+              {col.items.map((it) => (
+                <div
+                  key={it.c}
+                  className="rounded-lg border border-border bg-background p-2.5"
+                >
+                  <div className="text-sm font-bold">{it.c}</div>
+                  <div className="text-xs text-muted-foreground">{it.p}</div>
+                  <span
+                    className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${toneClass[it.tone]}`}
+                  >
+                    {col.label}
+                  </span>
+                </div>
+              ))}
+              {col.items.length === 0 && (
+                <div className="rounded-lg border border-dashed border-border p-3 text-center text-[10px] text-muted-foreground">
+                  비어 있음
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

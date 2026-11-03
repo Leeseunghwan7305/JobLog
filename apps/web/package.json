@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --import tsx --test \"src/**/*.test.ts\""
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@joblog/types": "workspace:*",
@@ -30,6 +32,7 @@
   "devDependencies": {
     "@joblog/eslint-config": "workspace:*",
     "@joblog/tsconfig": "workspace:*",
+    "@playwright/test": "^1.64.1",
     "@types/node": "^22.7.5",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
