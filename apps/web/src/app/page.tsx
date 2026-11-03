@@ -255,6 +255,68 @@ function Landing() {
         </div>
       </section>
 
+      {/* ───── 크롬 익스텐션 ───── */}
+      <section className="px-6 py-16 sm:py-20">
+        <div className="mx-auto max-w-4xl">
+          <Reveal>
+            <div className="overflow-hidden rounded-3xl border border-border bg-card p-8 sm:p-12">
+              <div className="flex flex-col items-center gap-10 text-center sm:flex-row sm:text-left">
+                <div className="flex-1">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-semibold text-muted-foreground">
+                    🧩 크롬 익스텐션 · 곧 출시
+                  </span>
+                  <h2 className="mt-4 text-balance text-2xl font-bold tracking-tight sm:text-3xl">
+                    공고 보다가, 클릭 한 번으로 담기
+                  </h2>
+                  <p className="mt-3 text-muted-foreground">
+                    원티드·잡코리아·사람인에서 공고를 보던 그 화면에서, 익스텐션
+                    버튼만 누르면 복사·붙여넣기 없이 바로 JobLog에 담겨요.
+                  </p>
+                  <div className="mt-6 flex flex-wrap justify-center gap-2 sm:justify-start">
+                    <button
+                      disabled
+                      className="cursor-not-allowed rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground opacity-60"
+                    >
+                      🧩 크롬에 추가 (준비 중)
+                    </button>
+                    <button
+                      onClick={goAnalyze}
+                      className="rounded-xl border border-border px-5 py-3 font-semibold text-foreground transition hover:border-ring"
+                    >
+                      지금은 링크로 분석하기 →
+                    </button>
+                  </div>
+                </div>
+                {/* 미니 목업: 브라우저 창 + 플로팅 담기 버튼 */}
+                <div
+                  aria-hidden="true"
+                  className="w-full max-w-xs shrink-0 overflow-hidden rounded-xl border border-border bg-background shadow-card"
+                >
+                  <div className="flex items-center gap-1.5 border-b border-border bg-secondary/60 px-3 py-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
+                    <span className="ml-2 truncate rounded bg-background px-2 py-0.5 text-[10px] text-muted-foreground">
+                      wanted.co.kr/wd/12345
+                    </span>
+                  </div>
+                  <div className="relative space-y-2 p-4">
+                    <div className="h-2.5 w-2/3 rounded bg-muted" />
+                    <div className="h-2 w-full rounded bg-muted/70" />
+                    <div className="h-2 w-5/6 rounded bg-muted/70" />
+                    <div className="h-2 w-4/6 rounded bg-muted/70" />
+                    <div className="pt-6" />
+                    <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-lg shadow-primary/30 motion-safe:animate-[float-slow_4s_ease-in-out_infinite]">
+                      ＋ JobLog에 담기
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
       {/* ───── 마지막 CTA ───── */}
       <section className="px-6 pb-24 pt-6 text-center">
         <Reveal>
