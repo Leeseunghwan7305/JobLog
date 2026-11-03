@@ -8,10 +8,11 @@ import { LlmService } from './llm.service';
 import { OllamaService } from './ollama.service';
 import { ParseController } from './parse.controller';
 import { ParseService } from './parse.service';
+import { ParsePreviewController } from './parse-preview.controller';
 
 @Module({
   imports: [AuthModule, SharedModule],
-  controllers: [ParseController],
+  controllers: [ParseController, ParsePreviewController],
   providers: [
     ParseService,
     LlmService,

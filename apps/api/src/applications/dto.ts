@@ -25,7 +25,6 @@ export class CreateApplicationDto {
   @IsOptional() @IsString() appliedAt?: string;
   @IsOptional() @IsInt() employeeCount?: number;
   @IsOptional() @IsString() memo?: string;
-  @IsOptional() @IsArray() @IsString({ each: true }) tags?: string[];
 
   @IsArray()
   @ValidateNested({ each: true })
@@ -43,7 +42,6 @@ export class UpdateApplicationDto {
   @IsOptional() @IsString() appliedAt?: string;
   @IsOptional() @IsInt() employeeCount?: number;
   @IsOptional() @IsString() memo?: string;
-  @IsOptional() @IsArray() @IsString({ each: true }) tags?: string[];
   @IsOptional() @IsBoolean() archived?: boolean;
   @IsOptional()
   @IsIn(['IN_PROGRESS', 'OFFER', 'REJECTED', 'CLOSED'])

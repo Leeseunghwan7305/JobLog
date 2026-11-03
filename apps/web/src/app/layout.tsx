@@ -55,10 +55,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      <head>
+      {/* 일부 브라우저 확장(Locator 등)이 <head>에 속성을 주입해 하이드레이션
+          경고를 유발 → suppressHydrationWarning으로 방어(head는 정적 콘텐츠뿐). */}
+      <head suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <Providers>
           {children}
           {/* 전역 "개발자에게 문의하기" 플로팅 버튼 (모든 페이지) */}

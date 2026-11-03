@@ -45,7 +45,6 @@ export class ApplicationsService {
           : null,
         employeeCount: dto.employeeCount ?? null,
         memo: dto.memo,
-        tags: dto.tags ?? [],
         stages: {
           create: dto.stages.map((s, i) => {
             const order = s.order ?? i;
@@ -106,7 +105,6 @@ export class ApplicationsService {
           : undefined,
         employeeCount: dto.employeeCount,
         memo: dto.memo,
-        tags: dto.tags,
         archivedAt: resolveArchivedAt(dto.archived, new Date()),
         status: dto.status ? (dto.status as AppStatus) : undefined,
       },

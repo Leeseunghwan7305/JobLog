@@ -36,7 +36,7 @@ export default function CalendarPage() {
   });
 
   useEffect(() => {
-    if (!getToken()) router.replace('/login');
+    if (!getToken()) router.replace('/');
     else setReady(true);
   }, [router]);
 

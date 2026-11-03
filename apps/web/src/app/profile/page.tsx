@@ -17,7 +17,7 @@ export default function ProfilePage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!getToken()) router.replace('/login');
+    if (!getToken()) router.replace('/');
     else setReady(true);
   }, [router]);
 

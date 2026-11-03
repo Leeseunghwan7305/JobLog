@@ -1,4 +1,4 @@
-import { getToken } from './auth';
+import { clearToken, getToken } from './auth';
 
 const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000';
 
@@ -20,7 +20,12 @@ export async function apiFetch<T>(
   });
 
   if (res.status === 401) {
-    if (typeof window !== 'undefined') window.location.href = '/login';
+    // 만료·무효 토큰 → 로그인 벽으로 가두지 않고, 토큰만 비우고
+    // 체험 가능한 랜딩('/')으로 보낸다 (value-first: 로그인 먼저 강요 X).
+    if (typeof window !== 'undefined') {
+      clearToken();
+      window.location.href = '/';
+    }
     throw new Error('unauthorized');
   }
   if (!res.ok) {

@@ -27,10 +27,21 @@ export class ParseService {
 
     // 1. 링크 우선: 본문이 없으면 Firecrawl로 수집 시도
     if (!text && dto.url) {
-      const scraped = await this.firecrawl.scrape(dto.url);
+      // SPA(원티드 등)는 렌더 전에 긁으면 본문이 비므로 waitFor로 대기한 뒤 수집
+      const scraped = await this.firecrawl.scrape(dto.url, { waitFor: 5000 });
       if (scraped && scraped.trim().length > 50) {
         // 추천/광고 섹션(다른 회사 공고)을 제거해 실제 공고만 LLM에 넘긴다
         text = stripRecommended(scraped.trim());
+        // 본문이 이미지로만 되어 있거나(JD 이미지 업로드) 내용이 너무 짧으면
+        // 틀린 기본값을 조용히 주지 말고 붙여넣기를 안내한다.
+        if (text.length < 200) {
+          return {
+            draft: this.emptyDraft(dto.url),
+            needsManualInput: true,
+            notice:
+              '공고 본문이 이미지로 되어 있거나 내용이 짧아 자동 분석이 어려워요. 공고 내용을 붙여넣어 주세요.',
+          };
+        }
       } else {
         // 수집 실패 → 붙여넣기 폴백
         return {
@@ -64,12 +75,18 @@ export class ParseService {
       };
     }
 
+    // 전형 단계를 본문에서 못 찾아 기본값으로 폴백한 경우(=이미지 전형 등) 명확히 안내
+    const stagesAreDefault =
+      parsed.stages.length === DEFAULT_STAGES.length &&
+      parsed.stages.every((s, i) => s.name === DEFAULT_STAGES[i]?.name);
+
     return {
       draft: parsed,
       needsManualInput: false,
       rawText: text.slice(0, 20000),
-      notice:
-        parsed.confidence === 'low'
+      notice: stagesAreDefault
+        ? '전형 단계를 공고에서 찾지 못해 기본값(서류·면접·최종)을 넣었어요. 공고에 전형 절차가 이미지로 있으면 본문을 붙여넣거나, 단계를 직접 수정해 주세요.'
+        : parsed.confidence === 'low'
           ? '일부 항목을 확실히 추출하지 못했어요. 확인 후 수정해 주세요.'
           : undefined,
     };

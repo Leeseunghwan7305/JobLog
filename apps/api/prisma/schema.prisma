@@ -36,7 +36,6 @@ model Application {
   deadline       DateTime?
   status         AppStatus   @default(IN_PROGRESS)
   memo           String?     @db.Text
-  tags           String[]    @default([]) // 사용자 자유 태그 (예: "희망", "리모트")
   archivedAt     DateTime?   // 보관(아카이브) 시점. null=활성, 값=보관됨.
   stages         Stage[]
   logs           StatusLog[]
