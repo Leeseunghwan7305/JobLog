@@ -12,6 +12,7 @@ import {
   parseDetail,
   parsePeriod,
   pickWorkplace,
+  rankCompanies,
   recentYms,
   toSearchResults,
 } from './nps';
@@ -217,4 +218,48 @@ test('toSearchResults: seq 없는 항목 제외하고 매핑', () => {
   const r = toSearchResults(items);
   assert.equal(r.length, 1);
   assert.deepEqual(r[0], { seq: '1', name: 'A', region: '서울', industry: 'IT' });
+});
+
+const sr = (
+  seq: string,
+  name: string,
+  industry: string | null = null,
+): { seq: string; name: string; region: string | null; industry: string | null } => ({
+  seq,
+  name,
+  region: null,
+  industry,
+});
+
+test('rankCompanies: 완전일치 본사가 파견·용역보다 앞', () => {
+  const input = [
+    sr('1', '토스인력파견'),
+    sr('2', '토스'),
+    sr('3', '토스테크(주)'),
+  ];
+  const ranked = rankCompanies(input, '토스').map((r) => r.seq);
+  // 완전일치 '토스'가 1위, 파견은 꼴찌
+  assert.equal(ranked[0], '2');
+  assert.equal(ranked[ranked.length - 1], '1');
+});
+
+test('rankCompanies: 업종에 용역이 있으면 뒤로', () => {
+  const input = [
+    sr('1', '가나다서비스', '건물 용역 관리'),
+    sr('2', '가나다소프트', 'IT'),
+  ];
+  const ranked = rankCompanies(input, '가나다').map((r) => r.seq);
+  assert.deepEqual(ranked, ['2', '1']);
+});
+
+test('rankCompanies: 동점이면 원래 순서 유지(안정)', () => {
+  const input = [sr('1', '알파'), sr('2', '베타'), sr('3', '감마')];
+  const ranked = rankCompanies(input, '없는회사').map((r) => r.seq);
+  assert.deepEqual(ranked, ['1', '2', '3']);
+});
+
+test('rankCompanies: 법인격 표기를 무시하고 완전일치 판정', () => {
+  const input = [sr('1', '현대파견'), sr('2', '주식회사 현대')];
+  const ranked = rankCompanies(input, '현대').map((r) => r.seq);
+  assert.equal(ranked[0], '2');
 });

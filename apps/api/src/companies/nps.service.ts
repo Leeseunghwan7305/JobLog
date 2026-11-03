@@ -10,6 +10,7 @@ import {
   parseBassItems,
   parseDetail,
   parsePeriod,
+  rankCompanies,
 } from './nps';
 
 const BASE = 'https://apis.data.go.kr/B552015/NpsBplcInfoInqireServiceV2';
@@ -63,7 +64,8 @@ export class NpsService {
     if (!this.enabled || !name) return [];
     try {
       const rows = parseBassItems(await this.bass(name));
-      return groupCompanies(rows);
+      // 본사 우선으로 재정렬 — 완전일치·일반을 앞에, 파견·용역 하청을 뒤로.
+      return rankCompanies(groupCompanies(rows), name);
     } catch (e) {
       this.logger.warn(`NPS search 실패 (${name}): ${String(e)}`);
       return [];

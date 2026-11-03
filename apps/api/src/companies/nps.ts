@@ -149,6 +149,40 @@ export function buildLinks(name: string): { label: string; url: string }[] {
   ];
 }
 
+/** 회사명 경량 정규화(랭킹용): 법인격 표기·공백 제거 + 소문자. */
+function normalizeForRank(s: string): string {
+  return s
+    .replace(/\(주\)|㈜|주식회사|유한회사|\(유\)/g, '')
+    .replace(/\s+/g, '')
+    .toLowerCase();
+}
+
+// 파견·용역·도급 같은 하청/인력공급 사업장을 뒤로 미는 신호. 바로 뒤에
+// '개발원' 등이 붙어 오탐나지 않게 '인력'은 공급/파견과 결합된 형태만 본다.
+const STAFFING_MARKERS = /파견|용역|도급|아웃소싱|인력공급|인력파견/;
+
+/**
+ * 검색 후보를 '본사 우선'으로 재정렬한다: 완전일치 > 일반 > 파견·용역 하청.
+ * 후보를 제거하지 않고 순서만 바꾸며, 동점이면 원래 순서를 유지(안정 정렬)한다.
+ */
+export function rankCompanies(
+  results: CompanySearchResult[],
+  query: string,
+): CompanySearchResult[] {
+  const q = normalizeForRank(query);
+  return results
+    .map((r, i) => {
+      const exact = normalizeForRank(r.name) === q;
+      const staffing =
+        STAFFING_MARKERS.test(r.name) ||
+        (r.industry != null && STAFFING_MARKERS.test(r.industry));
+      const score = (exact ? 2 : 0) - (staffing ? 1 : 0);
+      return { r, i, score };
+    })
+    .sort((a, b) => b.score - a.score || a.i - b.i)
+    .map((x) => x.r);
+}
+
 /** 검색 후보: seq 있는 사업장만 노출용으로 매핑. */
 export function toSearchResults(items: NpsWorkplace[]): CompanySearchResult[] {
   return items

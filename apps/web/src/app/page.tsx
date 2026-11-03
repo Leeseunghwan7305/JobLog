@@ -539,6 +539,22 @@ function KanbanMock() {
 }
 
 /** 체험 분석 결과 미리보기 (읽기 전용). 로그인하면 저장 가능. */
+/** 파싱 신뢰도 배지. low면 "확인 필요"로 보정을 유도한다(confidence는 서버가 내려줌). */
+function ConfidenceBadge({ confidence }: { confidence: 'high' | 'low' }) {
+  if (confidence === 'low') {
+    return (
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+        ⚠ 신뢰도 낮음 · 확인 필요
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+      ✓ 신뢰도 높음
+    </span>
+  );
+}
+
 function PreviewCard({
   draft,
   notice,
@@ -556,8 +572,11 @@ function PreviewCard({
     draft.deadline != null;
   return (
     <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-left shadow-card duration-300 animate-in fade-in slide-in-from-bottom-2">
-      <div className="mb-2 text-xs font-semibold text-primary">
-        ✨ AI가 이렇게 정리했어요
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold text-primary">
+          ✨ AI가 이렇게 정리했어요
+        </span>
+        <ConfidenceBadge confidence={draft.confidence} />
       </div>
       <div className="text-lg font-bold">
         {draft.companyName || '회사명 미정'}
@@ -589,10 +608,17 @@ function PreviewCard({
           </div>
         </div>
       )}
-      {notice && (
+      {notice ? (
         <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
           {notice}
         </p>
+      ) : (
+        draft.confidence === 'low' && (
+          <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+            일부 항목을 확실히 추출하지 못했어요. 저장 후 회사·직무·전형을 한 번 확인해
+            주세요.
+          </p>
+        )
       )}
       <button
         onClick={onSave}
@@ -731,18 +757,31 @@ function AppCard({ app }: { app: ApplicationDto }) {
         method: 'PATCH',
         body: JSON.stringify({ mode: v.mode }),
       }),
-    onSuccess: (_data, v) => {
+    onSuccess: async (_data, v) => {
       void qc.invalidateQueries({ queryKey: ['apps'] });
       void qc.invalidateQueries({ queryKey: ['stats'] });
-      void qc.invalidateQueries({ queryKey: ['insights'] });
       const name = app.stages.find((s) => s.id === v.stageId)?.name ?? '전형';
-      const msg =
+      if (v.mode === 'current') {
+        show(`‘${name}’ 단계로 되돌렸어요`, 'success');
+        return;
+      }
+      // 돌아올 보상: 상태를 반영한 '지금까지 합격률' 한 줄. 갱신된 인사이트를
+      // 바로 받아 붙인다(동시에 상단 인사이트 패널도 최신화). 실패하면 조용히 생략.
+      let reward = '';
+      try {
+        const ins = await apiFetch<DashboardInsights>('/dashboard/insights');
+        qc.setQueryData(['insights'], ins); // 상단 인사이트 패널도 최신화
+        if (ins.offerRate !== null && ins.decided > 0) {
+          reward = ` · 지금까지 합격률 ${Math.round(ins.offerRate * 100)}%`;
+        }
+      } catch {
+        // 보상 한 줄은 부가 정보 — 실패해도 핵심 토스트는 띄운다.
+      }
+      const base =
         v.mode === 'passed'
           ? `‘${name}’ 합격 처리했어요`
-          : v.mode === 'failed'
-            ? `‘${name}’ 탈락 처리했어요`
-            : `‘${name}’ 단계로 되돌렸어요`;
-      show(msg, v.mode === 'failed' ? 'info' : 'success');
+          : `‘${name}’ 탈락 처리했어요`;
+      show(base + reward, v.mode === 'failed' ? 'info' : 'success');
     },
     onError: () => {
       show('처리에 실패했어요. 잠시 후 다시 시도해 주세요.', 'error');

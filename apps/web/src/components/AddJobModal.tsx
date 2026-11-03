@@ -247,8 +247,23 @@ export default function AddJobModal({
 
             {step === 'draft' && draft && (
               <div className="flex flex-col gap-3 duration-200 animate-in fade-in">
+                <div>
+                  {draft.confidence === 'low' ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                      ⚠ 신뢰도 낮음 · 확인 필요
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                      ✓ 신뢰도 높음
+                    </span>
+                  )}
+                </div>
                 {notice ? (
                   <Notice>{notice}</Notice>
+                ) : draft.confidence === 'low' ? (
+                  <p className="text-sm text-amber-600 dark:text-amber-400">
+                    일부 항목이 불확실해요. 아래에서 확인·수정 후 저장해 주세요.
+                  </p>
                 ) : (
                   <p className="text-sm text-emerald-600 dark:text-emerald-400">
                     분석 완료! 내용을 확인하고 저장하세요.
