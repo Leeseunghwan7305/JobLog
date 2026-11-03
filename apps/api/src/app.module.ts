@@ -9,6 +9,7 @@ import { AdminModule } from './admin/admin.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { AuthModule } from './auth/auth.module';
 import { CompaniesModule } from './companies/companies.module';
+import { GmailModule } from './integrations/gmail/gmail.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ParseModule } from './parse/parse.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -26,6 +27,7 @@ import { SupportModule } from './support/support.module';
     ParseModule,
     CompaniesModule,
     NotificationsModule,
+    GmailModule,
     SupportModule,
     ProfileModule,
   ],

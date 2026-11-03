@@ -89,6 +89,28 @@ export interface StatusLogDto {
   createdAt: string; // ISO datetime
 }
 
+/** GET /integrations/gmail/status — Gmail 연결 상태. */
+export interface GmailStatus {
+  connected: boolean;
+  email: string | null;
+}
+
+/** POST /integrations/gmail/scan — 메일에서 감지한 합격/불합격 제안 한 건. */
+export interface GmailSuggestion {
+  applicationId: string;
+  companyName: string;
+  stageId: string | null; // 반영할 '현재' 전형
+  stageName: string | null;
+  detected: 'passed' | 'failed';
+  subject: string;
+  date: string; // ISO datetime
+}
+
+export interface GmailScanResult {
+  suggestions: GmailSuggestion[];
+  scanned: number; // 훑어본 메일 수
+}
+
 export interface ApplicationDto {
   id: string;
   companyName: string;

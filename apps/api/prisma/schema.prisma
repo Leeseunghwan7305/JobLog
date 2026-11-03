@@ -24,6 +24,11 @@ model User {
   kakaoRefreshToken   String?
   kakaoTokenExpiresAt DateTime?
   notifyKakao         Boolean   @default(true)
+  // Gmail 자동 상태감지용 Google OAuth 토큰 (gmail.readonly 동의 시 저장)
+  googleEmail          String?
+  googleAccessToken    String?
+  googleRefreshToken   String?
+  googleTokenExpiresAt DateTime?
   applications Application[]
   activity     DailyActive[]
   createdAt    DateTime      @default(now())
