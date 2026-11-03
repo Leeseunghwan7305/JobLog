@@ -20,7 +20,18 @@ model User {
   homeLat      Float?
   homeLng      Float?
   applications Application[]
+  activity     DailyActive[]
   createdAt    DateTime      @default(now())
+}
+
+// DAU/MAU 집계용 일별 활동 기록. 인증 요청 시 (userId, day) 1행 upsert.
+model DailyActive {
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  day    String // 'YYYY-MM-DD' (KST)
+
+  @@id([userId, day])
+  @@index([day])
 }
 
 model Application {

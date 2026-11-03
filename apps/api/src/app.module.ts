@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 
+import { ActivityInterceptor } from './activity/activity.interceptor';
+import { ActivityService } from './activity/activity.service';
 import { AdminModule } from './admin/admin.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { AuthModule } from './auth/auth.module';
@@ -25,6 +28,10 @@ import { SupportModule } from './support/support.module';
     NotificationsModule,
     SupportModule,
     ProfileModule,
+  ],
+  providers: [
+    ActivityService,
+    { provide: APP_INTERCEPTOR, useClass: ActivityInterceptor },
   ],
 })
 export class AppModule {}

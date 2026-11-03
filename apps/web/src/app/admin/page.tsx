@@ -1,7 +1,9 @@
 'use client';
 
 import type {
+  AdminActivityMetrics,
   AdminApplicationRow,
+  AdminDailyPoint,
   AdminOverview,
   AdminPage,
   AdminUserRow,
@@ -53,6 +55,11 @@ export default function AdminPage() {
   const overview = useQuery({
     queryKey: ['admin', 'overview'],
     queryFn: () => apiFetch<AdminOverview>('/admin/overview'),
+    enabled: isAdmin,
+  });
+  const metrics = useQuery({
+    queryKey: ['admin', 'metrics'],
+    queryFn: () => apiFetch<AdminActivityMetrics>('/admin/metrics'),
     enabled: isAdmin,
   });
   const users = useQuery({
@@ -137,6 +144,46 @@ export default function AdminPage() {
             <StatusPill status="CLOSED" n={ov.byStatus.closed} />
           </div>
         )}
+      </section>
+
+      {/* 활동 (DAU/MAU) */}
+      <section className="mb-10">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          활동 (최근 30일)
+        </h2>
+        <div className="rounded-xl border border-border bg-card p-5 shadow-card">
+          <div className="mb-4 flex gap-8">
+            <div>
+              <div className="text-3xl font-bold tabular-nums">
+                {metrics.data?.dau ?? (
+                  <span className="text-muted-foreground">—</span>
+                )}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                DAU (오늘 활동 사용자)
+              </div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold tabular-nums">
+                {metrics.data?.mau ?? (
+                  <span className="text-muted-foreground">—</span>
+                )}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                MAU (최근 30일 활동 사용자)
+              </div>
+            </div>
+          </div>
+          {metrics.data ? (
+            <DauChart daily={metrics.data.daily} />
+          ) : (
+            <Skeleton className="h-28 w-full" />
+          )}
+          <p className="mt-3 text-xs text-muted-foreground">
+            활동 = 접속(인증 요청) 또는 지원 등록·수정·전형 변경. 과거는 기존
+            기록으로 추정, 이후는 접속 기준으로 집계돼요.
+          </p>
+        </div>
       </section>
 
       {/* 전체 사용자 */}
@@ -278,6 +325,48 @@ function Pager({
       >
         다음
       </button>
+    </div>
+  );
+}
+
+/** 최근 N일 일별 활동 사용자 막대 차트 (직접 SVG, 차트 라이브러리 없음). */
+function DauChart({ daily }: { daily: AdminDailyPoint[] }) {
+  const max = Math.max(1, ...daily.map((d) => d.count));
+  const W = 100;
+  const H = 32;
+  const n = daily.length;
+  const gap = 0.35;
+  const bw = n > 0 ? (W - gap * (n - 1)) / n : W;
+  return (
+    <div className="w-full">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        preserveAspectRatio="none"
+        className="h-28 w-full"
+        role="img"
+        aria-label="최근 30일 일별 활동 사용자 수"
+      >
+        {daily.map((d, i) => {
+          const h = (d.count / max) * (H - 1);
+          const drawn = d.count > 0 ? Math.max(h, 0.6) : 0;
+          return (
+            <rect
+              key={d.day}
+              x={i * (bw + gap)}
+              y={H - drawn}
+              width={bw}
+              height={drawn}
+              className={i === n - 1 ? 'fill-primary' : 'fill-primary/40'}
+            >
+              <title>{`${d.day}: ${d.count}명`}</title>
+            </rect>
+          );
+        })}
+      </svg>
+      <div className="mt-1 flex justify-between text-[10px] tabular-nums text-muted-foreground">
+        <span>{daily[0]?.day.slice(5)}</span>
+        <span>{daily[daily.length - 1]?.day.slice(5)}</span>
+      </div>
     </div>
   );
 }

@@ -59,6 +59,19 @@ export interface AdminPage<T> {
   pageSize: number;
 }
 
+/** 활동 지표 일별 한 점 (DAU 추이용). */
+export interface AdminDailyPoint {
+  day: string; // 'YYYY-MM-DD' (KST)
+  count: number;
+}
+
+/** GET /admin/metrics — DAU/MAU 활동 지표. */
+export interface AdminActivityMetrics {
+  dau: number; // 오늘(KST) 고유 활동 사용자
+  mau: number; // 최근 30일 롤링 고유 활동 사용자
+  daily: AdminDailyPoint[]; // 최근 30일 일별 DAU(오름차순)
+}
+
 export interface StageDto {
   id: string;
   name: string;
