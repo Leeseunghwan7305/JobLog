@@ -3,9 +3,20 @@
   "name": "JobLog — 공고 담기",
   "version": "0.1.0",
   "description": "보고 있는 채용 공고를 클릭 한 번으로 JobLog에 담습니다.",
+  "homepage_url": "https://joblog-web.vercel.app",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "JobLog에 담기"
+    "default_title": "JobLog에 담기",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   },
   "permissions": ["activeTab"]
 }

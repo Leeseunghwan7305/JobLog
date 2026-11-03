@@ -24,11 +24,24 @@
 
 - `manifest.json` — Manifest V3, `activeTab` 권한만(클릭 시 현재 탭 URL 접근).
 - `popup.html` / `popup.js` — 담기 버튼 + 현재 탭 URL 캡처 → 웹 열기.
+- `icons/` — 16/48/128 PNG (소스: `scripts/make-icons.mjs`, 순수 Node 생성).
+- `scripts/package.sh` — 스토어 업로드용 zip 생성(`dist/`).
+- `STORE.md` — 스토어 리스팅 복붙·권한 사유·제출 단계.
+
+## 스토어 배포
+
+누구나 "Chrome에 추가"로 설치하려면 **Chrome 웹 스토어 등록**이 필요하다
+(일회성 $5 + 구글 심사). 자료·절차는 [`STORE.md`](STORE.md). 개인정보 처리방침은
+`https://joblog-web.vercel.app/privacy`.
+
+```bash
+bash apps/extension/scripts/package.sh   # → dist/joblog-extension-0.1.0.zip 업로드
+```
 
 ## 로드맵
 
+- [x] 아이콘(16/48/128), 스토어 제출 자료, 개인정보 처리방침.
 - [ ] **페이지 본문 텍스트 캡처** — `scripting`으로 `document.body.innerText`를 함께
       넘겨 Firecrawl 스크랩이 막히는 사이트도 담기(웹의 붙여넣기 폴백 재사용).
-- [ ] 아이콘(16/48/128) 추가.
 - [ ] 담기 성공 토스트/뱃지 피드백.
-- [ ] Chrome 웹 스토어 심사·배포 → 랜딩의 "크롬에 추가(준비 중)" 버튼을 스토어 링크로 교체.
+- [ ] 스토어 게시 후 랜딩의 "크롬에 추가(준비 중)" 버튼을 스토어 링크로 교체.
