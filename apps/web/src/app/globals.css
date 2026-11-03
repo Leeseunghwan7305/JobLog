@@ -84,6 +84,13 @@
       background-color 0.2s ease,
       color 0.2s ease;
   }
+  /* 전역 버튼 프레스: 누르면 살짝 작아졌다 떼면 되돌아오는 탭 피드백 */
+  button:not(:disabled) {
+    transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  button:not(:disabled):active {
+    transform: scale(0.94);
+  }
 }
 
 /* 접근성: 모션 최소화 설정이면 모든 진입 애니메이션을 끈다 */
@@ -93,5 +100,8 @@
   }
   * {
     transition-duration: 0.01ms !important;
+  }
+  button:not(:disabled):active {
+    transform: none;
   }
 }

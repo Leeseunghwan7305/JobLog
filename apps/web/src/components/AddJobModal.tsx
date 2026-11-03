@@ -149,7 +149,7 @@ export default function AddJobModal({
       onClick={tryClose}
     >
       <div
-        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-card p-6 shadow-2xl ring-1 ring-black/5 duration-200 animate-in fade-in zoom-in-95 slide-in-from-bottom-2"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-card p-6 shadow-2xl ring-1 ring-black/5 duration-300 ease-out animate-in fade-in zoom-in-95 slide-in-from-bottom-10"
         onClick={(e) => {
           e.stopPropagation();
         }}
