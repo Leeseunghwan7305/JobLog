@@ -1,32 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "JobLog — 1클릭 공고 저장",
+  "name": "JobLog — 공고 담기",
   "version": "0.1.0",
-  "description": "채용 공고 페이지에서 클릭 한 번으로 JobLog에 저장. AI가 회사·직무·전형을 자동 정리합니다.",
+  "description": "보고 있는 채용 공고를 클릭 한 번으로 JobLog에 담습니다.",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "JobLog에 저장",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
-    }
+    "default_title": "JobLog에 담기"
   },
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  },
-  "permissions": ["activeTab", "storage"],
-  "host_permissions": [
-    "https://joblog.duckdns.org/*",
-    "https://joblog-web.vercel.app/*"
-  ],
-  "content_scripts": [
-    {
-      "matches": ["https://joblog-web.vercel.app/*"],
-      "js": ["content-token.js"],
-      "run_at": "document_idle"
-    }
-  ]
+  "permissions": ["activeTab"]
 }

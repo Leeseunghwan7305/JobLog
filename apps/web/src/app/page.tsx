@@ -43,6 +43,13 @@ import {
 export default function Home() {
   const [hasToken, setHasToken] = useState<boolean | null>(null);
   useEffect(() => {
+    // 크롬 익스텐션(?addUrl=)에서 넘어온 공고 URL → 기존 pendingUrl 흐름으로 연결
+    // (로그인 상태면 Dashboard가 자동으로 분석 모달을 연다).
+    const addUrl = new URLSearchParams(window.location.search).get('addUrl');
+    if (addUrl) {
+      setPendingUrl(addUrl);
+      window.history.replaceState(null, '', window.location.pathname);
+    }
     setHasToken(!!getToken());
   }, []);
 

@@ -2,16 +2,52 @@
 <html lang="ko">
   <head>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="popup.css" />
+    <style>
+      :root {
+        --bg: #0e0f11;
+        --card: #191b1f;
+        --ink: #eaeaec;
+        --muted: #8b8e95;
+        --border: #262a30;
+        --primary: #3182f6;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        width: 280px;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+        padding: 16px;
+      }
+      .brand {
+        display: flex; align-items: center; gap: 8px;
+        font-weight: 800; font-size: 15px; letter-spacing: -0.02em; margin-bottom: 14px;
+      }
+      .brand .j {
+        display: grid; place-items: center; width: 24px; height: 24px;
+        border-radius: 7px; background: var(--primary); color: #fff; font-size: 13px;
+      }
+      .site {
+        font-size: 12px; color: var(--muted); margin: 0 0 12px;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      button {
+        width: 100%; border: 0; border-radius: 10px; padding: 11px 14px;
+        background: var(--primary); color: #fff; font-weight: 700; font-size: 14px;
+        cursor: pointer; transition: transform 0.1s ease, opacity 0.15s ease;
+      }
+      button:hover { opacity: 0.92; }
+      button:active { transform: scale(0.96); }
+      button:disabled { opacity: 0.45; cursor: not-allowed; }
+      .hint { font-size: 11px; color: var(--muted); margin: 10px 0 0; text-align: center; }
+    </style>
   </head>
   <body>
-    <header class="hdr">
-      <span class="logo">J</span>
-      <span class="brand">JobLog</span>
-    </header>
-    <main id="root" class="body">
-      <!-- popup.js 가 상태별로 렌더 -->
-    </main>
+    <div class="brand"><span class="j">J</span>JobLog</div>
+    <p id="site" class="site">현재 페이지 확인 중…</p>
+    <button id="add">＋ 이 공고 담기</button>
+    <p class="hint">JobLog가 열리면서 공고를 분석해요.</p>
     <script src="popup.js"></script>
   </body>
 </html>

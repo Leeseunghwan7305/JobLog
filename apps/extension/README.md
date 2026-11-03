@@ -1,33 +1,34 @@
-# JobLog 브라우저 확장 (Chrome MV3)
+# JobLog 크롬 익스텐션 (v0.1)
 
-채용 공고 페이지에서 **클릭 한 번으로 JobLog에 저장**. AI가 회사·직무·전형을 자동 정리합니다.
+보고 있는 채용 공고를 **클릭 한 번으로 JobLog에 담는** Chrome 확장 프로그램.
 
 ## 동작
 
-1. 원티드·잡코리아·사람인 등 **공고 페이지에서 확장 아이콘 클릭**
-2. 팝업이 현재 탭 URL을 공개 `/parse/preview`로 분석 → **회사·직무·전형 미리보기** (로그인 불필요)
-3. **JobLog 웹에 로그인돼 있으면** → `JobLog에 저장` 버튼으로 **바로 저장**
-   - 로그인 토큰은 `joblog-web.vercel.app` 방문 시 content script가 확장 저장소로 동기화한다.
-4. 로그인 전이면 → `로그인하고 저장` → 웹에서 카카오 로그인 후, 다시 공고에서 아이콘을 누르면 저장됨.
+1. 공고 페이지(원티드·잡코리아·사람인 등)에서 툴바의 JobLog 아이콘 클릭.
+2. 팝업의 **＋ 이 공고 담기** 버튼 → 현재 탭 URL을 캡처.
+3. JobLog 웹을 `?addUrl=<공고 URL>` 로 새 탭에서 열고, 로그인된 세션이
+   기존 분석·저장 흐름을 그대로 수행(복붙 불필요).
 
-확장 페이지(popup)의 fetch는 `host_permissions`로 허용돼 **API의 CORS 설정과 무관**하게 호출된다(백엔드 수정 불필요).
+> 인증(JWT)·비밀값을 익스텐션에 저장하지 않는다. 저장은 **JobLog 웹의 로그인 세션**이 담당하므로, 익스텐션은 URL만 넘긴다.
 
-## 설치 (개발/테스트)
+## 로컬에서 로드 (unpacked)
 
 1. Chrome → `chrome://extensions`
 2. 우측 상단 **개발자 모드** 켜기
 3. **압축해제된 확장 프로그램을 로드** → 이 `apps/extension` 폴더 선택
-4. (처음 1회) `joblog-web.vercel.app` 에서 카카오 로그인 → 토큰 동기화
+4. 공고 페이지에서 아이콘 클릭해 테스트
 
-## 구조
+로컬 웹(`localhost:3000`)으로 테스트하려면 `popup.js`의 `WEB_ORIGIN`을 바꾼다.
 
-- `manifest.json` — MV3 설정(action popup, host_permissions, content script)
-- `popup.html` / `popup.css` / `popup.js` — 분석·저장 UI
-- `content-token.js` — joblog-web 로그인 토큰을 확장으로 동기화
-- `icons/` — 툴바 아이콘 (브랜드 인디고; 더 멋진 아이콘으로 교체 가능)
+## 구성 (MV3, 빌드 불필요)
 
-## 커스터마이즈
+- `manifest.json` — Manifest V3, `activeTab` 권한만(클릭 시 현재 탭 URL 접근).
+- `popup.html` / `popup.js` — 담기 버튼 + 현재 탭 URL 캡처 → 웹 열기.
 
-- API/웹 주소는 `popup.js` 상단의 `API`, `WEB` 상수에서 변경.
-- 로컬 개발 서버로 붙이려면 `API`를 `http://localhost:4000`, `WEB`을 로컬 포트로 바꾸고
-  `manifest.json`의 `host_permissions`·content script `matches`에 해당 주소를 추가한다.
+## 로드맵
+
+- [ ] **페이지 본문 텍스트 캡처** — `scripting`으로 `document.body.innerText`를 함께
+      넘겨 Firecrawl 스크랩이 막히는 사이트도 담기(웹의 붙여넣기 폴백 재사용).
+- [ ] 아이콘(16/48/128) 추가.
+- [ ] 담기 성공 토스트/뱃지 피드백.
+- [ ] Chrome 웹 스토어 심사·배포 → 랜딩의 "크롬에 추가(준비 중)" 버튼을 스토어 링크로 교체.
