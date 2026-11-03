@@ -1,0 +1,6 @@
+{
+  "name": "@joblog/extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "JobLog 브라우저 확장 (Chrome MV3). 빌드 불필요 — chrome://extensions에서 '압축해제된 확장 프로그램 로드'."
+}
