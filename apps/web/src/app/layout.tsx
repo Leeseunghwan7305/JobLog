@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from 'next';
 
+import InstallPrompt from '@/components/InstallPrompt';
 import SupportWidget from '@/components/SupportWidget';
 import { getSiteUrl } from '@/lib/site-url';
 
@@ -65,6 +66,8 @@ export default function RootLayout({
           {children}
           {/* 전역 "개발자에게 문의하기" 플로팅 버튼 (모든 페이지) */}
           <SupportWidget />
+          {/* PWA "홈 화면에 추가" 설치 배너 (설치 가능 시에만 표시) */}
+          <InstallPrompt />
         </Providers>
         {/* Vercel 배포 시 트래픽·Web Vitals 수집 (그 외 환경에선 no-op) */}
         <Analytics />

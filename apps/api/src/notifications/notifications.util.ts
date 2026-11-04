@@ -31,3 +31,31 @@ export function dueWindowUtc(
   const lt = new Date(gte.getTime() + DAY_MS);
   return { gte, lt, dayKey: kstDayKey(gte) };
 }
+
+/** KST 기준 그 주 월요일 자정의 UTC ms (주간 계산 공통 기준). */
+function kstMondayMidnightAsUtc(now: Date): number {
+  const kst = new Date(now.getTime() + KST_OFFSET_MS);
+  const dow = (kst.getUTCDay() + 6) % 7; // 월=0 … 일=6
+  return Date.UTC(
+    kst.getUTCFullYear(),
+    kst.getUTCMonth(),
+    kst.getUTCDate() - dow,
+  );
+}
+
+/** KST 주차 키 'W YYYY-MM-DD'(그 주 월요일). 주간 요약·nudge 멱등 sendDate용. */
+export function kstWeekKey(now: Date): string {
+  return `W${kstDayKey(new Date(kstMondayMidnightAsUtc(now) - KST_OFFSET_MS))}`;
+}
+
+/** 이번 KST 주(월 00:00 ~ 다음 월 00:00)를 UTC 범위 [gte, lt)로. 주간 요약 집계용. */
+export function kstWeekWindowUtc(now: Date): { gte: Date; lt: Date } {
+  const gte = new Date(kstMondayMidnightAsUtc(now) - KST_OFFSET_MS);
+  const lt = new Date(gte.getTime() + 7 * DAY_MS);
+  return { gte, lt };
+}
+
+/** 마지막 활동 이후 days일 이상 지났으면 true (무변동 nudge 판정). */
+export function isStale(lastActivity: Date, now: Date, days: number): boolean {
+  return now.getTime() - lastActivity.getTime() >= days * DAY_MS;
+}

@@ -8,6 +8,7 @@ export default [
       'playwright.config.ts',
       'playwright-report/**',
       'test-results/**',
+      'public/**', // 정적 자산(서비스워커 sw.js 등)은 앱 tsconfig 밖
     ],
   },
   ...config,
