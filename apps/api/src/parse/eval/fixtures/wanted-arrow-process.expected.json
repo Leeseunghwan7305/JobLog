@@ -1,0 +1,17 @@
+{
+  "companyName": "어스얼라이언스",
+  "position": "Frontend Developer",
+  "location": "서울 마포구 양화로 78-22",
+  "employmentType": null,
+  "deadline": "2026-12-31",
+  "stages": [
+    { "name": "서류평가", "order": 0 },
+    { "name": "온라인 커피챗", "order": 1 },
+    { "name": "사전과제", "order": 2 },
+    { "name": "1차 실무 면접", "order": 3 },
+    { "name": "2차 임원 면접", "order": 4 },
+    { "name": "처우협의", "order": 5 },
+    { "name": "최종합격 및 입사", "order": 6 }
+  ],
+  "confidence": "high"
+}
