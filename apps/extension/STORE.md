@@ -10,7 +10,7 @@
 2. **패키지 업로드** — `pnpm --filter ... ` 대신 아래 zip을 만들어 업로드:
    ```bash
    bash apps/extension/scripts/package.sh
-   # → apps/extension/dist/joblog-extension-0.1.0.zip
+   # → apps/extension/dist/joblog-extension-0.2.0.zip
    ```
 3. **리스팅 작성**(아래 복붙) + **스크린샷** 업로드 + **개인정보 URL** 입력 → 제출.
 4. 구글 심사(보통 수일) 통과 후 게시.
