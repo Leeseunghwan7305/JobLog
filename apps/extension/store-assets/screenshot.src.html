@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #3182f6;
+    --ink: #eaeaec;
+    --muted: #8b8e95;
+  }
+  html, body { width: 1280px; height: 800px; }
+  body {
+    font-family: 'Apple SD Gothic Neo', 'Pretendard', system-ui, -apple-system, 'Malgun Gothic', sans-serif;
+    background:
+      radial-gradient(900px 500px at 12% -5%, rgba(49,130,246,0.22), transparent 60%),
+      radial-gradient(700px 500px at 108% 110%, rgba(80,70,220,0.16), transparent 55%),
+      linear-gradient(160deg, #0c0e11 0%, #121418 100%);
+    color: var(--ink);
+    overflow: hidden;
+    position: relative;
+  }
+  .wrap { display: flex; height: 100%; align-items: center; gap: 56px; padding: 0 72px; }
+
+  /* ── 왼쪽: 카피 ── */
+  .copy { width: 480px; flex-shrink: 0; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 700; color: #cdd3dd;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    padding: 7px 13px; border-radius: 999px; margin-bottom: 26px;
+  }
+  .badge .j {
+    display: grid; place-items: center; width: 20px; height: 20px;
+    border-radius: 6px; background: var(--primary); color: #fff; font-weight: 800; font-size: 12px;
+  }
+  h1 {
+    font-size: 54px; font-weight: 800; line-height: 1.14; letter-spacing: -0.03em;
+  }
+  h1 .hl { color: var(--primary); }
+  .sub { margin-top: 20px; font-size: 19px; line-height: 1.6; color: #aab0ba; max-width: 440px; }
+  .bullets { margin-top: 30px; display: flex; flex-direction: column; gap: 13px; }
+  .bullet { display: flex; align-items: center; gap: 11px; font-size: 16px; color: #d4d9e1; }
+  .bullet .dot {
+    display: grid; place-items: center; width: 24px; height: 24px; flex-shrink: 0;
+    border-radius: 50%; background: rgba(49,130,246,0.15); color: var(--primary); font-size: 13px; font-weight: 800;
+  }
+
+  /* ── 오른쪽: 브라우저 + 팝업 ── */
+  .scene { flex: 1; display: flex; justify-content: center; position: relative; }
+  .browser {
+    width: 620px; border-radius: 14px; overflow: hidden;
+    background: #16181c; border: 1px solid #2a2e35;
+    box-shadow: 0 40px 90px rgba(0,0,0,0.55);
+  }
+  .bar {
+    display: flex; align-items: center; gap: 8px; padding: 11px 14px;
+    background: #1d2025; border-bottom: 1px solid #2a2e35;
+  }
+  .dots { display: flex; gap: 6px; margin-right: 6px; }
+  .dots i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+  .url {
+    flex: 1; background: #0f1114; border: 1px solid #2a2e35; border-radius: 8px;
+    padding: 7px 12px; font-size: 13px; color: #9aa0aa; white-space: nowrap; overflow: hidden;
+  }
+  .url b { color: #cdd3dd; font-weight: 600; }
+  .pin {
+    display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px;
+    background: rgba(49,130,246,0.18); border: 1px solid var(--primary);
+    color: #fff; position: relative;
+  }
+  .pin .j { font-weight: 800; font-size: 14px; color: var(--primary); }
+  /* 공고 본문(흐리게) */
+  .page { padding: 26px 30px 40px; background: #16181c; }
+  .co { font-size: 13px; color: var(--primary); font-weight: 700; }
+  .ttl { font-size: 25px; font-weight: 800; margin-top: 6px; letter-spacing: -0.02em; }
+  .tags { margin-top: 14px; display: flex; gap: 8px; }
+  .tags span { font-size: 12px; color: #9aa0aa; background: #22262d; padding: 5px 10px; border-radius: 7px; }
+  .lines { margin-top: 20px; display: flex; flex-direction: column; gap: 11px; }
+  .lines i { display: block; height: 10px; border-radius: 5px; background: #242830; }
+
+  /* 팝업 (popup.html 재현, 툴바 아이콘 아래 앵커) */
+  .popup {
+    position: absolute; top: 60px; right: -18px; width: 272px;
+    background: #0e0f11; border: 1px solid #262a30; border-radius: 12px;
+    padding: 16px; box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+  }
+  .popup::before {
+    content: ""; position: absolute; top: -7px; right: 34px;
+    width: 13px; height: 13px; background: #0e0f11;
+    border-left: 1px solid #262a30; border-top: 1px solid #262a30;
+    transform: rotate(45deg);
+  }
+  .p-brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; letter-spacing: -0.02em; }
+  .p-brand .j { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; background: var(--primary); color: #fff; font-size: 13px; }
+  .p-site { font-size: 12px; color: var(--muted); margin: 12px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .p-btn { width: 100%; border: 0; border-radius: 10px; padding: 11px 14px; background: var(--primary); color: #fff; font-weight: 700; font-size: 14px; }
+  .p-hint { font-size: 11px; color: var(--muted); margin-top: 10px; text-align: center; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="copy">
+      <div class="badge"><span class="j">J</span> JobLog 크롬 확장</div>
+      <h1>보고 있는 공고,<br><span class="hl">클릭 한 번</span>으로 담기</h1>
+      <p class="sub">원티드·잡코리아·사람인 어디서든. 복사·붙여넣기 없이, 그 공고가 바로 JobLog에 담겨 전형까지 정리돼요.</p>
+      <div class="bullets">
+        <div class="bullet"><span class="dot">✓</span> 복붙 없이 — 아이콘만 누르면 끝</div>
+        <div class="bullet"><span class="dot">✓</span> 최소 권한(activeTab) · 비밀번호·토큰 저장 안 함</div>
+        <div class="bullet"><span class="dot">✓</span> 서류·면접·최종까지 한곳에서 추적</div>
+      </div>
+    </div>
+
+    <div class="scene">
+      <div class="browser">
+        <div class="bar">
+          <div class="dots"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+          <div class="url">🔒 wanted.co.kr/wd/<b>218841</b> · 프론트엔드 개발자</div>
+          <div class="pin"><span class="j">J</span></div>
+        </div>
+        <div class="page">
+          <div class="co">토스 (비바리퍼블리카)</div>
+          <div class="ttl">프론트엔드 개발자</div>
+          <div class="tags"><span>서울 강남구</span><span>정규직</span><span>경력 3년+</span></div>
+          <div class="lines"><i style="width:92%"></i><i style="width:85%"></i><i style="width:96%"></i><i style="width:60%"></i></div>
+        </div>
+      </div>
+
+      <div class="popup">
+        <div class="p-brand"><span class="j">J</span> JobLog</div>
+        <div class="p-site">wanted.co.kr · 프론트엔드 개발자</div>
+        <button class="p-btn">＋ 이 공고 담기</button>
+        <div class="p-hint">JobLog가 열리면서 공고를 분석해요.</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
