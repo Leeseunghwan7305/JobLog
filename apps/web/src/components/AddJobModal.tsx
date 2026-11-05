@@ -7,6 +7,7 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useToast } from '@/components/Toast';
 import { Spinner } from '@/components/ui/spinner';
 import { apiFetch } from '@/lib/api';
+import { parseStagesFromText } from '@/lib/stage';
 
 type Step = 'input' | 'manual' | 'draft';
 type AnalyzeMode = 'url' | 'text';
@@ -39,6 +40,8 @@ export default function AddJobModal({
   const [rawText, setRawText] = useState(initialRawText ?? '');
   const [notice, setNotice] = useState<string | undefined>();
   const [draft, setDraft] = useState<ParsedPosting | null>(null);
+  // '전형만 붙여넣기' 보강 입력 (수집이 전형을 못 가져왔을 때).
+  const [stageText, setStageText] = useState('');
   // 공고 원문(핏 분석 입력). 분석 응답의 rawText를 보관해 생성 시 rawPosting으로 저장.
   const [rawPosting, setRawPosting] = useState('');
   // 익스텐션/직접 분석 시 공고 URL을 저장용으로 보존.
@@ -329,6 +332,36 @@ export default function AddJobModal({
                   <div className="mb-1.5 text-xs font-semibold text-muted-foreground">
                     전형 단계
                   </div>
+
+                  {/* 전형만 붙여넣기 — 공고가 전형을 이미지로 두는 등 수집이 놓쳤을 때 */}
+                  <div className="mb-3 rounded-lg border border-dashed border-border bg-muted/30 p-2.5">
+                    <div className="mb-1.5 text-[11px] text-muted-foreground">
+                      전형이 비어있거나 안 맞나요? 공고의 전형을 그대로 붙여넣으면
+                      단계로 나눠 채워드려요.
+                    </div>
+                    <textarea
+                      value={stageText}
+                      onChange={(e) => {
+                        setStageText(e.target.value);
+                      }}
+                      rows={2}
+                      placeholder="예: 서류평가 ＞ 커피챗 ＞ 과제 ＞ 1차 면접 ＞ 최종"
+                      className="w-full resize-none rounded-md border border-input bg-background px-2.5 py-1.5 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
+                    />
+                    <button
+                      disabled={parseStagesFromText(stageText).length === 0}
+                      onClick={() => {
+                        const parsed = parseStagesFromText(stageText);
+                        if (parsed.length === 0) return;
+                        updateDraft({ stages: parsed });
+                        setStageText('');
+                      }}
+                      className="mt-1.5 rounded-md bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      단계로 채우기
+                    </button>
+                  </div>
+
                   <div className="flex flex-col gap-2">
                     {draft.stages.map((s, i) => (
                       <div key={i} className="flex items-center gap-2">

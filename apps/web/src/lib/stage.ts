@@ -1,5 +1,29 @@
 import type { ApplicationDto, StageDto, StageStatus } from '@joblog/types';
 
+// 전형 구분자: ＞ > → ▶ » ▷ · • | , / 줄바꿈. 공고에서 흔히 쓰는 화살표·쉼표 등.
+const STAGE_SEPARATORS = /[＞>→▶»▷⟶·•｜|,/\n\r]+/;
+
+/**
+ * 공고에서 복사한 전형 한 줄/여러 줄을 단계 배열로 분리한다.
+ * (수집이 전형을 못 가져왔을 때 사용자가 직접 붙여넣어 채우는 용도 — LLM 재호출 없음)
+ * 선행 번호("1. ")·끝 괄호 부연("(직무)")·콜론 뒤 설명은 LLM 규칙과 맞춰 제거한다.
+ */
+export function parseStagesFromText(
+  text: string,
+): { name: string; order: number }[] {
+  return text
+    .split(STAGE_SEPARATORS)
+    .map((s) =>
+      s
+        .replace(/^\s*\d+\s*[.)]\s*/, '') // 선행 "1. " "2) "
+        .replace(/\s*[(（].*?[)）]\s*$/, '') // 끝 괄호 부연
+        .replace(/\s*:.*$/, '') // 콜론 뒤 설명
+        .trim(),
+    )
+    .filter((s) => s.length > 0 && s.length <= 24) // 빈·과도하게 긴 토막 제외
+    .map((name, i) => ({ name, order: i }));
+}
+
 /** 카드/퀵액션에서 '지금 처리할' 전형. 진행중 우선, 없으면 첫 대기 전형. */
 export function currentStage(app: ApplicationDto): StageDto | null {
   return (
