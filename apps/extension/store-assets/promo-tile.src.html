@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --primary: #3182f6; }
+  html, body { width: 440px; height: 280px; }
+  body {
+    font-family: 'Apple SD Gothic Neo','Pretendard',system-ui,-apple-system,'Malgun Gothic',sans-serif;
+    background:
+      radial-gradient(420px 260px at 85% 0%, rgba(49,130,246,0.3), transparent 62%),
+      linear-gradient(155deg,#0d0f12 0%,#15171c 100%);
+    color: #eaeaec; overflow: hidden;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 0 34px; position: relative;
+  }
+  .j {
+    display: grid; place-items: center; width: 54px; height: 54px;
+    border-radius: 15px; background: var(--primary); color: #fff;
+    font-weight: 800; font-size: 28px; box-shadow: 0 10px 26px rgba(49,130,246,0.45);
+    margin-bottom: 18px;
+  }
+  h1 { font-size: 30px; font-weight: 800; line-height: 1.2; letter-spacing: -0.03em; }
+  h1 .hl { color: var(--primary); }
+  .sub { margin-top: 11px; font-size: 15px; color: #aab0ba; }
+  .brand { position: absolute; top: 26px; right: 30px; font-weight: 800; font-size: 16px; color: #cdd3dd; letter-spacing: -0.02em; }
+</style>
+</head>
+<body>
+  <div class="brand">JobLog</div>
+  <div class="j">J</div>
+  <h1><span class="hl">클릭 한 번</span>으로<br>채용 공고 담기</h1>
+  <p class="sub">원티드·잡코리아·사람인 어디서든, 복붙 없이.</p>
+</body>
+</html>
