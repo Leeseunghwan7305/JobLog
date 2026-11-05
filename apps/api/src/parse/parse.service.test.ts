@@ -3,6 +3,7 @@ import { test } from 'node:test';
 
 import { type ParsedPosting } from '@joblog/types';
 
+import { type PrismaService } from '../prisma/prisma.service';
 import { type FirecrawlService } from '../shared/firecrawl.service';
 import { type LlmService } from './llm.service';
 import { ParseService } from './parse.service';
@@ -37,7 +38,11 @@ function makeService(opts: {
     enabled: opts.llmEnabled ?? true,
     parse: () => Promise.resolve(opts.parsed ?? null),
   } as unknown as LlmService;
-  return new ParseService(firecrawl, llm);
+  // 계측 로깅은 best-effort — 테스트에선 no-op 스텁으로 대체.
+  const prisma = {
+    parseLog: { create: () => Promise.resolve({}) },
+  } as unknown as PrismaService;
+  return new ParseService(firecrawl, llm, prisma);
 }
 
 test('URL + Firecrawl 비활성 → 수집 건너뛰고 붙여넣기 폴백 (사용자가 겪던 증상)', async () => {

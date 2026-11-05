@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { IsOptional, IsString } from 'class-validator';
 
+import { PrismaService } from '../prisma/prisma.service';
 import { FirecrawlService } from '../shared/firecrawl.service';
 import { LlmService } from './llm.service';
 import {
@@ -17,12 +18,22 @@ export class ParseDto {
 
 @Injectable()
 export class ParseService {
+  private readonly logger = new Logger(ParseService.name);
+
   constructor(
     private firecrawl: FirecrawlService,
     private llm: LlmService,
+    private prisma: PrismaService,
   ) {}
 
+  /** 파싱 수행 + 사이트별 품질 계측(best-effort). 계측 실패는 응답에 영향 없음. */
   async parse(dto: ParseDto): Promise<ParseResponse> {
+    const result = await this.doParse(dto);
+    await this.logParse(dto, result);
+    return result;
+  }
+
+  private async doParse(dto: ParseDto): Promise<ParseResponse> {
     let text = (dto.rawText ?? '').trim();
 
     // 1. 링크 우선: 본문이 없으면 Firecrawl로 수집 시도
@@ -90,6 +101,32 @@ export class ParseService {
           ? '일부 항목을 확실히 추출하지 못했어요. 확인 후 수정해 주세요.'
           : undefined,
     };
+  }
+
+  /** 호스트 추출: URL이면 www 뺀 호스트, 붙여넣기면 'paste', 실패 시 'unknown'. */
+  private hostOf(url?: string): string {
+    if (!url) return 'paste';
+    try {
+      return new URL(url).hostname.replace(/^www\./, '');
+    } catch {
+      return 'unknown';
+    }
+  }
+
+  private async logParse(dto: ParseDto, res: ParseResponse): Promise<void> {
+    try {
+      await this.prisma.parseLog.create({
+        data: {
+          host: this.hostOf(dto.url),
+          // 빈 초안(companyName='')이면 실제 파싱이 아니라 폴백이다.
+          ok: res.draft.companyName !== '',
+          confidence: res.draft.companyName !== '' ? res.draft.confidence : null,
+          needsManualInput: res.needsManualInput,
+        },
+      });
+    } catch (e) {
+      this.logger.warn(`ParseLog 기록 실패: ${String(e)}`);
+    }
   }
 
   private emptyDraft(_url?: string): ParsedPosting {

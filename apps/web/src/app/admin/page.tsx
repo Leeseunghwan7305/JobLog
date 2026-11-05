@@ -8,6 +8,7 @@ import type {
   AdminPage,
   AdminUserRow,
   AppStatus,
+  GrowthMetrics,
   UserDto,
 } from '@joblog/types';
 import { useQuery } from '@tanstack/react-query';
@@ -33,6 +34,8 @@ const STATUS_CLASS: Record<AppStatus, string> = {
 };
 
 const fmtDate = (iso: string | null) => (iso ? iso.slice(0, 10) : '—');
+const pctOrDash = (r: number | null | undefined) =>
+  r == null ? '—' : `${Math.round(r * 100)}%`;
 const PAGE_SIZE = 50;
 
 export default function AdminPage() {
@@ -55,6 +58,11 @@ export default function AdminPage() {
   const overview = useQuery({
     queryKey: ['admin', 'overview'],
     queryFn: () => apiFetch<AdminOverview>('/admin/overview'),
+    enabled: isAdmin,
+  });
+  const growth = useQuery({
+    queryKey: ['admin', 'growth'],
+    queryFn: () => apiFetch<GrowthMetrics>('/admin/growth'),
     enabled: isAdmin,
   });
   const metrics = useQuery({
@@ -104,6 +112,7 @@ export default function AdminPage() {
   }
 
   const ov = overview.data;
+  const gr = growth.data;
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-8">
@@ -183,6 +192,76 @@ export default function AdminPage() {
             활동 = 접속(인증 요청) 또는 지원 등록·수정·전형 변경. 과거는 기존
             기록으로 추정, 이후는 접속 기준으로 집계돼요.
           </p>
+        </div>
+      </section>
+
+      {/* 성장 (퍼널 · 파싱 품질) */}
+      <section className="mb-10">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          성장 (퍼널 · 파싱 품질)
+        </h2>
+        <div className="rounded-xl border border-border bg-card p-5 shadow-card">
+          <div className="grid grid-cols-2 gap-5 sm:grid-cols-4">
+            <GrowthStat
+              label="활성화율"
+              hint={gr ? `${gr.usersActivated}/${gr.usersTotal}명 등록` : '가입→첫 공고'}
+              value={pctOrDash(gr?.activationRate)}
+            />
+            <GrowthStat
+              label="D1 재방문"
+              hint="가입 다음날"
+              value={pctOrDash(gr?.retentionD1)}
+            />
+            <GrowthStat
+              label="D7 재방문"
+              hint="가입 7일 뒤"
+              value={pctOrDash(gr?.retentionD7)}
+            />
+            <GrowthStat
+              label="공고당 업데이트"
+              hint="상태 변경 수"
+              value={
+                gr?.avgUpdatesPerApp == null
+                  ? '—'
+                  : gr.avgUpdatesPerApp.toFixed(1)
+              }
+            />
+          </div>
+
+          <div className="mt-5 border-t border-border pt-4">
+            <div className="mb-2 flex items-baseline justify-between">
+              <span className="text-sm font-semibold">사이트별 파싱 성공률</span>
+              <span className="text-xs text-muted-foreground">
+                {gr ? `전체 ${gr.parseOk}/${gr.parseTotal}건 성공` : ''}
+              </span>
+            </div>
+            {!gr ? (
+              <Skeleton className="h-16 w-full" />
+            ) : gr.parseBySite.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                아직 파싱 기록이 없어요.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {gr.parseBySite.slice(0, 8).map((s) => (
+                  <div key={s.host} className="flex items-center gap-3 text-sm">
+                    <span className="w-40 shrink-0 truncate font-mono text-xs text-muted-foreground">
+                      {s.host}
+                    </span>
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-primary"
+                        style={{ width: `${Math.round(s.successRate * 100)}%` }}
+                      />
+                    </div>
+                    <span className="w-24 shrink-0 text-right tabular-nums text-muted-foreground">
+                      {Math.round(s.successRate * 100)}% ({s.ok}/{s.total})
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
@@ -378,6 +457,24 @@ function StatCard({ label, value }: { label: string; value?: number }) {
         {value ?? <span className="text-muted-foreground">—</span>}
       </div>
       <div className="mt-1 text-xs text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
+function GrowthStat({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+}) {
+  return (
+    <div>
+      <div className="text-2xl font-bold tabular-nums">{value}</div>
+      <div className="mt-1 text-xs font-medium">{label}</div>
+      <div className="text-[11px] text-muted-foreground">{hint}</div>
     </div>
   );
 }

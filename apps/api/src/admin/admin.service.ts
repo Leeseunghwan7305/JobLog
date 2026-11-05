@@ -5,11 +5,18 @@ import type {
   AdminPage,
   AdminUserRow,
   AppStatus,
+  GrowthMetrics,
 } from '@joblog/types';
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { maskEmail, maskRegion, parsePaging } from './admin.util';
+import {
+  activationRate,
+  avgUpdatesPerApp,
+  parseSuccessBySite,
+  retentionRate,
+} from './growth.util';
 import { computeDauMau, kstDayOf, recentDays } from './metrics.util';
 
 const METRIC_DAYS = 30;
@@ -54,6 +61,42 @@ export class AdminService {
       tuples.push({ userId: l.application.userId, day: kstDayOf(l.createdAt) });
     }
     return computeDauMau(tuples, days);
+  }
+
+  /** 성장 퍼널 지표 — 활성화율·재방문율(D1/D7)·공고당 업데이트·사이트별 파싱 성공률. */
+  async growth(): Promise<GrowthMetrics> {
+    const today = kstDayOf(new Date());
+    const [usersTotal, activatedRows, totalApps, totalLogs, users, active, parseLogs] =
+      await Promise.all([
+        this.prisma.user.count(),
+        this.prisma.application.findMany({
+          distinct: ['userId'],
+          select: { userId: true },
+        }),
+        this.prisma.application.count(),
+        this.prisma.statusLog.count(),
+        this.prisma.user.findMany({ select: { id: true, createdAt: true } }),
+        this.prisma.dailyActive.findMany({ select: { userId: true, day: true } }),
+        this.prisma.parseLog.findMany({ select: { host: true, ok: true } }),
+      ]);
+
+    const signups = users.map((u) => ({
+      userId: u.id,
+      signupDay: kstDayOf(u.createdAt),
+    }));
+    const parseOk = parseLogs.filter((p) => p.ok).length;
+
+    return {
+      usersTotal,
+      usersActivated: activatedRows.length,
+      activationRate: activationRate(usersTotal, activatedRows.length),
+      avgUpdatesPerApp: avgUpdatesPerApp(totalLogs, totalApps),
+      retentionD1: retentionRate(signups, active, today, 1),
+      retentionD7: retentionRate(signups, active, today, 7),
+      parseTotal: parseLogs.length,
+      parseOk,
+      parseBySite: parseSuccessBySite(parseLogs),
+    };
   }
 
   /** 전역 통계 — 테이블 카운트 + 상태별 지원 수. */

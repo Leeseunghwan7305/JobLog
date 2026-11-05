@@ -72,6 +72,27 @@ export interface AdminActivityMetrics {
   daily: AdminDailyPoint[]; // 최근 30일 일별 DAU(오름차순)
 }
 
+/** 사이트별 파싱 성공률(공고 호스트 기준). */
+export interface SiteParseStat {
+  host: string; // 공고 URL 호스트 또는 'paste'
+  total: number;
+  ok: number;
+  successRate: number; // ok / total
+}
+
+/** GET /admin/growth — 성장 퍼널 지표(활성화·유지·파싱 품질). */
+export interface GrowthMetrics {
+  usersTotal: number;
+  usersActivated: number; // 지원 1건 이상 등록
+  activationRate: number | null; // usersActivated / usersTotal
+  avgUpdatesPerApp: number | null; // 공고당 평균 상태 변경 수
+  retentionD1: number | null; // 가입 +1일 재방문율
+  retentionD7: number | null; // 가입 +7일 재방문율
+  parseTotal: number;
+  parseOk: number;
+  parseBySite: SiteParseStat[];
+}
+
 export interface StageDto {
   id: string;
   name: string;

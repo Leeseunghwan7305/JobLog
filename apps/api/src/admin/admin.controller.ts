@@ -20,6 +20,11 @@ export class AdminController {
     return this.svc.metrics();
   }
 
+  @Get('growth')
+  growth() {
+    return this.svc.growth();
+  }
+
   @Get('users')
   users(@Query('page') page?: string, @Query('pageSize') pageSize?: string) {
     return this.svc.users(page, pageSize);

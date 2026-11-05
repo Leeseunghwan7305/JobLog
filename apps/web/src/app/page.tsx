@@ -21,6 +21,7 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 import AddJobModal from '@/components/AddJobModal';
 import LoginModal from '@/components/LoginModal';
+import ShareCard from '@/components/ShareCard';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useToast } from '@/components/Toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -998,6 +999,12 @@ function Dashboard() {
             placeholder="회사·직무·메모 검색"
             className="w-36 rounded-lg border border-input bg-background px-3 py-2 text-sm transition focus:w-52 focus:outline-none focus:ring-2 focus:ring-ring sm:w-44"
           />
+          {(stats.data?.total ?? 0) > 0 && stats.data && (
+            <ShareCard
+              stats={stats.data}
+              offerRate={insights.data?.offerRate ?? null}
+            />
+          )}
           <button
             onClick={openAdd}
             className="shrink-0 rounded-lg bg-primary px-4 py-2 font-semibold text-primary-foreground transition hover:bg-primary/90"

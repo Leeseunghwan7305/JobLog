@@ -90,6 +90,19 @@ model StatusLog {
   createdAt     DateTime    @default(now())
 }
 
+// 파싱 품질 계측 — 사이트별 성공률 집계용. 개인정보 없음(URL 호스트만, 붙여넣기는 'paste').
+model ParseLog {
+  id               String   @id @default(cuid())
+  host             String // 공고 URL 호스트(www 제거) 또는 'paste'
+  ok               Boolean // LLM이 실제 공고를 파싱했는지(빈 초안=false)
+  confidence       String? // 'high' | 'low' (성공 시)
+  needsManualInput Boolean  @default(false) // 수집 실패 → 붙여넣기 폴백
+  createdAt        DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([host])
+}
+
 // M4 — 기업 후기 캐시 (정규화된 회사명 기준)
 model CompanyReview {
   id          String   @id @default(cuid())
