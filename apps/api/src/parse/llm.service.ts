@@ -34,9 +34,35 @@ export class LlmService {
     return this.provider !== 'none';
   }
 
+  /**
+   * 2-tier 파싱: 기본(빠른/무료) 프로바이더로 먼저 파싱하고, 실패하거나 confidence가
+   * low면 강한 tier(anthropic)로 1회 에스컬레이션한다. ANTHROPIC_API_KEY가 없으면
+   * 에스컬레이션은 비활성(동작·비용 변화 없음) — 쉬운 공고는 싸게, 어려운 것만 비싸게.
+   */
   async parse(text: string): Promise<ParsedPosting | null> {
     const provider = this.provider;
     this.logger.log(`parsing via "${provider}"`);
+    const primary = await this.parseWith(provider, text);
+
+    const shouldEscalate =
+      provider !== 'anthropic' &&
+      this.claude.enabled &&
+      (primary === null || primary.confidence === 'low');
+    if (!shouldEscalate) return primary;
+
+    this.logger.log('low/none confidence → escalating to anthropic');
+    const strong = await this.claude.parse(text);
+    // 강한 tier가 성공하고(기존이 null이거나) 더 확신할 때만 교체.
+    if (strong && (primary === null || strong.confidence === 'high')) {
+      return strong;
+    }
+    return primary;
+  }
+
+  private parseWith(
+    provider: LlmProvider,
+    text: string,
+  ): Promise<ParsedPosting | null> {
     switch (provider) {
       case 'anthropic':
         return this.claude.parse(text);
@@ -45,7 +71,7 @@ export class LlmService {
       case 'ollama':
         return this.ollama.parse(text);
       default:
-        return null;
+        return Promise.resolve(null);
     }
   }
 }

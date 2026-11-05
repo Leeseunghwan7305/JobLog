@@ -103,6 +103,15 @@ model ParseLog {
   @@index([host])
 }
 
+// 파싱 결과 캐시 — 같은 공고(URL) 또는 같은 본문(해시) 재분석을 즉답. TTL은 앱에서 적용.
+model ParseCache {
+  key        String   @id // 'u:<url>' 또는 'h:<sha256(본문)>'
+  resultJson String   @db.Text // 성공한 ParseResponse 직렬화 (실패는 캐시 안 함)
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 // M4 — 기업 후기 캐시 (정규화된 회사명 기준)
 model CompanyReview {
   id          String   @id @default(cuid())

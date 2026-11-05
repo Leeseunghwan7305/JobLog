@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { Injectable, Logger } from '@nestjs/common';
 import { IsOptional, IsString } from 'class-validator';
 
@@ -16,6 +18,11 @@ export class ParseDto {
   @IsOptional() @IsString() rawText?: string;
 }
 
+/** 파싱 결과 캐시 수명 (3일) — 공고는 수 일 내 거의 안 바뀜. */
+const CACHE_TTL_MS = 3 * 24 * 60 * 60 * 1000;
+/** 렌더 성공으로 볼 최소 수집 길이 — 미만이면 긴 대기로 1회 재수집. */
+const RENDER_MIN = 600;
+
 @Injectable()
 export class ParseService {
   private readonly logger = new Logger(ParseService.name);
@@ -26,20 +33,31 @@ export class ParseService {
     private prisma: PrismaService,
   ) {}
 
-  /** 파싱 수행 + 사이트별 품질 계측(best-effort). 계측 실패는 응답에 영향 없음. */
+  /** 캐시 → 파싱 → 계측. 같은 URL/본문 재분석은 캐시로 즉답(수집·LLM 생략). */
   async parse(dto: ParseDto): Promise<ParseResponse> {
+    const key = this.cacheKey(dto);
+    if (key) {
+      const hit = await this.cacheGet(key);
+      if (hit) {
+        this.logger.log(`parse cache hit (${key.slice(0, 40)})`);
+        return hit;
+      }
+    }
     const result = await this.doParse(dto);
     await this.logParse(dto, result);
+    // 성공 결과만 캐시(실패/폴백은 재시도 여지를 남긴다)
+    if (key && result.draft.companyName !== '' && !result.needsManualInput) {
+      await this.cachePut(key, result);
+    }
     return result;
   }
 
   private async doParse(dto: ParseDto): Promise<ParseResponse> {
     let text = (dto.rawText ?? '').trim();
 
-    // 1. 링크 우선: 본문이 없으면 Firecrawl로 수집 시도
+    // 1. 링크 우선: 본문이 없으면 Firecrawl로 수집 시도(동적 대기)
     if (!text && dto.url) {
-      // SPA(원티드 등)는 렌더 전에 긁으면 본문이 비므로 waitFor로 대기한 뒤 수집
-      const scraped = await this.firecrawl.scrape(dto.url, { waitFor: 5000 });
+      const scraped = await this.scrapeAdaptive(dto.url);
       if (scraped && scraped.trim().length > 50) {
         // 추천/광고 섹션(다른 회사 공고)을 제거해 실제 공고만 LLM에 넘긴다
         text = stripRecommended(scraped.trim());
@@ -101,6 +119,50 @@ export class ParseService {
           ? '일부 항목을 확실히 추출하지 못했어요. 확인 후 수정해 주세요.'
           : undefined,
     };
+  }
+
+  /**
+   * 동적 대기 수집: 대부분 공고는 2.5s면 렌더 완료 → 빠른 1차. 결과가 비었거나
+   * 너무 짧으면(미렌더 SPA) 긴 대기(6s)로 1회만 재수집. 고정 5s 대기 제거.
+   */
+  private async scrapeAdaptive(url: string): Promise<string | null> {
+    const fast = await this.firecrawl.scrape(url, { waitFor: 2500 });
+    if (fast && fast.trim().length >= RENDER_MIN) return fast;
+    const slow = await this.firecrawl.scrape(url, { waitFor: 6000 });
+    return slow ?? fast;
+  }
+
+  /** 캐시 키: 붙여넣기면 본문 해시, 링크면 URL. 둘 다 없으면 캐시 안 함. */
+  private cacheKey(dto: ParseDto): string | null {
+    const raw = (dto.rawText ?? '').trim();
+    if (raw) return `h:${createHash('sha256').update(raw).digest('hex')}`;
+    if (dto.url) return `u:${dto.url.trim()}`;
+    return null;
+  }
+
+  private async cacheGet(key: string): Promise<ParseResponse | null> {
+    try {
+      const row = await this.prisma.parseCache.findUnique({ where: { key } });
+      if (!row) return null;
+      if (Date.now() - row.createdAt.getTime() > CACHE_TTL_MS) return null; // 만료
+      return JSON.parse(row.resultJson) as ParseResponse;
+    } catch (e) {
+      this.logger.warn(`ParseCache 조회 실패: ${String(e)}`);
+      return null;
+    }
+  }
+
+  private async cachePut(key: string, result: ParseResponse): Promise<void> {
+    try {
+      const resultJson = JSON.stringify(result);
+      await this.prisma.parseCache.upsert({
+        where: { key },
+        create: { key, resultJson },
+        update: { resultJson, createdAt: new Date() },
+      });
+    } catch (e) {
+      this.logger.warn(`ParseCache 저장 실패: ${String(e)}`);
+    }
   }
 
   /** 호스트 추출: URL이면 www 뺀 호스트, 붙여넣기면 'paste', 실패 시 'unknown'. */
