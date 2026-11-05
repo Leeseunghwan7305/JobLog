@@ -127,16 +127,19 @@ function Landing() {
             🇰🇷 한국 취준생을 위한 구직 트래커
           </span>
           <h1 className="text-balance text-4xl font-extrabold leading-[1.12] tracking-tight sm:text-5xl">
-            지원한 공고,{' '}
+            공고 링크 붙여넣기 한 번,
+            <br />
             <span className="bg-gradient-to-r from-primary to-indigo-400 bg-clip-text text-transparent">
-              어디까지 왔는지
+              AI가 전형까지 정리
             </span>
-            <br />한 곳에서 추적하세요
           </h1>
           <p className="mx-auto mt-5 max-w-md text-muted-foreground">
-            공고 링크만 붙여넣으면 회사·직무·전형을 자동으로 정리해 드려요.
+            회사·직무·전형 단계를 자동으로 뽑아내고, 서류부터 최종까지 상태를
+            추적해요.
             <br />
-            <span className="text-sm">로그인 없이 먼저 분석해 볼 수 있어요.</span>
+            <span className="text-sm">
+              로그인 없이 바로 분석 — 저장은 가입 후에.
+            </span>
           </p>
 
           <div className="mx-auto mt-8 flex max-w-lg gap-2">
