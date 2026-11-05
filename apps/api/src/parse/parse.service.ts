@@ -5,6 +5,12 @@ import { IsOptional, IsString } from 'class-validator';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { FirecrawlService } from '../shared/firecrawl.service';
+import {
+  buildWantedText,
+  extractJson,
+  matchWantedId,
+  wantedApiUrl,
+} from './adapters/wanted.adapter';
 import { LlmService } from './llm.service';
 import {
   DEFAULT_STAGES,
@@ -126,6 +132,19 @@ export class ParseService {
    * 너무 짧으면(미렌더 SPA) 긴 대기(6s)로 1회만 재수집. 고정 5s 대기 제거.
    */
   private async scrapeAdaptive(url: string): Promise<string | null> {
+    // 사이트 어댑터 우선: Wanted는 chaos API(JSON)에 전형 등 구조화 필드가 완전해
+    // 렌더 페이지보다 커버리지가 높다(전형이 이미지인 공고도 복구).
+    const wantedId = matchWantedId(url);
+    if (wantedId) {
+      const apiMd = await this.firecrawl.scrape(wantedApiUrl(wantedId));
+      const built = apiMd ? buildWantedText(extractJson(apiMd)) : null;
+      if (built && built.length > 200) {
+        this.logger.log(`wanted adapter hit (wd/${wantedId})`);
+        return built;
+      }
+      // 어댑터 실패 → 일반 수집으로 폴백
+    }
+
     const fast = await this.firecrawl.scrape(url, { waitFor: 2500 });
     if (fast && fast.trim().length >= RENDER_MIN) return fast;
     const slow = await this.firecrawl.scrape(url, { waitFor: 6000 });
