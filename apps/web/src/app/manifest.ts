@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'JobLog — 구직 현황 추적',
+    name: 'JobLog — 공고 링크로 전형까지 자동 정리',
     short_name: 'JobLog',
-    description: '지원한 공고, 어디까지 왔는지 한 곳에서 추적한다.',
+    description: '공고 링크만 붙여넣으면 AI가 전형까지 정리·추적해요.',
     start_url: '/',
     display: 'standalone',
     lang: 'ko',

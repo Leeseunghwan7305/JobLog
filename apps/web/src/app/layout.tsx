@@ -15,11 +15,11 @@ const siteUrl = getSiteUrl();
 // GA4는 측정 ID가 설정된 경우에만 로드 (없으면 스크립트 자체를 넣지 않음)
 const gaId = process.env.NEXT_PUBLIC_GA_ID;
 const description =
-  '지원한 공고, 어디까지 왔는지 한 곳에서 추적한다. 링크만 붙여넣으면 AI가 회사·직무·전형을 정리하고 서류부터 최종까지 상태를 관리한다.';
+  '공고 링크만 붙여넣으면 AI가 회사·직무·전형을 정리하고, 서류부터 최종까지 상태를 한곳에서 추적해요.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: { default: 'JobLog — 구직 현황 추적', template: '%s · JobLog' },
+  title: { default: 'JobLog — 공고 링크로 전형까지 자동 정리', template: '%s · JobLog' },
   description,
   applicationName: 'JobLog',
   keywords: ['구직', '취업', '채용', '지원 현황', '전형 관리', '채용 공고', 'JobLog'],
@@ -29,16 +29,16 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     siteName: 'JobLog',
-    title: 'JobLog — 구직 현황 추적',
-    description: '지원한 공고, 어디까지 왔는지 한 곳에서.',
+    title: 'JobLog — 공고 링크로 전형까지 자동 정리',
+    description: '링크 하나로 회사·직무·전형 자동 정리 — 서류부터 최종까지 추적.',
     url: '/',
     locale: 'ko_KR',
     // 공유 카드 이미지는 app/opengraph-image.tsx(파일 컨벤션)가 자동 주입한다.
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'JobLog — 구직 현황 추적',
-    description: '지원한 공고, 어디까지 왔는지 한 곳에서.',
+    title: 'JobLog — 공고 링크로 전형까지 자동 정리',
+    description: '링크 하나로 회사·직무·전형 자동 정리 — 서류부터 최종까지 추적.',
   },
 };
 

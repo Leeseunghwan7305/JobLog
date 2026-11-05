@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 // 모든 라우트가 상속하는 기본 OG/트위터 카드 (링크 공유 시 unfurl 미리보기).
-export const alt = 'JobLog — 구직 현황 추적';
+export const alt = 'JobLog — 공고 링크로 전형까지 자동 정리';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -22,8 +22,8 @@ async function loadKoreanFont(): Promise<ArrayBuffer | null> {
 export default async function OpengraphImage() {
   const fontData = await loadKoreanFont();
   const tagline = fontData
-    ? '지원한 공고, 어디까지 왔는지 한 곳에서'
-    : 'Track every job application, start to finish';
+    ? '링크 하나로, AI가 전형까지 정리'
+    : 'Paste a link — AI organizes every stage';
 
   return new ImageResponse(
     (

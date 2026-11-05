@@ -11,7 +11,7 @@ export default function LoginPage() {
         </div>
         <h1 className="mb-2 text-2xl font-extrabold tracking-tight">JobLog</h1>
         <p className="mb-8 text-muted-foreground">
-          지원한 공고, 어디까지 왔는지 한 곳에서.
+          공고 링크 하나로, AI가 전형까지 정리·추적.
         </p>
         <a
           href={kakaoLoginUrl}
