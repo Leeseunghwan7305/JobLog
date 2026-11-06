@@ -28,7 +28,7 @@ export class CompaniesController {
   @Get('public')
   publicProfile(@Query('name') name: string, @Req() req: Request) {
     this.rateLimit(this.clientIp(req));
-    return this.svc.getProfile(name ?? '');
+    return this.svc.getPublicProfile(name ?? '');
   }
 
   // 국민연금 사업장 후보 검색 (검색→선택 UX). 로그인 전용.

@@ -144,6 +144,28 @@ export class CompaniesService {
     return { companyName: name, seq: resolvedSeq, nps, links };
   }
 
+  /**
+   * 공개 페이지(SEO)용 프로필. 로그인 흐름의 '완전일치 단일'과 달리,
+   * 대기업(사업장 다수)도 해소되게 본사 우선 랭킹의 최상위 후보를 자동 선택한다.
+   */
+  async getPublicProfile(nameRaw: string): Promise<CompanyProfileDto> {
+    const name = this.normalize(nameRaw);
+    if (!name || !this.nps.enabled) {
+      return {
+        companyName: name || nameRaw,
+        seq: null,
+        nps: null,
+        links: buildLinks(name || nameRaw),
+      };
+    }
+    const candidates = await this.nps.searchCandidates(name);
+    const top = candidates[0]; // rankCompanies로 본사·완전일치가 앞에 온다
+    if (!top) {
+      return { companyName: name, seq: null, nps: null, links: buildLinks(name) };
+    }
+    return this.getProfile(name, top.seq);
+  }
+
   /** seq 캐시(7일) 우선, 없으면 국민연금 조회 후 캐시. */
   private async loadBySeq(
     seq: string,
