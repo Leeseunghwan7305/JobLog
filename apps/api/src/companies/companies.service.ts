@@ -154,7 +154,9 @@ export class CompaniesService {
     if (!name || !this.nps.enabled) {
       return { companyName: name || nameRaw, seq: null, nps: null, links };
     }
-    const r = await this.nps.resolveLargest(name);
+    // 정확 우선: 완전일치 단일 사업장일 때만 지표를 보인다.
+    // (대기업은 동명 사업장이 많아 by-name 해소가 불안정 → 틀린 지표보다 null)
+    const r = await this.nps.fetchByName(name, (s) => this.normalize(s));
     if (!r) {
       return { companyName: name, seq: null, nps: null, links };
     }

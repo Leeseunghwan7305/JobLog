@@ -72,41 +72,6 @@ export class NpsService {
     }
   }
 
-  /**
-   * 공개 페이지용: 이름으로 '가장 규모 큰' 사업장(=본사 추정)을 골라 지표 반환.
-   * 상위 후보들의 최신월 가입자수를 조회해 최대치를 선택 → 동명 소규모 오매칭 방지
-   * (예: '삼성전자' 4명짜리 공사업체 대신 본사). 캐시 미스 때만 호출(웹은 ISR).
-   */
-  async resolveLargest(
-    name: string,
-  ): Promise<{ seq: string; metrics: NpsMetrics } | null> {
-    if (!this.enabled || !name) return null;
-    try {
-      const candidates = rankCompanies(
-        groupCompanies(parseBassItems(await this.bass(name))),
-        name,
-      );
-      let bestSeq: string | null = null;
-      let bestCount = -1;
-      for (const c of candidates.slice(0, 6)) {
-        const d = parseDetail(
-          await this.get('getDetailInfoSearchV2', { seq: c.seq }),
-        );
-        const cnt = d?.memberCount ?? 0;
-        if (cnt > bestCount) {
-          bestCount = cnt;
-          bestSeq = c.seq;
-        }
-      }
-      if (!bestSeq) return null;
-      const metrics = await this.fetchProfile(name, bestSeq);
-      return metrics ? { seq: bestSeq, metrics } : null;
-    } catch (e) {
-      this.logger.warn(`NPS resolveLargest 실패 (${name}): ${String(e)}`);
-      return null;
-    }
-  }
-
   /** seq가 속한 회사의 최근 N개월 상세를 모아 추이 포함 지표 산출. */
   async fetchProfile(name: string, seq: string): Promise<NpsMetrics | null> {
     if (!this.enabled || !seq) return null;
