@@ -9,6 +9,7 @@ import { Prisma } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { FirecrawlService } from '../shared/firecrawl.service';
+import { CURATED } from './curated';
 import {
   extractCompanyCandidates,
   isCacheFresh,
@@ -33,7 +34,8 @@ export class CompaniesService {
   /** 회사명 정규화: 법인 접미사·여분 공백 제거 (spec 6.1) */
   normalize(name: string): string {
     return (name ?? '')
-      .replace(/\(주\)|\(유\)|주식회사|유한회사|㈜/g, '')
+      // 반각·전각 괄호 법인 접미사 모두 제거(NPS는 전각 （주） 로 저장하는 경우가 많다).
+      .replace(/\(주\)|\(유\)|（주）|（유）|주식회사|유한회사|㈜/g, '')
       .replace(/\s+/g, ' ')
       .trim();
   }
@@ -154,7 +156,14 @@ export class CompaniesService {
     if (!name || !this.nps.enabled) {
       return { companyName: name || nameRaw, seq: null, nps: null, links };
     }
-    // 정확 우선: 완전일치 단일 사업장일 때만 지표를 보인다.
+    // 1) 수동 큐레이션(검증된 seq) 우선 — 브랜드≠법인명·동명 다수인 인기 회사.
+    const curated = CURATED[name];
+    if (curated) {
+      const dto = await this.getProfile(curated.name, curated.seq);
+      return { ...dto, companyName: name }; // 표시명은 검색어 유지
+    }
+
+    // 2) 그 외는 정확 우선: 완전일치 단일 사업장일 때만 지표를 보인다.
     // (대기업은 동명 사업장이 많아 by-name 해소가 불안정 → 틀린 지표보다 null)
     const r = await this.nps.fetchByName(name, (s) => this.normalize(s));
     if (!r) {

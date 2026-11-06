@@ -152,7 +152,7 @@ export function buildLinks(name: string): { label: string; url: string }[] {
 /** 회사명 경량 정규화(랭킹용): 법인격 표기·공백 제거 + 소문자. */
 function normalizeForRank(s: string): string {
   return s
-    .replace(/\(주\)|㈜|주식회사|유한회사|\(유\)/g, '')
+    .replace(/\(주\)|㈜|（주）|（유）|주식회사|유한회사|\(유\)/g, '')
     .replace(/\s+/g, '')
     .toLowerCase();
 }
