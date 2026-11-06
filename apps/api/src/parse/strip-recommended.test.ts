@@ -1,7 +1,37 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { stripRecommended } from './types';
+import { stripNoise, stripRecommended } from './types';
+
+test('stripNoise: 이미지·링크 URL·장식선 제거, 라벨·본문은 보존', () => {
+  const md = [
+    '# 프론트엔드 개발자',
+    '![로고](https://img.example.com/logo.png)',
+    '우리는 [리액트](https://react.dev)로 개발합니다.',
+    '지원: https://apply.example.com/123',
+    '* * *',
+    '주요업무: 서비스 개발',
+  ].join('\n');
+  const out = stripNoise(md);
+  assert.ok(out.includes('프론트엔드 개발자'));
+  assert.ok(out.includes('리액트로 개발합니다'), '링크는 라벨만 남아야');
+  assert.ok(out.includes('주요업무: 서비스 개발'));
+  assert.ok(!out.includes('http'), 'URL 토큰은 제거돼야');
+  assert.ok(!out.includes('!['), '이미지 마크다운 제거');
+  assert.ok(!/^\s*\*\s*\*\s*\*\s*$/m.test(out), '수평선 장식 제거');
+});
+
+test('stripNoise: 과다 공백을 2줄로 축약', () => {
+  assert.equal(stripNoise('A\n\n\n\n\nB'), 'A\n\nB');
+});
+
+test('stripRecommended: 푸터/저작권/지도도 잘라낸다', () => {
+  const body = '회사 소개와 주요업무 '.repeat(40); // 400자 보호 구간 넘김
+  const text = body + '본 채용정보는 원티드랩의 동의없이 무단전재 금지. # 지도 데이터';
+  const out = stripRecommended(text);
+  assert.ok(!out.includes('무단전재'));
+  assert.ok(!out.includes('지도 데이터'));
+});
 
 test('추천/광고 섹션(마커 이후)을 잘라낸다', () => {
   const body = 'A'.repeat(500) + ' 진짜 공고 본문 ';

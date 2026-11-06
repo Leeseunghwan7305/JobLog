@@ -16,6 +16,7 @@ import {
   DEFAULT_STAGES,
   ParsedPosting,
   ParseResponse,
+  stripNoise,
   stripRecommended,
 } from './types';
 
@@ -65,8 +66,9 @@ export class ParseService {
     if (!text && dto.url) {
       const scraped = await this.scrapeAdaptive(dto.url);
       if (scraped && scraped.trim().length > 50) {
-        // 추천/광고 섹션(다른 회사 공고)을 제거해 실제 공고만 LLM에 넘긴다
-        text = stripRecommended(scraped.trim());
+        // 추천/광고(다른 회사 공고)를 자르고, 이미지·링크·푸터 노이즈를 걷어
+        // 실제 공고 텍스트만 LLM에 넘긴다(토큰↓·잡음↓).
+        text = stripNoise(stripRecommended(scraped.trim()));
         // 본문이 이미지로만 되어 있거나(JD 이미지 업로드) 내용이 너무 짧으면
         // 틀린 기본값을 조용히 주지 말고 붙여넣기를 안내한다.
         if (text.length < 200) {
