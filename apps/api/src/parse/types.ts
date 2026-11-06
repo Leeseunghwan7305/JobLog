@@ -185,9 +185,11 @@ const RECOMMEND_MARKERS = [
  * 공고 텍스트는 보존하고 이미지·링크 URL·장식선·과다 공백만 걷어낸다.
  */
 export function stripNoise(text: string): string {
+  // 링크/이미지 괄호부는 'URL(공백·괄호 없음) + 선택적 "title"' 형태로 정밀 매칭.
+  // (title에 ')'가 들어가도 안전 — 사람인 [(주)X](url "(주)X") 같은 케이스 방지)
   return text
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, '') // 이미지 ![alt](url)
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // 링크 [라벨](url) → 라벨만
+    .replace(/!\[[^\]]*\]\(\s*[^\s)]+(?:\s+"[^"]*")?\s*\)/g, '') // 이미지 ![alt](url)
+    .replace(/\[([^\]]*)\]\(\s*[^\s)]+(?:\s+"[^"]*")?\s*\)/g, '$1') // 링크 → 라벨만
     .replace(/https?:\/\/\S+/g, '') // 남은 raw URL
     .replace(/^(?:[ \t]*[*\-_]){3,}[ \t]*$/gm, '') // 수평선(*** , * * * , --- 등)
     .replace(/[ \t]+\n/g, '\n') // 줄 끝 공백

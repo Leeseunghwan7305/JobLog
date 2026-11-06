@@ -25,6 +25,13 @@ test('stripNoise: 과다 공백을 2줄로 축약', () => {
   assert.equal(stripNoise('A\n\n\n\n\nB'), 'A\n\nB');
 });
 
+test('stripNoise: title에 )가 있는 링크도 라벨만 깔끔히(사람인 (주)X 중복 방지)', () => {
+  const md = '[(주)디지털포토](https://www.saramin.co.kr/view?csn=abc "(주)디지털포토") 합격 시 50만원';
+  const out = stripNoise(md);
+  assert.equal(out, '(주)디지털포토 합격 시 50만원');
+  assert.ok(!out.includes('디지털포토디지털포토'), '이름이 중복되면 안 됨');
+});
+
 test('stripRecommended: 푸터/저작권/지도도 잘라낸다', () => {
   const body = '회사 소개와 주요업무 '.repeat(40); // 400자 보호 구간 넘김
   const text = body + '본 채용정보는 원티드랩의 동의없이 무단전재 금지. # 지도 데이터';
