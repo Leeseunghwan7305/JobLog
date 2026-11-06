@@ -35,6 +35,13 @@ function ageLabel(joinedYear: number | null): string | null {
   // 국민연금 가입연도 기준 업력(근사).
   return `${new Date().getFullYear() - joinedYear}년+`;
 }
+/** NPS 업종 필드의 플레이스홀더(BIZ_NO미존재사업장 등)는 노출하지 않는다. */
+function cleanIndustry(industry: string | null): string | null {
+  if (!industry || industry.includes('BIZ_NO') || industry.includes('미존재')) {
+    return null;
+  }
+  return industry;
+}
 
 export async function generateMetadata({
   params,
@@ -49,12 +56,13 @@ export async function generateMetadata({
     ? [
         nps.memberCount ? `직원 ${nps.memberCount.toLocaleString()}명` : null,
         wonLabel(nps.estimatedAnnualSalaryManwon),
-        nps.industry,
+        cleanIndustry(nps.industry),
       ]
         .filter(Boolean)
         .join(' · ')
     : '';
-  const title = `${company} 직원수·추정연봉·전형 정보 | JobLog`;
+  // 템플릿('%s · JobLog')이 접미사를 붙이므로 여기선 'JobLog'를 넣지 않는다.
+  const title = `${company} 직원수·추정연봉·전형 정보`;
   const description = facts
     ? `${company} — ${facts}. 국민연금 공개데이터 기반. JobLog에서 이 회사 지원 전형(서류·면접·최종)을 추적하세요.`
     : `${company}의 직원수·추정연봉·업종 정보와 지원 전형 추적. JobLog.`;
@@ -124,7 +132,7 @@ export default async function CompanyPage({
           />
           <Metric label="추정 평균근속" value={tenureLabel(nps.estTenureMonths)} />
           <Metric label="업력" value={ageLabel(nps.npsJoinedYear)} />
-          <Metric label="업종" value={nps.industry} />
+          <Metric label="업종" value={cleanIndustry(nps.industry)} />
           <Metric label="지역" value={nps.region} />
           <Metric
             label="이번 달 입사"
