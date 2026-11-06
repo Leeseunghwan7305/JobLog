@@ -150,20 +150,16 @@ export class CompaniesService {
    */
   async getPublicProfile(nameRaw: string): Promise<CompanyProfileDto> {
     const name = this.normalize(nameRaw);
+    const links = buildLinks(name || nameRaw);
     if (!name || !this.nps.enabled) {
-      return {
-        companyName: name || nameRaw,
-        seq: null,
-        nps: null,
-        links: buildLinks(name || nameRaw),
-      };
+      return { companyName: name || nameRaw, seq: null, nps: null, links };
     }
-    const candidates = await this.nps.searchCandidates(name);
-    const top = candidates[0]; // rankCompanies로 본사·완전일치가 앞에 온다
-    if (!top) {
-      return { companyName: name, seq: null, nps: null, links: buildLinks(name) };
+    const r = await this.nps.resolveLargest(name);
+    if (!r) {
+      return { companyName: name, seq: null, nps: null, links };
     }
-    return this.getProfile(name, top.seq);
+    await this.cacheProfile(r.seq, name, r.metrics);
+    return { companyName: name, seq: r.seq, nps: r.metrics, links };
   }
 
   /** seq 캐시(7일) 우선, 없으면 국민연금 조회 후 캐시. */
