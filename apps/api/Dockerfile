@@ -1,6 +1,6 @@
 # JobLog API — pnpm 모노레포에서 apps/api만 빌드해 실행하는 이미지.
 # 빌드 컨텍스트는 저장소 루트(context: .), 비밀은 런타임 env_file로만 주입.
-FROM node:20-bookworm-slim AS base
+FROM node:22-bookworm-slim AS base
 # prisma 쿼리 엔진에 openssl 필요
 RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
