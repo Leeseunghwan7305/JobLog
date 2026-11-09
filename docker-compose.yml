@@ -13,5 +13,23 @@ services:
     volumes:
       - joblog_pg:/var/lib/postgresql/data
 
+  # JobLog API (NestJS). 자체 호스팅(미니PC 등)에서 compose로 함께 구동.
+  # 비밀값은 apps/api/.env(gitignore)에서 주입. DB는 compose 네트워크의 db:5432로 접속.
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: joblog-api
+    restart: unless-stopped
+    env_file:
+      - apps/api/.env
+    environment:
+      # 컨테이너→컨테이너는 서비스명 db:5432 (호스트의 5434 아님)
+      DATABASE_URL: 'postgresql://joblog:joblog@db:5432/joblog?schema=public'
+    ports:
+      - '4000:4000'
+    depends_on:
+      - db
+
 volumes:
   joblog_pg:

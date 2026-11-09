@@ -1,14 +1,8 @@
-name: Deploy API (EC2)
+name: Deploy API (EC2) — DEPRECATED
 
+# EC2 폐기(미니PC + docker compose로 이전). 자동 트리거 제거 — 수동 실행만 남김.
+# 미니PC 배포: 미니PC에서 git pull && docker compose up -d --build
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'apps/api/**'
-      - 'packages/**'
-      - 'pnpm-lock.yaml'
-      - 'pnpm-workspace.yaml'
-      - '.github/workflows/deploy-api.yml'
   workflow_dispatch: {}
 
 # 동시 배포 방지 (겹치면 앞 배포 취소)
