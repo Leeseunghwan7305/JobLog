@@ -18,6 +18,7 @@ node scripts/make-icons.mjs >/dev/null
 zip -r "$OUT" \
   manifest.json \
   popup.html \
+  popup.css \
   popup.js \
   content.js \
   icons \
