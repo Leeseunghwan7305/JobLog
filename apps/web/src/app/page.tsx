@@ -310,7 +310,7 @@ function Landing() {
               <div className="flex flex-col items-center gap-10 text-center sm:flex-row sm:text-left">
                 <div className="flex-1">
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-semibold text-muted-foreground">
-                    🧩 크롬 익스텐션 · 곧 출시
+                    🧩 크롬 익스텐션 · 출시됨
                   </span>
                   <h2 className="mt-4 text-balance text-2xl font-bold tracking-tight sm:text-3xl">
                     공고 보다가, 클릭 한 번으로 담기
@@ -320,17 +320,19 @@ function Landing() {
                     버튼만 누르면 복사·붙여넣기 없이 바로 JobLog에 담겨요.
                   </p>
                   <div className="mt-6 flex flex-wrap justify-center gap-2 sm:justify-start">
-                    <button
-                      disabled
-                      className="cursor-not-allowed rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground opacity-60"
+                    <a
+                      href="https://chromewebstore.google.com/detail/gnfiphkmjdjkcpmbjeihdedbkohfhakk"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground transition hover:bg-primary/90"
                     >
-                      🧩 크롬에 추가 (준비 중)
-                    </button>
+                      🧩 크롬에 추가
+                    </a>
                     <button
                       onClick={goAnalyze}
                       className="rounded-xl border border-border px-5 py-3 font-semibold text-foreground transition hover:border-ring"
                     >
-                      지금은 링크로 분석하기 →
+                      링크로 분석하기 →
                     </button>
                   </div>
                 </div>
