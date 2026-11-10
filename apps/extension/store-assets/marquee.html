@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"/><style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Apple SD Gothic Neo','Pretendard',system-ui,-apple-system,'Malgun Gothic',sans-serif;}
+  :root{--primary:#3182f6;}
+  html,body{width:1400px;height:560px;overflow:hidden;}
+  body{background:radial-gradient(900px 560px at 88% -10%,rgba(49,130,246,.35),transparent 60%),linear-gradient(150deg,#0c0e12 0%,#14171d 100%);color:#eef0f3;display:flex;align-items:center;padding:0 90px;position:relative;}
+  .left{width:720px;z-index:2;}
+  .brand{display:flex;align-items:center;gap:16px;margin-bottom:30px;}
+  .j{width:64px;height:64px;border-radius:17px;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:850;font-size:36px;box-shadow:0 12px 28px -8px rgba(49,130,246,.7);}
+  .bn{font-size:28px;font-weight:800;}
+  h1{font-size:54px;font-weight:850;line-height:1.18;letter-spacing:-1.8px;}
+  h1 b{color:#6aa6ff;}
+  p{font-size:23px;color:#aab3c2;margin-top:22px;font-weight:500;line-height:1.5;}
+  .pills{display:flex;gap:10px;margin-top:30px;}
+  .pill{font-size:15px;font-weight:600;color:#cdd5e2;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:30px;padding:8px 16px;}
+  /* 우측 미니 팝업 목업 */
+  .ext{position:absolute;right:86px;top:50%;transform:translateY(-50%);width:300px;background:#fff;border-radius:18px;box-shadow:0 30px 70px -14px rgba(0,0,0,.55);padding:22px;color:#13171f;}
+  .ext .eh{display:flex;align-items:center;gap:10px;}
+  .ext .ej{width:36px;height:36px;border-radius:10px;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:800;font-size:19px;}
+  .ext .en{font-weight:800;font-size:15px;}
+  .ext .ed{font-size:13px;color:#7a8290;margin-top:15px;line-height:1.5;}
+  .ext .btn{margin-top:16px;background:var(--primary);color:#fff;border-radius:12px;height:52px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;box-shadow:0 10px 20px -6px rgba(49,130,246,.6);}
+</style></head><body>
+  <div class="left">
+    <div class="brand"><div class="j">J</div><div class="bn">JobLog — 공고 담기</div></div>
+    <h1>보던 공고를, <b>클릭 한 번</b>으로<br>담고 추적하세요</h1>
+    <p>복사·붙여넣기 없이 — 원티드·잡코리아·사람인 어디서든.<br>서류부터 최종까지 전형을 한 곳에서.</p>
+    <div class="pills"><span class="pill">＋ 1클릭 저장</span><span class="pill">AI 자동 정리</span><span class="pill">최소 권한</span></div>
+  </div>
+  <div class="ext">
+    <div class="eh"><div class="ej">J</div><div class="en">JobLog — 공고 담기</div></div>
+    <div class="ed">지금 보고 있는 채용 공고를<br>JobLog에 담습니다.</div>
+    <div class="btn">＋ 이 공고 담기</div>
+  </div>
+</body></html>

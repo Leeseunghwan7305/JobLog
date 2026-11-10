@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"/><style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Apple SD Gothic Neo','Pretendard',system-ui,-apple-system,'Malgun Gothic',sans-serif;}
+  :root{--primary:#3182f6;}
+  html,body{width:1280px;height:800px;overflow:hidden;}
+  body{background:linear-gradient(160deg,#eef3fb 0%,#e3ebf7 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;}
+  .headline{text-align:center;}
+  .headline h1{font-size:44px;font-weight:850;color:#13171f;letter-spacing:-1.5px;}
+  .headline h1 b{color:var(--primary);}
+  .headline p{font-size:20px;color:#5b6472;margin-top:12px;font-weight:500;}
+  .board{width:1080px;background:#fff;border-radius:18px;box-shadow:0 30px 70px -20px rgba(20,40,80,.3);border:1px solid #dbe3ee;padding:26px;}
+  .cols{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+  .col .ct{font-size:13px;font-weight:800;color:#8a93a3;letter-spacing:.3px;margin-bottom:12px;display:flex;gap:7px;align-items:center;}
+  .col .n{background:#eef1f6;border-radius:20px;padding:1px 8px;font-size:11px;color:#7a8290;}
+  .card{background:#fff;border:1px solid #e6eaf1;border-radius:12px;padding:13px;margin-bottom:11px;box-shadow:0 2px 6px rgba(20,40,80,.04);}
+  .card .cn{font-weight:800;font-size:15px;color:#13171f;}
+  .card .cp{font-size:12.5px;color:#7a8290;margin-top:3px;}
+  .card .pill{display:inline-block;margin-top:9px;font-size:11.5px;font-weight:700;border-radius:20px;padding:3px 10px;}
+  .p-doc{background:#eaf2ff;color:#2f6df0;}.p-int{background:#fff0e0;color:#c9801a;}.p-off{background:#e3f6ec;color:#138a5e;}.p-wait{background:#f1f4f9;color:#8a93a3;}
+  .track{display:flex;gap:4px;margin-top:10px;}
+  .track i{height:5px;flex:1;border-radius:3px;background:#e6eaf1;}
+  .track i.on{background:var(--primary);}.track i.ok{background:#22c07a;}
+</style></head><body>
+  <div class="headline"><h1>서류부터 최종까지, <b>한 곳에서 추적</b></h1><p>담은 공고가 자동으로 정리되고, 전형 상태를 칸반으로 관리</p></div>
+  <div class="board"><div class="cols">
+    <div class="col"><div class="ct">진행중 <span class="n">3</span></div>
+      <div class="card"><div class="cn">어스얼라이언스</div><div class="cp">Frontend Developer</div><div class="track"><i class="ok"></i><i class="on"></i><i></i><i></i></div><span class="pill p-int">온라인 커피챗</span></div>
+      <div class="card"><div class="cn">토스</div><div class="cp">백엔드 개발자</div><div class="track"><i class="on"></i><i></i><i></i></div><span class="pill p-doc">서류 접수</span></div>
+      <div class="card"><div class="cn">당근마켓</div><div class="cp">프로덕트 디자이너</div><div class="track"><i class="ok"></i><i class="on"></i><i></i></div><span class="pill p-int">1차 면접</span></div>
+    </div>
+    <div class="col"><div class="ct">서류 <span class="n">2</span></div>
+      <div class="card"><div class="cn">네이버</div><div class="cp">데이터 엔지니어</div><div class="track"><i class="on"></i><i></i><i></i></div><span class="pill p-doc">서류 평가</span></div>
+      <div class="card"><div class="cn">카카오</div><div class="cp">iOS 개발자</div><div class="track"><i class="on"></i><i></i></div><span class="pill p-wait">지원 완료</span></div>
+    </div>
+    <div class="col"><div class="ct">면접 <span class="n">1</span></div>
+      <div class="card"><div class="cn">배달의민족</div><div class="cp">서버 개발자</div><div class="track"><i class="ok"></i><i class="ok"></i><i class="on"></i></div><span class="pill p-int">임원 면접</span></div>
+    </div>
+    <div class="col"><div class="ct">최종합격 <span class="n">1</span></div>
+      <div class="card"><div class="cn">라인</div><div class="cp">플랫폼 엔지니어</div><div class="track"><i class="ok"></i><i class="ok"></i><i class="ok"></i></div><span class="pill p-off">최종 합격 🎉</span></div>
+    </div>
+  </div></div>
+</body></html>
