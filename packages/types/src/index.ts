@@ -72,6 +72,23 @@ export interface AdminActivityMetrics {
   daily: AdminDailyPoint[]; // 최근 30일 일별 DAU(오름차순)
 }
 
+/** GET /benchmark — 익명 집계 벤치마크의 전형 한 줄(표본 충분한 것만 노출). */
+export interface BenchmarkStage {
+  name: string; // 전형명(trim)
+  decided: number; // 합격/불합격이 결정된 표본 수
+  passRate: number; // passed / decided (0~1)
+}
+
+/** GET /benchmark — 전 사용자 익명 집계. 개인정보 없음, 표본 임계값 적용. */
+export interface Benchmark {
+  users: number; // 집계에 포함된 사용자 수(신뢰도 표시)
+  applications: number; // 전체 지원 수
+  decided: number; // 결론 난 지원 수(offer+rejected)
+  offerRate: number | null; // 전체 합격률(표본 부족 시 null)
+  stages: BenchmarkStage[]; // 표본 충분한 전형, 표본 수 내림차순
+  updatedAt: string; // ISO
+}
+
 /** 사이트별 파싱 성공률(공고 호스트 기준). */
 export interface SiteParseStat {
   host: string; // 공고 URL 호스트 또는 'paste'

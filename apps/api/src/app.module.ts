@@ -8,6 +8,7 @@ import { ActivityService } from './activity/activity.service';
 import { AdminModule } from './admin/admin.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { AuthModule } from './auth/auth.module';
+import { BenchmarkModule } from './benchmark/benchmark.module';
 import { CompaniesModule } from './companies/companies.module';
 import { GmailModule } from './integrations/gmail/gmail.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -26,6 +27,7 @@ import { SupportModule } from './support/support.module';
     ApplicationsModule,
     ParseModule,
     CompaniesModule,
+    BenchmarkModule,
     NotificationsModule,
     GmailModule,
     SupportModule,
