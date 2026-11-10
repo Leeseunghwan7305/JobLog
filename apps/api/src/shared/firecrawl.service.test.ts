@@ -58,6 +58,44 @@ test('키가 있으면 올바른 요청을 보내고 data.markdown을 반환', a
   assert.equal(auth, 'Bearer fc-test-key');
 });
 
+test('헤더 직무 제목이 본문에서 잘린 경우 metadata.ogTitle을 맨 앞 H1로 복원', async () => {
+  process.env.FIRECRAWL_API_KEY = 'fc-test-key';
+  globalThis.fetch = () =>
+    Promise.resolve(
+      new Response(
+        JSON.stringify({
+          data: {
+            markdown: '## 팀을 소개해요\n커뮤니티 빌더 집중 채용',
+            metadata: { ogTitle: 'Product Designer - 커뮤니티' },
+          },
+        }),
+        { status: 200 },
+      ),
+    );
+  const fc = new FirecrawlService();
+  const md = await fc.scrape('https://job/1');
+  assert.ok(md?.startsWith('# Product Designer - 커뮤니티\n'), '직무명이 맨 앞 H1로');
+  assert.ok(md?.includes('팀을 소개해요'), '본문도 유지');
+});
+
+test('타이틀이 이미 본문 앞부분에 있으면 중복 H1을 넣지 않는다', async () => {
+  process.env.FIRECRAWL_API_KEY = 'fc-test-key';
+  globalThis.fetch = () =>
+    Promise.resolve(
+      new Response(
+        JSON.stringify({
+          data: {
+            markdown: '# 백엔드 개발자\n주요업무',
+            metadata: { title: '백엔드 개발자' },
+          },
+        }),
+        { status: 200 },
+      ),
+    );
+  const fc = new FirecrawlService();
+  assert.equal(await fc.scrape('https://job/1'), '# 백엔드 개발자\n주요업무');
+});
+
 test('응답이 2xx가 아니면 null (수집 실패 → 폴백)', async () => {
   process.env.FIRECRAWL_API_KEY = 'fc-test-key';
   globalThis.fetch = () =>
