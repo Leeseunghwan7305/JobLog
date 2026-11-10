@@ -70,6 +70,7 @@
 - [x] 집 주소 기반 통근 길찾기 — 마이페이지(`PATCH /profile/home`)에 집 주소 저장(지오코딩→좌표, `User.homeAddress/homeLat/homeLng`). 각 공고 상세에서 `GET /applications/:id/commute` → **집→회사 네이버 지도 대중교통 길찾기 딥링크**. 지오코딩 `GeoService`(Kakao Local 우선→Nominatim 폴백, 키 없어도 동작), 순수 `naverDirectionsUrl`·`parseKakaoGeocode`·`parseNominatim` 단위테스트. 집 미설정/실패 시 우아한 폴백. 마이그레이션 `add_home_location`(additive)
 - [x] 카카오톡 '나에게 보내기' D-day 리마인더 — `talk_message` 동의 토큰 저장(`User.kakao*`), `KakaoService.sendMemo`(만료 시 refresh 재시도), 알림 루프에서 이메일과 함께 발송. scope는 `KAKAO_TALK_MESSAGE=on`일 때만 요청(미설정 시 로그인 영향 없음). 마이그레이션 `add_kakao_tokens`
 - [x] Gmail 자동 상태감지 — `integrations/gmail`(OAuth connect/callback/status/scan/disconnect). `gmail.readonly`로 **제목·발신자·스니펫만** 읽어 진행중 지원의 회사명+합격/불합격 키워드 매칭 → 전형 변경 **제안**(자동반영 X, 사용자가 기존 progress 엔드포인트로 선택). 공개 콜백은 서명 JWT `state`로 userId 식별, 본문 미저장. 순수 `classify` 우선순위 단위테스트. 마이그레이션 `add_google_tokens`(additive). `GOOGLE_*` 미설정 시 기능 비활성(다른 기능 영향 없음)
+- [x] 익명 벤치마크 (유입 surface) — 공개 `GET /benchmark`(인증 없음) + 색인되는 `/benchmark` 페이지. 전 사용자 지원을 모아 **전형별 평균 통과율·합격률만** 노출, 개인정보·회사명 없음. 프라이버시 임계값 `MIN_SAMPLE=5`(표본 부족 전형·합격률은 숨김→"데이터 모이는 중" 상태). `computeInsights` 재사용 + 순수 `computeBenchmark` 단위테스트(임계값·정렬·null). 10분 캐시. robots·sitemap 색인 허용, 공유/가입 CTA
 
 ---
 

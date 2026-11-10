@@ -160,6 +160,7 @@ interface ParsedPosting {
 | DELETE | `/integrations/gmail/disconnect`    |  ✓   | Gmail 연결 해제(토큰 삭제)             |
 | GET    | `/dashboard/stats`                  |  ✓   | 지원 수·진행중·합격·탈락 통계          |
 | GET    | `/dashboard/insights`               |  ✓   | 합격률(결론 대비)·전형명별 통과율 인사이트 (M4) |
+| GET    | `/benchmark`                        |  -   | **공개** 익명 집계: 전형별 평균 통과율·합격률. 개인정보·회사명 없음, 표본<5 전형·합격률 숨김. 10분 캐시 |
 
 ### 5.1 주요 DTO (요약)
 
