@@ -95,6 +95,42 @@ function Landing() {
     preview.reset();
   };
 
+  // 크롬 익스텐션으로 담은 공고 → 로그인 전에도 바로 체험 분석.
+  // content.js가 localStorage에 심는 게 비동기라, 잠깐 폴링해 레이스를 피한다.
+  useEffect(() => {
+    let tries = 0;
+    const pick = (): boolean => {
+      let raw: string | null = null;
+      try {
+        raw = localStorage.getItem('joblog_ext_capture');
+      } catch {
+        return true; // 접근 불가 환경이면 폴링 중단
+      }
+      if (!raw) return false;
+      try {
+        localStorage.removeItem('joblog_ext_capture');
+        const cap = JSON.parse(raw) as { url?: string };
+        if (cap.url) {
+          setUrl(cap.url);
+          setResult(null);
+          preview.mutate(cap.url);
+        }
+      } catch {
+        /* 손상된 캡처 무시 */
+      }
+      return true;
+    };
+    if (pick()) return;
+    const id = setInterval(() => {
+      tries += 1;
+      if (pick() || tries >= 12) clearInterval(id); // 최대 ~2.4s 대기
+    }, 200);
+    return () => {
+      clearInterval(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const raw = preview.error?.message ?? '';
   const errorText =
     raw && raw !== 'unauthorized' && !/^API \d+$/.test(raw)
@@ -967,9 +1003,6 @@ function Dashboard() {
             >
               어드민
             </Link>
-          )}
-          {me.data && (
-            <span className="text-muted-foreground">{me.data.nickname}님</span>
           )}
           <button
             onClick={() => {
