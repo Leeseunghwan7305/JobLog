@@ -169,13 +169,10 @@ function Landing() {
               AI가 전형까지 정리
             </span>
           </h1>
-          <p className="mx-auto mt-5 max-w-md text-muted-foreground">
-            회사·직무·전형 단계를 자동으로 뽑아내고, 서류부터 최종까지 상태를
-            추적해요.
+          <p className="mx-auto mt-5 max-w-sm text-balance text-muted-foreground">
+            회사·직무·전형을 자동으로 정리하고, 서류부터 최종까지 추적해요.
             <br />
-            <span className="text-sm">
-              로그인 없이 바로 분석 — 저장은 가입 후에.
-            </span>
+            <span className="text-sm">로그인 없이 바로 분석 · 저장은 가입 후에.</span>
           </p>
 
           <div className="mx-auto mt-8 flex max-w-lg gap-2">
