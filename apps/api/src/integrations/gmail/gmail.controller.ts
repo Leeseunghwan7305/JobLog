@@ -12,6 +12,7 @@ import type { Response } from 'express';
 
 import { CurrentUser } from '../../auth/current-user.decorator';
 import { JwtAuthGuard } from '../../auth/jwt.guard';
+import { primaryWebOrigin } from '../../shared/web-origin';
 import { GmailService } from './gmail.service';
 
 @Controller('integrations/gmail')
@@ -40,7 +41,7 @@ export class GmailController {
     @Query('state') state: string,
     @Res() res: Response,
   ): Promise<void> {
-    const web = process.env.WEB_ORIGIN ?? 'http://localhost:3000';
+    const web = primaryWebOrigin();
     try {
       const payload = await this.jwt.verifyAsync<{ sub: string; kind: string }>(
         state,

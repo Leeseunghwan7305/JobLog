@@ -5,6 +5,7 @@ import { NestFactory } from '@nestjs/core';
 import type { Express } from 'express';
 
 import { AppModule } from './app.module';
+import { webOrigins } from './shared/web-origin';
 
 // Vercel 서버리스용 Nest 부트스트랩.
 // warm 인스턴스 간 재사용(cached)하여 콜드스타트를 줄인다.
@@ -17,7 +18,7 @@ export async function bootstrapServerless(): Promise<Express> {
     logger: ['error', 'warn'],
   });
   app.enableCors({
-    origin: process.env.WEB_ORIGIN ?? 'http://localhost:3000',
+    origin: webOrigins(),
     credentials: true,
   });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));

@@ -1,6 +1,7 @@
 import { Controller, Get, Query, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 
+import { primaryWebOrigin } from '../shared/web-origin';
 import { AuthService } from './auth.service';
 import { CurrentUser } from './current-user.decorator';
 import { JwtAuthGuard } from './jwt.guard';
@@ -18,7 +19,7 @@ export class AuthController {
   // 카카오 콜백: 토큰 발급 후 웹으로 리다이렉트 (토큰은 URL fragment로)
   @Get('kakao/callback')
   async callback(@Query('code') code: string, @Res() res: Response) {
-    const web = process.env.WEB_ORIGIN ?? 'http://localhost:3000';
+    const web = primaryWebOrigin();
     try {
       const token = await this.auth.loginWithKakaoCode(code);
       res.redirect(`${web}/auth/callback#token=${token}`);
