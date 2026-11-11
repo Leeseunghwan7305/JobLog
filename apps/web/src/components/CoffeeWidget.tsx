@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 import { useToast } from '@/components/Toast';
@@ -10,7 +11,7 @@ import { useToast } from '@/components/Toast';
  */
 const BANK = '국민은행';
 const ACCOUNT = '812701-04-155948';
-const HOLDER = '이승환'; // 예금주 — 실제와 다르면 이 줄만 고치면 된다.
+const HOLDER = '이*환'; // 예금주(가운데 마스킹) — 실제와 다르면 이 줄만 고치면 된다.
 
 export default function CoffeeWidget() {
   const [open, setOpen] = useState(false);
@@ -105,6 +106,21 @@ function CoffeeModal({ onClose }: { onClose: () => void }) {
           <div className="mt-0.5 text-xs text-muted-foreground">
             예금주 {HOLDER}
           </div>
+        </div>
+
+        <div className="mt-4 flex flex-col items-center gap-1.5">
+          <div className="rounded-xl bg-white p-2 shadow-sm ring-1 ring-black/5">
+            <Image
+              src="/donation-qr.png"
+              alt="토스 송금 QR"
+              width={132}
+              height={132}
+              unoptimized
+            />
+          </div>
+          <span className="text-xs text-muted-foreground">
+            📱 토스 앱으로 스캔하면 송금 화면이 열려요
+          </span>
         </div>
 
         <button
