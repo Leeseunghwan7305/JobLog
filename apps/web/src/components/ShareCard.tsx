@@ -82,7 +82,7 @@ export default function ShareCard({
     }
     ctx.fillStyle = 'rgba(255,255,255,0.7)';
     ctx.font = `500 30px ${font}`;
-    ctx.fillText('joblog-web.vercel.app', S / 2, S - 70);
+    ctx.fillText('joblog.store', S / 2, S - 70);
 
     return new Promise((resolve) => {
       canvas.toBlob((b) => {
