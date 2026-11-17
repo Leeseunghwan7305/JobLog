@@ -162,7 +162,7 @@ function Landing() {
           <span className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground duration-500 animate-in fade-in">
             🇰🇷 한국 취준생을 위한 구직 트래커
           </span>
-          <h1 className="text-balance text-4xl font-extrabold leading-[1.12] tracking-tight sm:text-5xl">
+          <h1 className="text-balance text-4xl font-extrabold leading-[1.3] tracking-tight sm:text-5xl">
             공고 링크 붙여넣기 한 번,
             <br />
             <span className="bg-gradient-to-r from-primary to-indigo-400 bg-clip-text text-transparent">
