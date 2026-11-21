@@ -20,6 +20,8 @@ export default defineConfig({
   use: {
     baseURL: BASE,
     trace: 'on-first-retry',
+    // PR 자동 데모 영상용: 모든 테스트를 녹화한다(test-results/**/video.webm).
+    video: 'on',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {

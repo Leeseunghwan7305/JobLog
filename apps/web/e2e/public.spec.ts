@@ -7,11 +7,9 @@ test.describe('공개 플로우 (로그아웃)', () => {
     await page.goto('/');
     await expect(page).toHaveURL(/\/$/);
     await expect(
-      page.getByRole('heading', { name: /어디까지 왔는지/ }),
+      page.getByRole('heading', { name: /전형까지 정리/ }),
     ).toBeVisible();
-    await expect(
-      page.getByText('로그인 없이 먼저 분석해 볼 수 있어요'),
-    ).toBeVisible();
+    await expect(page.getByText(/저장은 가입 후에/)).toBeVisible();
     await expect(
       page.getByPlaceholder('채용 공고 링크를 붙여넣으세요'),
     ).toBeVisible();
